@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tempest", "Tempest\Tempest.vcxproj", "{DE05DFE2-8969-4BC9-9DB0-F9B211894841}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Spark", "Spark\Spark.vcxproj", "{701F582E-77DF-4737-A217-813873C1D18D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DE05DFE2-8969-4BC9-9DB0-F9B211894841}.Debug|x64.ActiveCfg = Debug|x64
+		{DE05DFE2-8969-4BC9-9DB0-F9B211894841}.Debug|x64.Build.0 = Debug|x64
+		{DE05DFE2-8969-4BC9-9DB0-F9B211894841}.Release|x64.ActiveCfg = Release|x64
+		{DE05DFE2-8969-4BC9-9DB0-F9B211894841}.Release|x64.Build.0 = Release|x64
+		{701F582E-77DF-4737-A217-813873C1D18D}.Debug|x64.ActiveCfg = Debug|x64
+		{701F582E-77DF-4737-A217-813873C1D18D}.Debug|x64.Build.0 = Debug|x64
+		{701F582E-77DF-4737-A217-813873C1D18D}.Release|x64.ActiveCfg = Release|x64
+		{701F582E-77DF-4737-A217-813873C1D18D}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {96A61DC4-2EFC-4BAB-9867-CA17BB065BA9}
+	EndGlobalSection
+EndGlobal

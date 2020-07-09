@@ -1,6 +1,9 @@
-#include <iostream>
+#include <EngineCore.h>
 
 int main()
 {
-	std::cout << "Hello Tempest" << std::endl;
+	Tempest::EngineCoreOptions options;
+
+	Tempest::EngineCore engine(options);
+	engine.StartEngineLoop();
 }

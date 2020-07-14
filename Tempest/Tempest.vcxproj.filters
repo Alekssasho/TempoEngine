@@ -3,8 +3,25 @@
   <ItemGroup>
     <ClInclude Include="EngineCore.h" />
     <ClInclude Include="Defines.h" />
+    <ClInclude Include="Logging.h" />
+    <ClInclude Include="Job\JobSystem.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="Job\Queue.h">
+      <Filter>Job</Filter>
+    </ClInclude>
+    <ClInclude Include="Memory.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
+    <ClCompile Include="Logging.cpp" />
+    <ClCompile Include="Job\JobSystem.cpp">
+      <Filter>Job</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Job">
+      <UniqueIdentifier>{7ca71f12-de08-47db-97d4-62ed2f28bb27}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
 </Project>

@@ -11,6 +11,9 @@
       <Filter>Job</Filter>
     </ClInclude>
     <ClInclude Include="Memory.h" />
+    <ClInclude Include="Platform\WindowsPlatform.h">
+      <Filter>Platform</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -18,10 +21,16 @@
     <ClCompile Include="Job\JobSystem.cpp">
       <Filter>Job</Filter>
     </ClCompile>
+    <ClCompile Include="Platform\WindowsPlatform.cpp">
+      <Filter>Platform</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
       <UniqueIdentifier>{7ca71f12-de08-47db-97d4-62ed2f28bb27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Platform">
+      <UniqueIdentifier>{838c37c0-b88b-4ebc-b227-3321fdd50d77}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

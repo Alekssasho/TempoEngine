@@ -54,7 +54,6 @@ public:
 
 	// Waits for all threads to finish
 	void WaitForCompletion();
-
 private:
 	void WorkerThreadEntryPoint();
 	static void FiberEntryPoint(void* params);

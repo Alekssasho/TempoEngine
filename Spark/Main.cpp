@@ -3,7 +3,9 @@
 int main()
 {
 	Tempest::EngineCoreOptions options;
-	options.numWorkerThreads = std::thread::hardware_concurrency();
+	options.NumWorkerThreads = std::thread::hardware_concurrency();
+	options.Width = 1280;
+	options.Height = 720;
 
 	Tempest::EngineCore engine(options);
 	engine.StartEngineLoop();

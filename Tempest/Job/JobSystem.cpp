@@ -53,7 +53,6 @@ JobSystem::~JobSystem()
 JobSystem::JobSystem(uint32_t numWorkerThreads, uint32_t numFibers, uint32_t fiberStackSize)
 	: m_Quit(false)
 {
-	OPTICK_THREAD("SchedulerThread");
 	// First create all the needed fibers
 	m_Fibers.reserve(numFibers);
 

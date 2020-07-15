@@ -14,6 +14,18 @@
     <ClInclude Include="Platform\WindowsPlatform.h">
       <Filter>Platform</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Renderer.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Dx12Device.h">
+      <Filter>Graphics\Dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Dx12Common.h">
+      <Filter>Graphics\Dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Math.h">
+      <Filter>Math</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -24,6 +36,12 @@
     <ClCompile Include="Platform\WindowsPlatform.cpp">
       <Filter>Platform</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Renderer.cpp">
+      <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Dx12Device.cpp">
+      <Filter>Graphics\Dx12</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -31,6 +49,15 @@
     </Filter>
     <Filter Include="Platform">
       <UniqueIdentifier>{838c37c0-b88b-4ebc-b227-3321fdd50d77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics">
+      <UniqueIdentifier>{6d3219c5-894f-43fb-afb8-924ad6ae388a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Dx12">
+      <UniqueIdentifier>{c4e4295f-150e-4d32-a8a9-5b45825e5d86}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{f54ee5c1-4eaf-4cd1-9d67-b99e4c9dc0db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

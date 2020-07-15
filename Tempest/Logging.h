@@ -1,5 +1,6 @@
 #pragma once
 #include <Defines.h>
+#include <EASTL/string.h>
 
 namespace Tempest
 {
@@ -26,4 +27,12 @@ public:
 };
 
 #define LOG(Severity, System, Message) Tempest::Logger::gLogger->WriteLog(Tempest::LogSeverity::##Severity, #System, Message)
+#define FORMAT_LOG(Severity, System, Message, ...) \
+	do \
+	{ \
+		eastl::string buffer; \
+		buffer.sprintf(Message, __VA_ARGS__); \
+		Tempest::Logger::gLogger->WriteLog(Tempest::LogSeverity::##Severity, #System, buffer.c_str()); \
+	}\
+	while(0)
 }

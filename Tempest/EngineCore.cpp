@@ -18,6 +18,7 @@ EngineCore::~EngineCore()
 
 void EngineCore::StartEngineLoop()
 {
+	LOG(Info, EngineCore, "Starting Engine Loop");
 	OPTICK_APP("Tempo Engine");
 	// This is needed for proper visualization of profile library
 	OPTICK_FRAME("Engine Execution");
@@ -63,6 +64,7 @@ void EngineCore::DoFrameJob(void* data)
 void EngineCore::InitializeWindow()
 {
 	m_Platform.SpawnWindow(m_Options.Width, m_Options.Height, "Tempest Engine", this);
+	m_Renderer.CreateWindowSurface(m_Platform.GetHandle());
 }
 
 void EngineCore::DoFrame()

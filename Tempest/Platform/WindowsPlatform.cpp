@@ -187,3 +187,10 @@ void WindowsPlatform::KillWindow()
 }
 
 };
+
+// Needed by EASTL to function properly
+#include <stdio.h>
+int Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list arguments)
+{
+	return ::vsnprintf(pDestination, n, pFormat, arguments);
+}

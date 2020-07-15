@@ -11,6 +11,7 @@ public:
 	void SpawnWindow(unsigned width, unsigned height, const char* title, class EngineCore* core);
 	void PumpMessages();
 	void KillWindow();
+	WindowHandle GetHandle() { return m_Handle; }
 private:
 	WindowHandle m_Handle;
 };

@@ -3,6 +3,7 @@
 #include <Logging.h>
 #include <Job/JobSystem.h>
 #include <Platform/WindowsPlatform.h>
+#include <Graphics/Renderer.h>
 
 namespace Tempest
 {
@@ -28,6 +29,7 @@ private:
 	Logger m_Logger;
 	Job::JobSystem m_JobSystem;
 	WindowsPlatform m_Platform;
+	Renderer m_Renderer;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(void*);

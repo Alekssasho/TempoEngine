@@ -71,5 +71,7 @@ void EngineCore::DoFrame()
 {
 	m_Platform.PumpMessages();
 
+	// TODO: This should be on seperate job and be pipelined with the DoFrame job
+	m_Renderer.RenderFrame();
 }
 }

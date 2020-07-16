@@ -194,3 +194,8 @@ int Vsnprintf8(char* pDestination, size_t n, const char* pFormat, va_list argume
 {
 	return ::vsnprintf(pDestination, n, pFormat, arguments);
 }
+
+int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)
+{
+	return ::vswprintf(pDestination, n, pFormat, arguments);
+}

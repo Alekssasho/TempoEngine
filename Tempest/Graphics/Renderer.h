@@ -16,6 +16,7 @@ public:
 	Renderer();
 	~Renderer();
 	bool CreateWindowSurface(WindowHandle handle);
+	void RenderFrame();
 private:
 	eastl::unique_ptr<class Dx12::Dx12Device> m_Device;
 };

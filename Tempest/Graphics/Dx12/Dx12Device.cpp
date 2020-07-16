@@ -52,6 +52,11 @@ Dx12Device::Dx12Device()
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 
 	CHECK_SUCCESS(m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_GraphicsQueue)));
+	m_GraphicsQueue->SetName(L"Main Graphics Queue");
+}
+
+Dx12Device::~Dx12Device()
+{
 }
 
 void Dx12Device::Initialize(WindowHandle handle)
@@ -170,6 +175,81 @@ void Dx12Device::Initialize(WindowHandle handle)
 
 		// Create an event handle to use for frame synchronization.
 		m_FenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	}
+
+	// Create Command Lists for number of back buffers
+	for (int i = 0; i < m_SwapChainImages.size(); ++i)
+	{
+		ComPtr<ID3D12CommandAllocator> allocator;
+		CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)));
+		allocator->SetName(L"Backbuffer Command Allocator");
+
+		ComPtr<ID3D12GraphicsCommandList> list;
+		CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(&list)));
+		list->SetName(L"Backbuffer Command List");
+
+		list->Close();
+
+		m_MainCommandLists.push_back({ allocator, list });
+	}
+}
+
+Dx12FrameData Dx12Device::StartNewFrame()
+{
+	uint32_t index = m_SwapChain->GetCurrentBackBufferIndex();
+	CommandList& list = m_MainCommandLists[index];
+	list.CommandAllocator->Reset();
+	list.DxCommandList->Reset(list.CommandAllocator.Get(), nullptr);
+
+	D3D12_RESOURCE_BARRIER barrier;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = m_SwapChainImages[index].Resource.Get();
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	list.DxCommandList->ResourceBarrier(1, &barrier);
+
+	return Dx12FrameData{
+		list.DxCommandList.Get(),
+		m_SwapChainImages[index].Resource.Get(),
+		m_SwapChainImages[index].RTVHandle,
+		m_DSVHandle
+	};
+}
+
+void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
+{
+	D3D12_RESOURCE_BARRIER barrier;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = frame.BackBufferResource;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
+	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+
+	frame.CommandList->ResourceBarrier(1, &barrier);
+
+	frame.CommandList->Close();
+
+	ID3D12CommandList* cmdList = frame.CommandList;
+	m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
+}
+
+void Dx12Device::Present()
+{
+	m_SwapChain->Present(1, 0);
+
+	const UINT64 fence = m_FenceValue;
+	m_GraphicsQueue->Signal(m_Fence.Get(), fence);
+	m_FenceValue++;
+
+	// Wait until the previous frame is finished.
+	if (m_Fence->GetCompletedValue() < m_FenceValue - 2)
+	{
+		m_Fence->SetEventOnCompletion(m_FenceValue - 2, m_FenceEvent);
+		WaitForSingleObject(m_FenceEvent, INFINITE);
 	}
 }
 }

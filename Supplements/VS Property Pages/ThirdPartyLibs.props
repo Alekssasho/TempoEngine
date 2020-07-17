@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\glm\include;$(SolutionDir)ThirdParty\optick\include;$(SolutionDir)ThirdParty\EASTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\imgui\include;$(SolutionDir)ThirdParty\glm\include;$(SolutionDir)ThirdParty\optick\include;$(SolutionDir)ThirdParty\EASTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\EASTL\lib\$(Configuration);$(SolutionDir)ThirdParty\optick\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

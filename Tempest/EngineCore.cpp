@@ -2,6 +2,8 @@
 #include <Memory.h>
 #include <optick.h>
 
+#include <imgui.h>
+
 namespace Tempest
 {
 EngineCore::EngineCore(const EngineCoreOptions& options)
@@ -70,6 +72,16 @@ void EngineCore::InitializeWindow()
 void EngineCore::DoFrame()
 {
 	m_Platform.PumpMessages();
+
+	// UI
+	{
+		auto& io = ImGui::GetIO();
+		//io.DeltaTime = deltaTime;
+		ImGui::NewFrame();
+	}
+
+	// Test Code
+	ImGui::ShowDemoWindow();
 
 	// TODO: This should be on seperate job and be pipelined with the DoFrame job
 	m_Renderer.RenderFrame();

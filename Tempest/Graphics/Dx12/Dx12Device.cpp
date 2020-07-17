@@ -1,5 +1,11 @@
 #include <Graphics/Dx12/Dx12Device.h>
 
+#include <optick.h>
+
+#include <imgui.h>
+// TODO: Reimplement as our own
+#include <imgui_impl_dx12.h>
+
 namespace Tempest
 {
 namespace Dx12
@@ -57,6 +63,8 @@ Dx12Device::Dx12Device()
 
 Dx12Device::~Dx12Device()
 {
+	ImGui_ImplDX12_InvalidateDeviceObjects();
+	ImGui_ImplDX12_Shutdown();
 }
 
 void Dx12Device::Initialize(WindowHandle handle)
@@ -192,6 +200,39 @@ void Dx12Device::Initialize(WindowHandle handle)
 
 		m_MainCommandLists.push_back({ allocator, list });
 	}
+
+	// Initializa UI
+	{
+		auto& io = ImGui::GetIO();
+		io.DisplaySize.x = float(m_SwapChainSize.x);
+		io.DisplaySize.y = float(m_SwapChainSize.y);
+		io.IniFilename = nullptr;
+
+		unsigned char* pixels;
+		int w, h;
+		io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
+		//io.Fonts->TexID = reinterpret_cast<void*>(Modules.Renderer.UITextureLoaded(pixels, w, h));
+		ImGui::StyleColorsDark();
+
+		// TODO: Make this real code and remove imgui_impl_dx12
+
+		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+		srvHeapDesc.NumDescriptors = 1;
+		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
+
+		ImGui_ImplDX12_Init(
+			m_Device.Get(),
+			2,
+			DXGI_FORMAT_R8G8B8A8_UNORM,
+			m_SRVHeap.Get(),
+			m_SRVHeap->GetCPUDescriptorHandleForHeapStart(),
+			m_SRVHeap->GetGPUDescriptorHandleForHeapStart()
+		);
+
+		ImGui_ImplDX12_CreateDeviceObjects();
+	}
 }
 
 Dx12FrameData Dx12Device::StartNewFrame()
@@ -221,6 +262,20 @@ Dx12FrameData Dx12Device::StartNewFrame()
 
 void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 {
+	// UI Rendering before we finish the frame
+	{
+		OPTICK_EVENT("ImGUI CPU Render");
+		ImGui::Render();
+		ImGui_ImplDX12_NewFrame();
+	}
+	{
+		OPTICK_EVENT("ImGUI GPU Draw");
+		frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, false, nullptr);
+		frame.CommandList->SetDescriptorHeaps(1, m_SRVHeap.GetAddressOf());
+		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), frame.CommandList);
+	}
+
+	// Finish the frame itself
 	D3D12_RESOURCE_BARRIER barrier;
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;

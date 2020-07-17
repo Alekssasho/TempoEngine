@@ -26,6 +26,10 @@ public:
 	Dx12FrameData StartNewFrame();
 	void SubmitFrame(const Dx12FrameData& frame);
 	void Present();
+	glm::uvec2 GetSwapChainSize()
+	{
+		return m_SwapChainSize;
+	}
 private:
 	ComPtr<IDXGIFactory4> m_Factory;
 	ComPtr<ID3D12Device> m_Device;
@@ -53,6 +57,9 @@ private:
 		ComPtr<ID3D12GraphicsCommandList> DxCommandList;
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
+
+	// UI Stuff
+	ComPtr<ID3D12DescriptorHeap> m_SRVHeap;
 };
 }
 }

@@ -47,6 +47,18 @@
     <ClInclude Include="..\ThirdParty\imgui\include\imgui_impl_dx12.h">
       <Filter>ThirdParty\imgui</Filter>
     </ClInclude>
+    <ClInclude Include="..\ThirdParty\flecs\flecs.h">
+      <Filter>ThirdParty\flecs</Filter>
+    </ClInclude>
+    <ClInclude Include="World\World.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Components\Components.h">
+      <Filter>World\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="World\Systems\MoveSystem.h">
+      <Filter>World\Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -78,6 +90,12 @@
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_impl_dx12.cpp">
       <Filter>ThirdParty\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\flecs\flecs.c">
+      <Filter>ThirdParty\flecs</Filter>
+    </ClCompile>
+    <ClCompile Include="World\World.cpp">
+      <Filter>World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -100,6 +118,18 @@
     </Filter>
     <Filter Include="ThirdParty\imgui">
       <UniqueIdentifier>{65069f0b-823b-4f9e-a3c5-efe24ee4829e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\flecs">
+      <UniqueIdentifier>{0066a56c-22bb-4a46-8c64-2e43f9fd870d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{7bbbf021-e716-4661-a64e-9da74394c0c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Components">
+      <UniqueIdentifier>{6021f8d6-84c1-415c-afda-d7f3e598ba65}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\Systems">
+      <UniqueIdentifier>{7a8dbafd-6c62-43a8-b7d1-132520d3bb56}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

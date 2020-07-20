@@ -11,6 +11,8 @@
       <AdditionalIncludeDirectories>$(SolutionDir)Tempest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -83,6 +83,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\ThirdParty\flecs\flecs.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imconfig.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imgui.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imgui_impl_dx12.h" />
@@ -101,8 +102,15 @@
     <ClInclude Include="Math\Math.h" />
     <ClInclude Include="Memory.h" />
     <ClInclude Include="Platform\WindowsPlatform.h" />
+    <ClInclude Include="World\Components\Components.h" />
+    <ClInclude Include="World\Systems\MoveSystem.h" />
+    <ClInclude Include="World\World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\ThirdParty\flecs\flecs.c">
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4703;4700;4305;4267;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4703;4700;4305;4267;4244;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
     <ClCompile Include="..\ThirdParty\imgui\include\imgui.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_demo.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_draw.cpp" />
@@ -114,6 +122,7 @@
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Platform\WindowsPlatform.cpp" />
+    <ClCompile Include="World\World.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

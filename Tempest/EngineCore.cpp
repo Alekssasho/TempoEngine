@@ -83,6 +83,9 @@ void EngineCore::DoFrame()
 	// Test Code
 	ImGui::ShowDemoWindow();
 
+	// TODO: add real delta time
+	m_World.Update(1.0f / 60.0f);
+
 	// TODO: This should be on seperate job and be pipelined with the DoFrame job
 	m_Renderer.RenderFrame();
 }

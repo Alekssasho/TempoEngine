@@ -4,6 +4,7 @@
 #include <Job/JobSystem.h>
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/Renderer.h>
+#include <World/World.h>
 
 namespace Tempest
 {
@@ -22,6 +23,11 @@ public:
 
 	void StartEngineLoop();
 	void RequestExit();
+
+	World& GetWorld()
+	{
+		return m_World;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;
@@ -30,6 +36,7 @@ private:
 	Job::JobSystem m_JobSystem;
 	WindowsPlatform m_Platform;
 	Renderer m_Renderer;
+	World m_World;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(void*);

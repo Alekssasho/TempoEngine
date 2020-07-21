@@ -9114,7 +9114,7 @@ bool ecs_strbuf_appendstrn(
     const char* str,
     int32_t len)
 {
-    va_list args;
+    va_list args = 0;
     return ecs_strbuf_append_intern(
         b, str, len, false, args
     );
@@ -9144,7 +9144,7 @@ bool ecs_strbuf_appendstr(
     ecs_strbuf_t *b,
     const char* str)
 {
-    va_list args;
+    va_list args = 0;
     return ecs_strbuf_append_intern(
         b, str, -1, false, args
     );

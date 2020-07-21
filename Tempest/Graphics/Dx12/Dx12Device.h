@@ -30,6 +30,11 @@ public:
 	{
 		return m_SwapChainSize;
 	}
+
+	ID3D12Device* GetDevice()
+	{
+		return m_Device.Get();
+	}
 private:
 	ComPtr<IDXGIFactory4> m_Factory;
 	ComPtr<ID3D12Device> m_Device;

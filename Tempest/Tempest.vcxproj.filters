@@ -59,6 +59,12 @@
     <ClInclude Include="World\Systems\MoveSystem.h">
       <Filter>World\Systems</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Dx12Backend.h">
+      <Filter>Graphics\Dx12</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Managers\PipelineManager.h">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -96,6 +102,12 @@
     <ClCompile Include="World\World.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Dx12Backend.cpp">
+      <Filter>Graphics\Dx12</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -130,6 +142,9 @@
     </Filter>
     <Filter Include="World\Systems">
       <UniqueIdentifier>{7a8dbafd-6c62-43a8-b7d1-132520d3bb56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Dx12\Managers">
+      <UniqueIdentifier>{b5a265a9-31c9-4bd9-9653-1dd3244001b1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

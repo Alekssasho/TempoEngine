@@ -8,7 +8,7 @@
 namespace Tempest
 {
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
-namespace Dx12 { class Dx12Device; }
+namespace Dx12 { class Backend; }
 
 class Renderer
 {
@@ -18,7 +18,7 @@ public:
 	bool CreateWindowSurface(WindowHandle handle);
 	void RenderFrame();
 private:
-	eastl::unique_ptr<class Dx12::Dx12Device> m_Device;
+	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 };
 }
 

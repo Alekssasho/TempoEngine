@@ -1,0 +1,24 @@
+namespace Tempest.Definition;
+
+enum ShaderType : byte
+{
+    Vertex,
+    Pixel
+}
+
+table Shader
+{
+    name : string(key);
+    type : ShaderType;
+    code : [ubyte];
+}
+
+table ShaderLibrary
+{
+    shaders : [Shader];
+}
+
+
+file_identifier "TSLB";
+file_extension "tslb";
+root_type ShaderLibrary;

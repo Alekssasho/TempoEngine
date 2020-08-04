@@ -65,6 +65,9 @@
     <ClInclude Include="Graphics\Dx12\Managers\PipelineManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="DataDefinitions\ShaderLibrary_generated.h">
+      <Filter>DataDefinitions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -146,5 +149,16 @@
     <Filter Include="Graphics\Dx12\Managers">
       <UniqueIdentifier>{b5a265a9-31c9-4bd9-9653-1dd3244001b1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DataDefinitions">
+      <UniqueIdentifier>{660c16b2-1422-4ce5-9883-65a8fa047fc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\EASTL">
+      <UniqueIdentifier>{2453127f-c4db-4c69-9c5c-0af849ab1ff4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis">
+      <Filter>ThirdParty\EASTL</Filter>
+    </Natvis>
   </ItemGroup>
 </Project>

@@ -11,3 +11,4 @@ hassle-rs = "0.4.0"
 structopt = "0.3"
 flatbuffers = "0.6.1"
 data_definition_generated = {path = "../DataDefinitionGenerated" }
+regex = "1"

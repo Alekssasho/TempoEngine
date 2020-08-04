@@ -8,14 +8,14 @@ enum ShaderType : byte
 
 table Shader
 {
-    Name : string(key);
-    Type : ShaderType;
-    Code : [ubyte];
+    name : string(key);
+    type : ShaderType;
+    code : [ubyte];
 }
 
 table ShaderLibrary
 {
-    Shaders : [Shader];
+    shaders : [Shader];
 }
 
 

@@ -50,23 +50,23 @@ void Backend::Initialize(WindowHandle handle)
 	flatbuffers::Verifier verifier(data.data(), data.size());
 	assert(shaderLib->Verify(verifier));
 
-	auto shaders = shaderLib->Shaders();
+	auto shaders = shaderLib->shaders();
 	eastl::vector<const char*> shaderNames;
 	for (auto sh : *shaders) {
-		shaderNames.push_back(sh->Name()->c_str());
+		shaderNames.push_back(sh->name()->c_str());
 	}
 	auto uiVsShader = shaders->LookupByKey("UI-VS");
 	assert(uiVsShader);
 	auto uiPsShader = shaders->LookupByKey("UI-PS");
 	assert(uiPsShader);
-	assert(uiVsShader->Type() == Definition::ShaderType_Vertex);
-	assert(uiPsShader->Type() == Definition::ShaderType_Pixel);
+	assert(uiVsShader->type() == Definition::ShaderType_Vertex);
+	assert(uiPsShader->type() == Definition::ShaderType_Pixel);
 
 	auto desc = m_PipelineManager.PrepareDefaultPipelineStateDesc();
-	desc.VS.pShaderBytecode = uiVsShader->Code()->Data();
-	desc.VS.BytecodeLength = uiVsShader->Code()->size();
-	desc.PS.pShaderBytecode = uiPsShader->Code()->Data();
-	desc.PS.BytecodeLength = uiPsShader->Code()->size();
+	desc.VS.pShaderBytecode = uiVsShader->code()->Data();
+	desc.VS.BytecodeLength = uiVsShader->code()->size();
+	desc.PS.pShaderBytecode = uiPsShader->code()->Data();
+	desc.PS.BytecodeLength = uiPsShader->code()->size();
 
 	D3D12_ROOT_PARAMETER rootParam;
 	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;

@@ -1,54 +1,35 @@
+use data_definition_generated::ShaderType;
+use regex::Regex;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-enum ShaderType {
-    VertexShader,
-    PixelShader,
-}
-
-fn compile_hlsl_source_file(source_name: &str, shader_type: ShaderType) -> Option<Vec<u8>> {
-    let shader_text = std::fs::read_to_string(source_name).expect("File name not found");
-
+fn compile_hlsl_source(source: &str, shader_type: ShaderType) -> Option<Vec<u8>> {
     let (target_profile, entry_point) = match shader_type {
-        ShaderType::VertexShader => ("vs_6_0", "VertexShaderMain"),
-        ShaderType::PixelShader => ("ps_6_0", "PixelShaderMain"),
+        ShaderType::Vertex => ("vs_6_0", "VertexShaderMain"),
+        ShaderType::Pixel => ("ps_6_0", "PixelShaderMain"),
     };
 
-    let result = hassle_rs::compile_hlsl(
-        source_name,
-        &shader_text,
-        entry_point,
-        target_profile,
-        &[],
-        &[],
-    );
+    let result = hassle_rs::compile_hlsl("Shader", source, entry_point, target_profile, &[], &[]);
+
     match result {
         Ok(code) => Some(code),
         Err(err) => panic!("Error {}", err),
     }
 }
 
-#[allow(dead_code)]
-fn write_bytecode_to_header(source: Vec<u8>, output_file: PathBuf, shader_type: ShaderType) {
-    let mut file = File::create(output_file).expect("Cannot create output file!");
-    let mut contents = String::with_capacity(1024);
-    let variable_name = match shader_type {
-        ShaderType::VertexShader => "g_VertexShaderMain[]",
-        ShaderType::PixelShader => "g_PixelShaderMain[]",
-    };
-    contents.push_str("const unsigned char ");
-    contents.push_str(variable_name);
-    contents.push_str(" = {\n");
-    for byte in source {
-        contents.push_str(&byte.to_string());
-        contents.push_str(",");
+fn find_all_hlsl_files(input_folder: &PathBuf) -> Result<Vec<PathBuf>, std::io::Error> {
+    let mut result = Vec::new();
+    for entry in std::fs::read_dir(input_folder)? {
+        let entry = entry?;
+        let path = entry.path();
+        match path.extension() {
+            Some(ext) if ext == "hlsl" => result.push(path),
+            _ => (),
+        }
     }
-    contents.pop(); // remove the last comma
-    contents.push_str("\n};\n");
-    file.write_all(contents.as_bytes())
-        .expect("Cannot write into file");
+    Ok(result)
 }
 
 #[derive(StructOpt)]
@@ -62,82 +43,85 @@ struct CommandLineOptions {
     output_folder: PathBuf,
 }
 
-fn read_input_files(input_folder: &PathBuf) -> Result<Vec<PathBuf>, std::io::Error> {
-    let mut result = Vec::new();
-    for entry in std::fs::read_dir(input_folder)? {
-        let entry = entry?;
-        let path = entry.path();
-        match path.extension() {
-            Some(ext) if ext == "hlsl" => result.push(path),
-            _ => (),
-        }
-    }
-    Ok(result)
-}
-
 fn main() {
     let opt = CommandLineOptions::from_args();
 
-    let input_shaders =
-        read_input_files(&opt.input_folder).expect("Cannot read input folder for shaders");
+    // Prepare regexes for checking shader type
+    let shader_type_regex = [
+        (
+            Regex::new(r"(?m)\bVertexShaderMain\b").unwrap(),
+            ShaderType::Vertex,
+            "VS",
+        ),
+        (
+            Regex::new(r"(?m)\bPixelShaderMain\b").unwrap(),
+            ShaderType::Pixel,
+            "PS",
+        ),
+    ];
 
-    let mut shader_library_builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-    let mut shaders_vector = Vec::with_capacity(input_shaders.len() * 2);
-    for shader in input_shaders {
-        {
-            let compiled_vertex_shader =
-                compile_hlsl_source_file(shader.to_str().unwrap(), ShaderType::VertexShader);
-            let name = format!("{}-VS", shader.file_stem().unwrap().to_str().unwrap());
-            let vertex_shader_name = shader_library_builder.create_string(&name);
-            let vertex_code = shader_library_builder.create_vector(&compiled_vertex_shader.unwrap()[..]);
-            let vertex_shader = data_definition_generated::Shader::create(&mut shader_library_builder, &data_definition_generated::ShaderArgs{
-                Name: Some(vertex_shader_name),
-                Type: data_definition_generated::ShaderType::Vertex,
-                Code: Some(vertex_code),
-            });
-            shaders_vector.push((name, vertex_shader));
+    let input_hlsl_files =
+        find_all_hlsl_files(&opt.input_folder).expect("Cannot read input folder for shaders");
+    let input_hlsl_strings: Vec<(String, PathBuf)> = input_hlsl_files
+        .into_iter()
+        .map(|path| {
+            (
+                std::fs::read_to_string(&path).expect("File name not found"),
+                path,
+            )
+        })
+        .collect();
 
-            // let mut output_file = shader.clone();
-            // output_file.set_file_name(format!("{}-VS", output_file.file_stem().unwrap().to_str().unwrap()));
-            // output_file.set_extension("h");
-            // println!("Outputing vertex shader code to {:?}", output_file);
-            // write_bytecode_to_header(compiled_vertex_shader.unwrap(), output_file, ShaderType::VertexShader);
-        }
+    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
+    let mut shaders_offsets = Vec::with_capacity(input_hlsl_strings.len() * 2);
+    for (hlsl_string, hlsl_file) in input_hlsl_strings {
+        for (regex, shader_type, shader_extension) in shader_type_regex.iter() {
+            if regex.is_match(&hlsl_string) {
+                let compiled_shader = compile_hlsl_source(&hlsl_string, *shader_type);
 
-        {
-            let compiled_pixel_shader =
-                compile_hlsl_source_file(shader.to_str().unwrap(), ShaderType::PixelShader);
-
-            let name = format!("{}-PS", shader.file_stem().unwrap().to_str().unwrap());
-            let pixel_shader_name = shader_library_builder.create_string(&name);
-            let pixel_code = shader_library_builder.create_vector(&compiled_pixel_shader.unwrap()[..]);
-            let pixel_shader = data_definition_generated::Shader::create(&mut shader_library_builder, &data_definition_generated::ShaderArgs{
-                Name: Some(pixel_shader_name),
-                Type: data_definition_generated::ShaderType::Pixel,
-                Code: Some(pixel_code),
-            });
-            shaders_vector.push((name, pixel_shader));
-            // let mut output_file = shader.clone();
-            // output_file.set_file_name(format!("{}-PS", output_file.file_stem().unwrap().to_str().unwrap()));
-            // output_file.set_extension("h");
-            // println!("Outputing pixel shader code to {:?}", output_file);
-            // write_bytecode_to_header(compiled_vertex_shader.unwrap(), output_file, ShaderType::PixelShader);
+                let name = format!(
+                    "{}-{}",
+                    hlsl_file.file_stem().unwrap().to_str().unwrap(),
+                    shader_extension
+                );
+                let name_offset = builder.create_string(&name);
+                let code_offset = builder.create_vector(&compiled_shader.unwrap()[..]);
+                let shader_offset = data_definition_generated::Shader::create(
+                    &mut builder,
+                    &data_definition_generated::ShaderArgs {
+                        name: Some(name_offset),
+                        type_: *shader_type,
+                        code: Some(code_offset),
+                    },
+                );
+                shaders_offsets.push((name, shader_offset));
+            }
         }
     }
+    // We are reading the vectors with binary searches from engine side, so we need a sort here.
+    shaders_offsets.sort_unstable_by(|lhs, rhs| lhs.0.cmp(&rhs.0));
+    let sorted_vector: Vec<flatbuffers::WIPOffset<data_definition_generated::Shader>> =
+        shaders_offsets.into_iter().map(|x| x.1).collect();
 
-    shaders_vector.sort_unstable_by(|lhs, rhs| lhs.0.cmp(&rhs.0));
-    let sorted_vector: Vec<flatbuffers::WIPOffset<data_definition_generated::Shader>> = shaders_vector.into_iter().map(|x| x.1).collect();
+    let shaders_vector_offset = builder.create_vector(&sorted_vector[..]);
+    let root_shader_library = data_definition_generated::ShaderLibrary::create(
+        &mut builder,
+        &data_definition_generated::ShaderLibraryArgs {
+            shaders: Some(shaders_vector_offset),
+        },
+    );
+    builder.finish(
+        root_shader_library,
+        Some(data_definition_generated::SHADER_LIBRARY_IDENTIFIER),
+    );
+    let data = builder.finished_data();
 
-    let shaders = shader_library_builder.create_vector(&sorted_vector[..]);
-    let root_shader_library = data_definition_generated::ShaderLibrary::create(&mut shader_library_builder, &data_definition_generated::ShaderLibraryArgs{
-        Shaders: Some(shaders)
-    });
-    shader_library_builder.finish(root_shader_library, Some(data_definition_generated::SHADER_LIBRARY_IDENTIFIER));
-    let data = shader_library_builder.finished_data();
-
+    // Write the output data
     let mut output_file_path = opt.output_folder;
     output_file_path.push("ShaderLibrary");
     output_file_path.set_extension(data_definition_generated::SHADER_LIBRARY_EXTENSION);
     let mut output_file = File::create(output_file_path).expect("Cannot create output file");
-    output_file.write_all(data).expect("Cannot write output data");
+    output_file
+        .write_all(data)
+        .expect("Cannot write output data");
 }

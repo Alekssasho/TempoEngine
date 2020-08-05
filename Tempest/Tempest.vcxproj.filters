@@ -68,6 +68,9 @@
     <ClInclude Include="DataDefinitions\ShaderLibrary_generated.h">
       <Filter>DataDefinitions</Filter>
     </ClInclude>
+    <ClInclude Include="Resources\ResourceLoader.h">
+      <Filter>Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -110,6 +113,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Resources\ResourceLoader.cpp">
+      <Filter>Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -154,6 +160,9 @@
     </Filter>
     <Filter Include="ThirdParty\EASTL">
       <UniqueIdentifier>{2453127f-c4db-4c69-9c5c-0af849ab1ff4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{65ffaaab-968a-4310-99ff-bdfcd864729b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

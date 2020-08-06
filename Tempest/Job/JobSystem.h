@@ -7,6 +7,7 @@
 #include <mutex>
 
 #include <EASTL/vector.h>
+#include <EASTL/array.h>
 #include <EASTL/unordered_map.h>
 
 #include <Job/Queue.h>
@@ -33,6 +34,14 @@ struct Counter
 	std::atomic<unsigned> Value = 0u;
 };
 
+// TODO: This should be client provided if this is made into a library
+enum class ThreadTag : uint8_t
+{
+	Worker, // Standard Worker thread
+	Windows, // Thread that executes windows calls as the message pump is thread specific
+	Count
+};
+
 using FiberHandle = void*;
 
 class TEMPEST_API JobSystem
@@ -42,7 +51,7 @@ public:
 	~JobSystem();
 
 	// Can be called from anywhere
-	void RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Counter* counter = nullptr);
+	void RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Counter* counter = nullptr, ThreadTag threadToRunOn = ThreadTag::Worker);
 
 	// Note only 1 job can wait on some counter. This sounds reasonable for now. Implement if ever needed.
 	// Can be called only from a Job
@@ -55,11 +64,6 @@ public:
 	// Waits for all threads to finish
 	void WaitForCompletion();
 private:
-	void WorkerThreadEntryPoint();
-	static void FiberEntryPoint(void* params);
-
-	void CleanUpOldFiber();
-
 	struct NextFreeFiber
 	{
 		FiberHandle Handle;
@@ -87,14 +91,26 @@ private:
 		std::atomic<bool> CanBeMadeReady;
 	};
 
+	struct ThreadQueues
+	{
+		Queue<JobData> Jobs;
+		Queue<ReadyFiber> ReadyFibers;
+	};
+
+	void WorkerThreadEntryPoint(ThreadTag tag);
+	static void FiberEntryPoint(void* params);
+	// Returns whether we have executed a fiber
+	static bool FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues);
+
+	void CleanUpOldFiber();
 	NextFreeFiber GetNextFreeFiber();
 
 	eastl::vector<std::thread> m_WorkerThreads;
 	eastl::vector<FiberHandle> m_Fibers;
 
-	Queue<JobData> m_Jobs;
 	Queue<unsigned> m_FreeFibers;
-	Queue<ReadyFiber> m_ReadyFibers;
+
+	eastl::array<ThreadQueues, uint8_t(ThreadTag::Count)> m_ThreadSpecificJobs;
 
 	std::atomic<bool> m_Quit;
 
@@ -111,9 +127,32 @@ private:
 		unsigned CurrentFiberId = INVALID_FIBER_ID;
 		unsigned FiberToPushToFreeList = INVALID_FIBER_ID;
 		std::atomic<bool>* CanBeMadeReadyFlag = nullptr;
+		ThreadTag Tag;
 	};
 
 	static thread_local WorkerThreadData tlsWorkerThreadData;
+
+public:
+	// Convenience functions
+	template<typename Func, typename Arg>
+	void WaitSingleJob(const char* jobName, ThreadTag tag, Arg& arg, Func func)
+	{
+		struct PassedData
+		{
+			Func Function;
+			Arg& Argument;
+		} data{ func, arg };
+
+		Job::Counter counter;
+		Job::JobDecl job{ [](void* data) {
+			PassedData* passedData = reinterpret_cast<PassedData*>(data);
+			passedData->Function(passedData->Argument);
+		}, &data };
+		RunJobs(jobName, &job, 1, &counter, tag);
+		WaitForCounter(&counter, 0);
+	}
 };
+
+
 }
 }

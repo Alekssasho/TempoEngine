@@ -29,7 +29,7 @@ void EngineCore::StartEngineLoop()
 	OPTICK_FRAME("Engine Execution");
 
 	Job::JobDecl mainJob{ InitializeWindowJob, this };
-	m_JobSystem.RunJobs("Initialize Window Job", &mainJob, 1, nullptr);
+	m_JobSystem.RunJobs("Initialize Window Job", &mainJob, 1, nullptr, Job::ThreadTag::Windows);
 
 	m_JobSystem.WaitForCompletion();
 
@@ -74,7 +74,10 @@ void EngineCore::InitializeWindow()
 
 void EngineCore::DoFrame()
 {
-	m_Platform.PumpMessages();
+	// Message pumping should be done on the Windows Thread
+	m_JobSystem.WaitSingleJob("Pump Messages", Job::ThreadTag::Windows, m_Platform, [](WindowsPlatform& platform) {
+		platform.PumpMessages();
+	});
 
 	// UI
 	{

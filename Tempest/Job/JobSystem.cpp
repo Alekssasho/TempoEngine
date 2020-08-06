@@ -62,13 +62,26 @@ JobSystem::JobSystem(uint32_t numWorkerThreads, uint32_t numFibers, uint32_t fib
 		m_FreeFibers.Enqueue(i);
 	}
 
-	m_WorkerThreads.reserve(numWorkerThreads);
-	for (auto i = 0u; i < numWorkerThreads; ++i)
+	if (numWorkerThreads > 0)
 	{
+		m_WorkerThreads.reserve(numWorkerThreads);
+		// Add a Windows Thread
 		m_WorkerThreads.emplace_back(
 			std::thread(
 				&JobSystem::WorkerThreadEntryPoint,
-				this));
+				this,
+				ThreadTag::Windows)
+		);
+		// Add rest of threads which are worker only
+		for (auto i = 1u; i < numWorkerThreads; ++i)
+		{
+			m_WorkerThreads.emplace_back(
+				std::thread(
+					&JobSystem::WorkerThreadEntryPoint,
+					this,
+					ThreadTag::Worker)
+			);
+		}
 	}
 }
 
@@ -87,11 +100,12 @@ void JobSystem::WaitForCompletion()
 	m_WorkerThreads.clear();
 }
 
-void JobSystem::WorkerThreadEntryPoint()
+void JobSystem::WorkerThreadEntryPoint(ThreadTag tag)
 {
 	OPTICK_THREAD("WorkerThread");
 	SetThreadName("WorkerThread");
 
+	tlsWorkerThreadData.Tag = tag;
 	tlsWorkerThreadData.InitialFiber = ::ConvertThreadToFiber(this);
 
 	// We are fiber now and we can schedule other fibers
@@ -115,7 +129,7 @@ JobSystem::NextFreeFiber JobSystem::GetNextFreeFiber()
 	return NextFreeFiber{ m_Fibers[freeFiberIndex], freeFiberIndex };
 }
 
-void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Counter* counter)
+void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Counter* counter, ThreadTag tag)
 {
 	if (counter)
 	{
@@ -124,7 +138,7 @@ void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Count
 
 	for (auto i = 0u; i < numJobs; ++i)
 	{
-		m_Jobs.Enqueue({ jobs[i], counter, name });
+		m_ThreadSpecificJobs[uint8_t(tag)].Jobs.Enqueue({ jobs[i], counter, name });
 	}
 }
 
@@ -163,6 +177,81 @@ void JobSystem::WaitForCounter(Counter* counter, uint32_t value)
 	CleanUpOldFiber();
 }
 
+bool JobSystem::FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues)
+{
+	// First check for waiting fibers
+	if (!jobQueues.ReadyFibers.Empty())
+	{
+		ReadyFiber readyFiber;
+		if (!jobQueues.ReadyFibers.Dequeue(readyFiber))
+		{
+			return false;
+		}
+
+		// Remember the current fiber which needs to be pushed into the free list
+		// We cannot push it in the free list because another thread can take it
+		// and corrupted the fiber stack before we manage to switch to another fiber
+		tlsWorkerThreadData.FiberToPushToFreeList = tlsWorkerThreadData.CurrentFiberId;
+
+		tlsWorkerThreadData.CurrentJobName = readyFiber.JobName;
+		tlsWorkerThreadData.CurrentFiberId = readyFiber.FiberId;
+		OPTICK_PUSH_DYNAMIC(readyFiber.JobName);
+
+		::SwitchToFiber(system->m_Fibers[readyFiber.FiberId]);
+
+		// And we have returned. Clean the old fiber
+		system->CleanUpOldFiber();
+
+		return true;
+	}
+	// Take new task
+	else if (!jobQueues.Jobs.Empty())
+	{
+		JobData jobData;
+		if (!jobQueues.Jobs.Dequeue(jobData))
+		{
+			return false;
+		}
+
+		tlsWorkerThreadData.CurrentJobName = jobData.Name;
+		OPTICK_PUSH_DYNAMIC(jobData.Name);
+
+		jobData.Job.EntryPoint(jobData.Job.Data);
+
+		OPTICK_POP();
+		tlsWorkerThreadData.CurrentJobName = nullptr;
+
+		// This task is done. Decrement its counter
+		if (jobData.Counter)
+		{
+			{
+				std::lock_guard<std::mutex> lock(system->m_WaitingFibersMutex);
+
+				jobData.Counter->Value.fetch_sub(1);
+				auto findIt = system->m_WaitingFibers.find(jobData.Counter);
+				if (findIt != system->m_WaitingFibers.end())
+				{
+					if (jobData.Counter->Value.load() <= findIt->second.TargetValue)
+					{
+						// Busy loop on this flag. If it is false, it means that
+						// this waiting thread has not switched to another fiber
+						// Adding it in the readyFibersList will expose a chance
+						// to corrupt the stack of the fiber if we switch to it before
+						// it has switched
+						while (!findIt->second.CanBeMadeReady.load());
+
+						jobQueues.ReadyFibers.Enqueue(ReadyFiber{ findIt->second.FiberId, findIt->second.JobName });
+						system->m_WaitingFibers.erase(findIt);
+					}
+				}
+			}
+		}
+		return true;
+	}
+
+	return false;
+}
+
 void JobSystem::FiberEntryPoint(void* params)
 {
 	auto system = reinterpret_cast<JobSystem*>(params);
@@ -171,71 +260,12 @@ void JobSystem::FiberEntryPoint(void* params)
 
 	while (!system->m_Quit.load())
 	{
-		// First check for waiting fibers
-		if (!system->m_ReadyFibers.Empty())
+		// First try to execute from current thread specific jobs
+		bool didWeRunAJob = FiberLoopBody(system, system->m_ThreadSpecificJobs[uint8_t(tlsWorkerThreadData.Tag)]);
+		// If we are not Worker specific, try to execute a worker jobs as well
+		if (!didWeRunAJob && tlsWorkerThreadData.Tag != ThreadTag::Worker)
 		{
-			ReadyFiber readyFiber;
-			if (!system->m_ReadyFibers.Dequeue(readyFiber))
-			{
-				continue;
-			}
-
-			// Remember the current fiber which needs to be pushed into the free list
-			// We cannot push it in the free list because another thread can take it
-			// and corrupted the fiber stack before we manage to switch to another fiber
-			tlsWorkerThreadData.FiberToPushToFreeList = tlsWorkerThreadData.CurrentFiberId;
-
-			tlsWorkerThreadData.CurrentJobName = readyFiber.JobName;
-			tlsWorkerThreadData.CurrentFiberId = readyFiber.FiberId;
-			OPTICK_PUSH_DYNAMIC(readyFiber.JobName);
-
-			::SwitchToFiber(system->m_Fibers[readyFiber.FiberId]);
-
-			// And we have returned. Clean the old fiber
-			system->CleanUpOldFiber();
-		}
-		// Take new task
-		else if (!system->m_Jobs.Empty())
-		{
-			JobData jobData;
-			if (!system->m_Jobs.Dequeue(jobData))
-			{
-				continue;
-			}
-
-			tlsWorkerThreadData.CurrentJobName = jobData.Name;
-			OPTICK_PUSH_DYNAMIC(jobData.Name);
-
-			jobData.Job.EntryPoint(jobData.Job.Data);
-
-			OPTICK_POP();
-			tlsWorkerThreadData.CurrentJobName = nullptr;
-
-			// This task is done. Decrement its counter
-			if (jobData.Counter)
-			{
-				{
-					std::lock_guard<std::mutex> lock(system->m_WaitingFibersMutex);
-
-					jobData.Counter->Value.fetch_sub(1);
-					auto findIt = system->m_WaitingFibers.find(jobData.Counter);
-					if (findIt != system->m_WaitingFibers.end())
-					{
-						if (jobData.Counter->Value.load() <= findIt->second.TargetValue)
-						{
-							// Busy loop on this flag. If it is false, it means that
-							// this waiting thread has not switched to another fiber
-							// Adding it in the readyFibersList will expose a chance
-							// to corrupt the stack of the fiber if we switch to it before
-							// it has switched
-							while (!findIt->second.CanBeMadeReady.load());
-
-							system->m_ReadyFibers.Enqueue(ReadyFiber{ findIt->second.FiberId, findIt->second.JobName });
-							system->m_WaitingFibers.erase(findIt);
-						}
-					}
-				}
-			}
+			FiberLoopBody(system, system->m_ThreadSpecificJobs[uint8_t(ThreadTag::Worker)]);
 		}
 	}
 

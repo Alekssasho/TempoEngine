@@ -21,13 +21,18 @@ public:
 	ResourceLoader(const char* dataFolder);
 
 	template<typename ResourceType>
-	ResourceType* LoadResource(const char* fileName)
+	const ResourceType* LoadResource(const char* fileName)
 	{
 		AssetMap::iterator it = EnsureResourceIsLoaded(fileName);
 		if (it == m_LoadedAssets.end()) {
 			return nullptr;
 		}
-		return flatbuffers::GetRoot<ResourceType>(it->second.data());
+		const ResourceType* resource = flatbuffers::GetRoot<ResourceType>(it->second.data());
+#ifdef _DEBUG
+		flatbuffers::Verifier verifier(it->second.data(), it->second.size());
+		assert(resource->Verify(verifier));
+#endif
+		return resource;
 	}
 
 	AssetMap::iterator EnsureResourceIsLoaded(const char* fileName);

@@ -1,11 +1,11 @@
 #include <Graphics/Dx12/Dx12Backend.h>
+#include <EngineCore.h>
 
 #ifdef _DEBUG
 #include <initguid.h>
 #include <dxgidebug.h>
 #endif
 
-#include <fstream>
 #include <DataDefinitions/ShaderLibrary_generated.h>
 
 
@@ -37,18 +37,7 @@ void Backend::Initialize(WindowHandle handle)
 	m_Device->Initialize(handle);
 
 	// Load Shader Library
-	std::ifstream stream("../../Tempest/Shaders/ShaderLibrary.tslb", std::ios::binary);
-	assert(stream.good());
-	stream.seekg(0, std::ios::end);
-	size_t size = stream.tellg();
-	stream.seekg(0);
-
-	eastl::vector<uint8_t> data(size);
-	stream.read((char*)data.data(), size);
-
-	const Definition::ShaderLibrary* shaderLib = Definition::GetShaderLibrary(data.data());
-	flatbuffers::Verifier verifier(data.data(), data.size());
-	assert(shaderLib->Verify(verifier));
+	const Definition::ShaderLibrary* shaderLib = gEngine->GetResourceLoader().LoadResource<Definition::ShaderLibrary>("ShaderLibrary.tslb");
 
 	auto shaders = shaderLib->shaders();
 	eastl::vector<const char*> shaderNames;

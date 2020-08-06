@@ -6,10 +6,13 @@
 
 namespace Tempest
 {
+EngineCore* gEngine = nullptr;
+
 EngineCore::EngineCore(const EngineCoreOptions& options)
 	: m_Options(options)
 	, m_Logger()
 	, m_JobSystem(options.NumWorkerThreads, 64, 2 * 1024 * 1024)
+	, m_ResourceLoader(options.ResourceFolder)
 {
 	gEngine = this;
 }

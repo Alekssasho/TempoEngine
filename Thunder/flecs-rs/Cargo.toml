@@ -1,0 +1,14 @@
+[package]
+name = "flecs-rs"
+version = "0.1.0"
+authors = ["Alekssasho <aleksandar.angelovv@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+bindgen = "0.54.1"
+cc = "1.0.58"
+
+[dependencies]
+components = { path="../Components" }

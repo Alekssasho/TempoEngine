@@ -5,4 +5,5 @@ members = [
     "Thunder/ShaderCompiler",
     "Thunder/DataDefinitionGenerated",
     "Thunder/Components",
+    "Thunder/flecs-rs"
 ]

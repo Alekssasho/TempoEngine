@@ -18,6 +18,8 @@ public:
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC PrepareDefaultPipelineStateDesc();
 
 	PipelineHandle CreateGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& decs);
+
+	ID3D12PipelineState* GetPipeline(PipelineHandle handle);
 private:
 	eastl::unordered_map<PipelineHandle, ComPtr<ID3D12PipelineState>> m_Pipelines;
 	PipelineHandle m_NextPipelineHandle = 0;

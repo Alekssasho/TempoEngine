@@ -94,11 +94,14 @@
     <ClInclude Include="DataDefinitions\ShaderLibrary_generated.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="EngineCore.h" />
+    <ClInclude Include="Graphics\RendererCommandList.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Backend.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Common.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Device.h" />
     <ClInclude Include="Graphics\Dx12\Managers\PipelineManager.h" />
+    <ClInclude Include="Graphics\Features\RectFeature.h" />
     <ClInclude Include="Graphics\Renderer.h" />
+    <ClInclude Include="Graphics\RendererTypes.h" />
     <ClInclude Include="Job\JobSystem.h" />
     <ClInclude Include="Job\Queue.h" />
     <ClInclude Include="Logging.h" />
@@ -124,6 +127,7 @@
     <ClCompile Include="Graphics\Dx12\Dx12Backend.cpp" />
     <ClCompile Include="Graphics\Dx12\Dx12Device.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp" />
+    <ClCompile Include="Graphics\Features\RectFeature.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />
@@ -133,6 +137,19 @@
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Mesh.hlsl">
+      <FileType>Document</FileType>
+    </None>
+    <None Include="Shaders\UI.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Rects.hlsl">
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

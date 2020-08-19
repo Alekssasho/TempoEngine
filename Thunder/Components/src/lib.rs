@@ -1,9 +1,10 @@
+#![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
 include!(concat!(env!("OUT_DIR"), "/component_bindings.rs"));
 
-use nalgebra_glm as glm;
-type glm_vec3 = glm::Vec3;
+pub use nalgebra_glm as glm;
+pub type glm_vec3 = glm::Vec3;
 
 #[cfg(test)]
 mod tests {

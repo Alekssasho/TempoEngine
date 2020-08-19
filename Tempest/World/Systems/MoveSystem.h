@@ -11,7 +11,7 @@ struct MoveSystem
 {
 	static void Run(flecs::entity entity, Components::Transform& transform)
 	{
-		transform.Position += glm::vec3{ 1.0f, 0.0f, 0.0f };
+		transform.Position += glm::vec3{ 0.02f, 0.0f, 0.0f };
 	}
 };
 

@@ -9,6 +9,17 @@ namespace Components
 struct Transform
 {
 	glm::vec3 Position;
+	static constexpr const char* Name = "Transform";
 };
+
+struct Rect
+{
+	float width;
+	float height;
+	glm::vec4 color;
+
+	static constexpr const char* Name = "Rect";
+};
+
 }
 }

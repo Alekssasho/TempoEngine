@@ -13,9 +13,9 @@ public:
 	void Update(float deltaTime);
 
 	template<typename ComponentType>
-	void RegisterComponent(const char* name)
+	void RegisterComponent()
 	{
-		flecs::component<ComponentType>(m_EntityWorld, name);
+		flecs::component<ComponentType>(m_EntityWorld, ComponentType::Name);
 	}
 
 	template<typename ...ComponentTypes, typename UpdateFunc>
@@ -29,7 +29,8 @@ public:
 	{
 		flecs::entity(m_EntityWorld);
 	}
-private:
+// TODO: maybe being private is better
+//private:
 	flecs::world m_EntityWorld;
 };
 }

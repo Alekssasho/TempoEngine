@@ -71,6 +71,15 @@
     <ClInclude Include="Resources\ResourceLoader.h">
       <Filter>Resources</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\RendererTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Features\RectFeature.h">
+      <Filter>Graphics\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\RendererCommandList.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -116,6 +125,9 @@
     </ClCompile>
     <ClCompile Include="Resources\ResourceLoader.cpp">
       <Filter>Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Features\RectFeature.cpp">
+      <Filter>Graphics\Features</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -164,10 +176,23 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{65ffaaab-968a-4310-99ff-bdfcd864729b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Shaders">
+      <UniqueIdentifier>{cf372380-5283-425a-9a88-d567a09cd0f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Graphics\Features">
+      <UniqueIdentifier>{670010d7-9c07-4ee7-a140-d55ab9f9b310}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis">
       <Filter>ThirdParty\EASTL</Filter>
     </Natvis>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\Rects.hlsl">
+      <Filter>Graphics\Shaders</Filter>
+    </None>
+    <None Include="Shaders\Mesh.hlsl" />
+    <None Include="Shaders\UI.hlsl" />
   </ItemGroup>
 </Project>

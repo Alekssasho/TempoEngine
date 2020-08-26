@@ -414,3 +414,8 @@ MigrationBackup/
 .ionide/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,c++,rust
+
+
+# Custom generated files from flatbuffers
+*.tlb
+*.tslb

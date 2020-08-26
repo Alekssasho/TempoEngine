@@ -1,0 +1,11 @@
+namespace Tempest.Definition;
+
+table Level
+{
+    name: string;
+    entities: [ubyte];
+}
+
+file_identifier "TLDB";
+file_extension "tlb";
+root_type Level;

@@ -80,6 +80,9 @@
     <ClInclude Include="Graphics\RendererCommandList.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="DataDefinitions\Level_generated.h">
+      <Filter>DataDefinitions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />

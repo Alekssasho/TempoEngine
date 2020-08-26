@@ -91,6 +91,7 @@
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_rectpack.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_textedit.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_truetype.h" />
+    <ClInclude Include="DataDefinitions\Level_generated.h" />
     <ClInclude Include="DataDefinitions\ShaderLibrary_generated.h" />
     <ClInclude Include="Defines.h" />
     <ClInclude Include="EngineCore.h" />

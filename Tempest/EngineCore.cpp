@@ -4,6 +4,8 @@
 
 #include <imgui.h>
 
+#include <DataDefinitions/Level_generated.h>
+
 namespace Tempest
 {
 EngineCore* gEngine = nullptr;
@@ -44,6 +46,23 @@ void EngineCore::RequestExit()
 void EngineCore::InitializeWindowJob(void* data)
 {
 	gEngine->InitializeWindow();
+
+	gEngine->m_JobSystem.WaitSingleJob("Level Load", Job::ThreadTag::Worker, gEngine->m_Options.LevelToLoad, [](const char* levelToLoad) {
+		const Definition::Level* level = gEngine->GetResourceLoader().LoadResource<Definition::Level>(levelToLoad);
+		const char* levelName = level->name()->c_str();
+		FORMAT_LOG(Info, EngineCore, "Loading Level \"%s\".", levelName);
+
+		// Runs async to loading the world
+		{
+			Job::JobDecl changeWindowName{ [](void* levelName) {
+				gEngine->m_Platform.SetTitleName(reinterpret_cast<const char*>(levelName));
+			}, (void*)levelName };
+			gEngine->m_JobSystem.RunJobs("Change Window Name", &changeWindowName, 1, nullptr, Job::ThreadTag::Windows);
+		}
+
+		const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
+		gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
+	});
 
 	// Start the engine loop
 	Job::JobDecl frameJob{ DoFrameJob, data };

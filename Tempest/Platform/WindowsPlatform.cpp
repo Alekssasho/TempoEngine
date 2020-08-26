@@ -188,6 +188,12 @@ void WindowsPlatform::KillWindow()
 	::DestroyWindow(HWND(m_Handle));
 }
 
+void WindowsPlatform::SetTitleName(const char* name)
+{
+	eastl::string buffer;
+	buffer.sprintf("Tempest Engine - %s", name);
+	::SetWindowText(HWND(m_Handle), buffer.c_str());
+}
 };
 
 // Needed by EASTL to function properly

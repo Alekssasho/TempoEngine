@@ -29,6 +29,8 @@ public:
 	{
 		flecs::entity(m_EntityWorld);
 	}
+
+	void LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better
 //private:
 	flecs::world m_EntityWorld;

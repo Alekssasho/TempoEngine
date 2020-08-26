@@ -1,5 +1,7 @@
 #include <EngineCore.h>
 
+#include <fstream>
+
 int main()
 {
 	Tempest::EngineCoreOptions options;
@@ -10,6 +12,7 @@ int main()
 	// TODO: Only resource for now are shaders so just point to that folder.
 	// Make real resource folder
 	options.ResourceFolder = "../../Tempest/Shaders/";
+	options.LevelToLoad = "Level_Rects.tlb";
 
 	{
 		Tempest::EngineCore engine(options);

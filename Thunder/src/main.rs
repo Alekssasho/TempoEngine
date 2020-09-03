@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 fn create_entity(state: &FlecsState, name: &str, pos: glm_vec3, color: glm_vec4) {
-    let transform = Components::Transform(Tempest_Components_Transform { Position: pos });
+    let transform = Components::Transform(Tempest_Components_Transform { Position: pos, Heading: glm::vec3(1.0, 0.0, 0.0) });
     let rect = Components::Rect(Tempest_Components_Rect {
         width: 0.5f32,
         height: 0.5f32,

@@ -83,6 +83,9 @@
     <ClInclude Include="DataDefinitions\Level_generated.h">
       <Filter>DataDefinitions</Filter>
     </ClInclude>
+    <ClInclude Include="World\Systems\BoidsSystem.h">
+      <Filter>World\Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -131,6 +134,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Features\RectFeature.cpp">
       <Filter>Graphics\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Systems\BoidsSystem.cpp">
+      <Filter>World\Systems</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,7 +8,9 @@ namespace Components
 {
 struct Transform
 {
+	// TODO: Change to transforms
 	glm::vec3 Position;
+	glm::vec3 Heading;
 	static constexpr const char* Name = "Transform";
 };
 

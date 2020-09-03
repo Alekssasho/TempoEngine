@@ -111,6 +111,7 @@
     <ClInclude Include="Platform\WindowsPlatform.h" />
     <ClInclude Include="Resources\ResourceLoader.h" />
     <ClInclude Include="World\Components\Components.h" />
+    <ClInclude Include="World\Systems\BoidsSystem.h" />
     <ClInclude Include="World\Systems\MoveSystem.h" />
     <ClInclude Include="World\World.h" />
   </ItemGroup>
@@ -134,6 +135,7 @@
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Platform\WindowsPlatform.cpp" />
     <ClCompile Include="Resources\ResourceLoader.cpp" />
+    <ClCompile Include="World\Systems\BoidsSystem.cpp" />
     <ClCompile Include="World\World.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -2,6 +2,7 @@
 
 #include <World/Components/Components.h>
 #include <World/Systems/MoveSystem.h>
+#include <World/Systems/BoidsSystem.h>
 
 namespace Tempest
 {
@@ -27,6 +28,10 @@ World::World()
 void World::Update(float deltaTime)
 {
 	m_EntityWorld.progress(deltaTime);
+
+	// TODO: make this part of flecs systems
+	Systems::BoidsSystem boids;
+	boids.Run(m_EntityWorld);
 }
 
 void World::LoadFromLevel(const char* data, size_t size)

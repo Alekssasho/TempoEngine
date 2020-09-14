@@ -100,7 +100,7 @@ impl FlecsState {
         }
     }
 
-    pub fn create_entity(&self, name: &str, components: &[Components]) -> ecs_entity_t {
+    pub fn create_entity(&self, name: &str, components: &[Components]) -> (ecs_entity_t, CString) {
         unsafe {
             let mut component_signature = String::new();
             for component in components {
@@ -129,7 +129,7 @@ impl FlecsState {
                 );
             }
 
-            entity
+            (entity, name)
         }
     }
 

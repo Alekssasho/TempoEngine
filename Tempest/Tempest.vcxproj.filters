@@ -86,6 +86,21 @@
     <ClInclude Include="World\Systems\BoidsSystem.h">
       <Filter>World\Systems</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Graph.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="World\TaskGraph\TaskGraph.h">
+      <Filter>World\TaskGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="World\TaskGraph\Tasks.h">
+      <Filter>World\TaskGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="World\System.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\EntityQuery.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -137,6 +152,12 @@
     </ClCompile>
     <ClCompile Include="World\Systems\BoidsSystem.cpp">
       <Filter>World\Systems</Filter>
+    </ClCompile>
+    <ClCompile Include="World\TaskGraph\TaskGraph.cpp">
+      <Filter>World\TaskGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="World\EntityQuery.cpp">
+      <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -190,6 +211,12 @@
     </Filter>
     <Filter Include="Graphics\Features">
       <UniqueIdentifier>{670010d7-9c07-4ee7-a140-d55ab9f9b310}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{f404b507-5ca7-49a1-b910-0482bdb43510}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\TaskGraph">
+      <UniqueIdentifier>{d5c1e7df-fa88-48bc-8b8f-5e70e767c4bd}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

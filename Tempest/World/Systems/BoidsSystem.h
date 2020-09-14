@@ -10,7 +10,7 @@ namespace Systems
 {
 struct BoidsSystem
 {
-	void Run(flecs::world& world);
+	void Run(flecs::world& world, float deltaTime);
 };
 
 }

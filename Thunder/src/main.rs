@@ -4,33 +4,47 @@ use flecs_rs::*;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
+use std::ffi::{c_void, CStr, CString};
 
-fn create_entity(state: &FlecsState, name: &str, pos: glm_vec3, color: glm_vec4) {
-    let transform = Components::Transform(Tempest_Components_Transform { Position: pos, Heading: glm::vec3(1.0, 0.0, 0.0) });
+fn create_entity(state: &FlecsState, name: &str, pos: glm_vec3, color: glm_vec4) -> (ecs_entity_t, CString) {
+    let transform = Components::Transform(Tempest_Components_Transform {
+        Position: pos,
+        Heading: glm::vec3(1.0, 0.0, 0.0),
+    });
     let rect = Components::Rect(Tempest_Components_Rect {
-        width: 0.5f32,
-        height: 0.5f32,
+        width: 0.02f32,
+        height: 0.02f32,
         color,
     });
-    state.create_entity(name, &[transform, rect]);
+    state.create_entity(name, &[transform, rect])
 }
 
-fn prepare_entities() -> FlecsState {
+fn prepare_entities() -> (FlecsState, Vec<(ecs_entity_t, CString)>) {
     let flecs_state = FlecsState::new();
-    create_entity(
-        &flecs_state,
-        "Green Rect",
-        glm::vec3(-1.0, -1.0, 0.0),
-        glm::vec4(0.0, 1.0, 0.0, 1.0),
-    );
-    create_entity(
-        &flecs_state,
-        "Blue Rect",
-        glm::vec3(0.0, 0.0, 0.0),
-        glm::vec4(0.0, 0.0, 1.0, 1.0),
-    );
+    let mut entity_names = Vec::new();
+    // create_entity(
+    //     &flecs_state,
+    //     "Green Rect",
+    //     glm::vec3(-1.0, -1.0, 0.0),
+    //     glm::vec4(1.0, 1.0, 0.0, 1.0),
+    // );
+    // create_entity(
+    //     &flecs_state,
+    //     "Blue Rect",
+    //     glm::vec3(0.9, 0.9, 0.0),
+    //     glm::vec4(0.0, 0.0, 1.0, 1.0),
+    // );
+    for i in 0..50 {
+        let name = format!("Rect {}", i);
+        entity_names.push(create_entity(
+            &flecs_state,
+            &name,
+            glm::vec3(-0.8 + ((i as f32) * 0.03), -1.0, 0.0),
+            glm::vec4(0.0, 0.0, 1.0, 1.0),
+        ));
+    }
 
-    flecs_state
+    (flecs_state, entity_names)
 }
 
 #[derive(StructOpt)]
@@ -45,7 +59,7 @@ fn main() {
     let entities_world = prepare_entities();
 
     let mut entities = Vec::<u8>::new();
-    entities_world.write_to_buffer(&mut entities);
+    entities_world.0.write_to_buffer(&mut entities);
 
     let name = "Rects";
 

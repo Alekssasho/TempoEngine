@@ -39,7 +39,7 @@ World::World()
 	m_Systems.emplace_back(new Systems::MoveSystem);
 }
 
-void World::Update(float deltaTime)
+void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 {
 	//m_EntityWorld.progress(deltaTime);
 
@@ -50,7 +50,7 @@ void World::Update(float deltaTime)
 	}
 
 	graph.Compile();
-	graph.Execute();
+	graph.Execute(jobSystem);
 
 	// TODO: make this part of flecs systems
 	//Systems::BoidsSystem boids;

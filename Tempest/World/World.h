@@ -10,12 +10,16 @@
 
 namespace Tempest
 {
+namespace Job
+{
+class JobSystem;
+}
 class World
 {
 public:
 	World();
 
-	void Update(float deltaTime);
+	void Update(float deltaTime, Job::JobSystem& jobSystem);
 
 	void LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better

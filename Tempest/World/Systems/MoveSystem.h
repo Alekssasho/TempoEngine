@@ -20,20 +20,15 @@ struct MoveSystem : public System
 
 	virtual void Update(float deltaTime, TaskGraph::TaskGraph& graph) override
 	{
-		using namespace Components;
-
-		// TODO: change to perfect forwarding to constructor arguments and return the handle itself
 		// TODO: Change the ForEach to take the components and be pretty :D
-		TaskGraph::TaskHandle handle;
-		graph.CreateTask<Task::ParallelQueryEach>(handle)
-			.SetQuery(&m_Query)
-			.ForEach([deltaTime](ecs_iter_t* iter) {
-				ECS_COLUMN(iter, Transform, transform, 1);
-				for (int i = 0; i < iter->count; ++i)
-				{
-					transform[i].Position += glm::vec3{ 0.2f, 0.0f, 0.0f } *deltaTime;
-				}
-			});
+		TaskGraph::TaskHandle handle = graph.CreateTask<Task::ParallelQueryEach>(&m_Query, [deltaTime](ecs_iter_t* iter) {
+			using namespace Components;
+			ECS_COLUMN(iter, Transform, transform, 1);
+			for (int i = 0; i < iter->count; ++i)
+			{
+				transform[i].Position += glm::vec3{ 0.2f, 0.0f, 0.0f } *deltaTime;
+			}
+		});
 	}
 };
 

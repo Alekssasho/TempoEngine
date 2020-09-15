@@ -138,7 +138,7 @@ void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Count
 
 	for (auto i = 0u; i < numJobs; ++i)
 	{
-		m_ThreadSpecificJobs[uint8_t(tag)].Jobs.Enqueue({ jobs[i], counter, name });
+		m_ThreadSpecificJobs[uint8_t(tag)].Jobs.Enqueue({ jobs[i], counter, name, i });
 	}
 }
 
@@ -216,7 +216,7 @@ bool JobSystem::FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues)
 		tlsWorkerThreadData.CurrentJobName = jobData.Name;
 		OPTICK_PUSH_DYNAMIC(jobData.Name);
 
-		jobData.Job.EntryPoint(jobData.Job.Data);
+		jobData.Job.EntryPoint(jobData.Index, jobData.Job.Data);
 
 		OPTICK_POP();
 		tlsWorkerThreadData.CurrentJobName = nullptr;

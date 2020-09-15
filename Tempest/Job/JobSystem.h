@@ -17,7 +17,7 @@ namespace Tempest
 namespace Job
 {
 
-using JobEntryPoint = void(*)(void*);
+using JobEntryPoint = void(*)(uint32_t, void*);
 
 struct JobDecl
 {
@@ -75,6 +75,7 @@ private:
 		JobDecl Job;
 		Counter* Counter;
 		const char* Name;
+		uint32_t Index;
 	};
 
 	struct ReadyFiber
@@ -144,7 +145,7 @@ public:
 		} data{ func, arg };
 
 		Job::Counter counter;
-		Job::JobDecl job{ [](void* data) {
+		Job::JobDecl job{ [](uint32_t, void* data) {
 			PassedData* passedData = reinterpret_cast<PassedData*>(data);
 			passedData->Function(passedData->Argument);
 		}, &data };

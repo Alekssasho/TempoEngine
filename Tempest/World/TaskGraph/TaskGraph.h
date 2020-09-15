@@ -7,6 +7,11 @@
 
 namespace Tempest
 {
+namespace Job
+{
+class JobSystem;
+struct Counter;
+}
 namespace TaskGraph
 {
 
@@ -15,7 +20,7 @@ using TaskHandle = uint32_t;
 struct Task
 {
 	// TODO: Look for alternatives to inheritance
-	virtual void Execute() = 0;
+	virtual void Execute(Job::JobSystem& jobSystem, Job::Counter* counter) = 0;
 
 	eastl::string Name;
 	eastl::vector<TaskHandle> Dependacies;
@@ -26,7 +31,7 @@ class TaskGraph
 public:
 	// Executes the compiled graph using the Job System.
 	// Note: You should compile the graph before executing it.
-	void Execute();
+	void Execute(Job::JobSystem& jobSystem);
 
 	// Compile the graph tasks.
 	// This will arrange all the tasks and will give
@@ -35,14 +40,16 @@ public:
 	// recreation every frame if nothing is changed.
 	void Compile();
 
-	template<typename TaskType>
-	TaskType& CreateTask(TaskHandle& handle)
+	template<typename TaskType, typename... Args>
+	TaskHandle CreateTask(Args&&... args)
 	{
-		handle = TaskHandle(m_Tasks.size());
-		return *static_cast<TaskType*>(m_Tasks.emplace_back(new TaskType).get());
+		TaskHandle handle = TaskHandle(m_Tasks.size());
+		m_Tasks.emplace_back(new TaskType{ eastl::forward<Args>(args)... });
+		return handle;
 	}
 private:
 	Utils::DirectedGraph<int> m_Graph;
+	eastl::vector<int> m_ExecutionOrder;
 	// TODO: remove this allocation, or put them through a special allocator
 	eastl::vector<eastl::unique_ptr<Task>> m_Tasks;
 };

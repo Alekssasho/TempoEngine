@@ -48,10 +48,10 @@ private:
 	World m_World;
 
 	// Methods for jobs and executions
-	static void InitializeWindowJob(void*);
+	static void InitializeWindowJob(uint32_t, void*);
 	void InitializeWindow();
 
-	static void DoFrameJob(void*);
+	static void DoFrameJob(uint32_t, void*);
 	void DoFrame();
 };
 

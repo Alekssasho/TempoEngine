@@ -43,7 +43,7 @@ void EngineCore::RequestExit()
 	m_JobSystem.Quit();
 }
 
-void EngineCore::InitializeWindowJob(void* data)
+void EngineCore::InitializeWindowJob(uint32_t, void* data)
 {
 	gEngine->InitializeWindow();
 
@@ -54,7 +54,7 @@ void EngineCore::InitializeWindowJob(void* data)
 
 		// Runs async to loading the world
 		{
-			Job::JobDecl changeWindowName{ [](void* levelName) {
+			Job::JobDecl changeWindowName{ [](uint32_t, void* levelName) {
 				gEngine->m_Platform.SetTitleName(reinterpret_cast<const char*>(levelName));
 			}, (void*)levelName };
 			gEngine->m_JobSystem.RunJobs("Change Window Name", &changeWindowName, 1, nullptr, Job::ThreadTag::Windows);
@@ -69,7 +69,7 @@ void EngineCore::InitializeWindowJob(void* data)
 	gEngine->m_JobSystem.RunJobs("Frame", &frameJob, 1, nullptr);
 }
 
-void EngineCore::DoFrameJob(void* data)
+void EngineCore::DoFrameJob(uint32_t, void* data)
 {
 	// Start a new frame and update the profiler
 	OPTICK_UPDATE();
@@ -109,7 +109,7 @@ void EngineCore::DoFrame()
 	//ImGui::ShowDemoWindow();
 
 	// TODO: add real delta time
-	m_World.Update(1.0f / 60.0f);
+	m_World.Update(1.0f / 60.0f, m_JobSystem);
 
 	// TODO: This should be on seperate job and be pipelined with the DoFrame job
 	FrameData frameData = m_Renderer.GatherWorldData(m_World);

@@ -37,4 +37,20 @@ int EntitiyQuery::GetMatchedEntitiesCount()
 	}
 	return iter.table_count;
 }
+
+ecs_iter_t EntitiyQuery::GetIterForAchetype(uint32_t index)
+{
+	if (!Query)
+	{
+		return {};
+	}
+
+	ecs_iter_t iter = ecs_query_iter(Query);
+	int result = 0;
+	do {
+		ecs_query_next(&iter);
+	} while (index--);
+
+	return iter;
+}
 }

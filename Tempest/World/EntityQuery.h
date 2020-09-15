@@ -1,6 +1,9 @@
 #pragma once
 
+#include <Defines.h>
+
 struct ecs_query_t;
+struct ecs_iter_t;
 
 namespace Tempest
 {
@@ -12,5 +15,6 @@ struct EntitiyQuery
 
 	int GetMatchedEntitiesCount();
 	int GetMatchedArchetypesCount();
+	ecs_iter_t GetIterForAchetype(uint32_t index);
 };
 }

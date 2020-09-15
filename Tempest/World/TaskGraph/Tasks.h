@@ -19,7 +19,7 @@ struct ParallelFor : TaskGraph::Task
 
 struct ParallelQueryEach : TaskGraph::Task
 {
-	ParallelQueryEach(EntitiyQuery* query, eastl::function<void(ecs_iter_t*)> function)
+	ParallelQueryEach(EntityQuery* query, eastl::function<void(ecs_iter_t*)> function)
 		: Query(query)
 		, Function(function)
 	{}
@@ -45,7 +45,7 @@ struct ParallelQueryEach : TaskGraph::Task
 		task->Function(&ecsIter);
 	}
 
-	EntitiyQuery* Query;
+	EntityQuery* Query;
 	eastl::function<void(ecs_iter_t*)> Function;
 };
 

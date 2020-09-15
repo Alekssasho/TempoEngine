@@ -4,8 +4,7 @@
 
 namespace Tempest
 {
-
-EntitiyQuery::~EntitiyQuery()
+EntityQuery::~EntityQuery()
 {
 	if (Query)
 	{
@@ -13,7 +12,7 @@ EntitiyQuery::~EntitiyQuery()
 	}
 }
 
-int EntitiyQuery::GetMatchedArchetypesCount()
+int EntityQuery::GetMatchedArchetypesCount()
 {
 	if (!Query)
 	{
@@ -23,7 +22,7 @@ int EntitiyQuery::GetMatchedArchetypesCount()
 	return iter.table_count;
 }
 
-int EntitiyQuery::GetMatchedEntitiesCount()
+int EntityQuery::GetMatchedEntitiesCount()
 {
 	if (!Query)
 	{
@@ -38,7 +37,7 @@ int EntitiyQuery::GetMatchedEntitiesCount()
 	return iter.table_count;
 }
 
-ecs_iter_t EntitiyQuery::GetIterForAchetype(uint32_t index)
+ecs_iter_t EntityQuery::GetIterForAchetype(uint32_t index)
 {
 	if (!Query)
 	{

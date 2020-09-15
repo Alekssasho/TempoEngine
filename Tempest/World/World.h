@@ -10,10 +10,8 @@
 
 namespace Tempest
 {
-namespace Job
-{
-class JobSystem;
-}
+namespace Job { class JobSystem; }
+
 class World
 {
 public:

@@ -7,11 +7,14 @@ struct ecs_iter_t;
 
 namespace Tempest
 {
-struct EntitiyQuery
+struct EntityQuery
 {
 	struct ecs_query_t* Query = nullptr;
 
-	~EntitiyQuery();
+	~EntityQuery();
+
+	template<typename... Components>
+	void Init(class World& world);
 
 	int GetMatchedEntitiesCount();
 	int GetMatchedArchetypesCount();

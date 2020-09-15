@@ -101,6 +101,9 @@
     <ClInclude Include="World\EntityQuery.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="World\EntityQueryImpl.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />

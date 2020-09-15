@@ -18,6 +18,6 @@ public:
 	virtual void Update(float deltaTime, TaskGraph::TaskGraph& graph) = 0;
 protected:
 	// TODO: This should probably be more than one, but for now will do
-	EntitiyQuery m_Query;
+	EntityQuery m_Query;
 };
 }

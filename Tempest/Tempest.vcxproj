@@ -113,6 +113,7 @@
     <ClInclude Include="Utils\Graph.h" />
     <ClInclude Include="World\Components\Components.h" />
     <ClInclude Include="World\EntityQuery.h" />
+    <ClInclude Include="World\EntityQueryImpl.h" />
     <ClInclude Include="World\System.h" />
     <ClInclude Include="World\Systems\BoidsSystem.h" />
     <ClInclude Include="World\Systems\MoveSystem.h" />

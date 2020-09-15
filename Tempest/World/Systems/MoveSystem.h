@@ -1,7 +1,7 @@
 #pragma once
 
-#include <EngineCore.h>
 #include <World/System.h>
+#include <World/EntityQueryImpl.h> // For Query Init which is templated
 #include <World/TaskGraph/Tasks.h>
 #include <World/Components/Components.h>
 
@@ -13,9 +13,7 @@ struct MoveSystem : public System
 {
 	virtual void PrepareQueries(class World& world) override
 	{
-		// TODO: wrap this in special function
-		flecs::query<Components::Transform> query(world.m_EntityWorld);
-		m_Query.Query = query.c_ptr();
+		m_Query.Init<Components::Transform>(world);
 	}
 
 	virtual void Update(float deltaTime, TaskGraph::TaskGraph& graph) override

@@ -8,9 +8,11 @@ namespace Tempest
 {
 namespace Systems
 {
-struct BoidsSystem
+struct BoidsSystem : public System
 {
-	void Run(flecs::world& world, float deltaTime);
+	virtual void PrepareQueries(class World& world) override;
+
+	virtual void Update(float deltaTime, TaskGraph::TaskGraph& graph) override;
 };
 
 }

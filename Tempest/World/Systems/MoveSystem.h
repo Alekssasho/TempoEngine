@@ -18,13 +18,11 @@ struct MoveSystem : public System
 
 	virtual void Update(float deltaTime, TaskGraph::TaskGraph& graph) override
 	{
-		// TODO: Change the ForEach to take the components and be pretty :D
 		TaskGraph::TaskHandle handle = graph.CreateTask<Task::ParallelQueryEach>(&m_Query, [deltaTime](ecs_iter_t* iter) {
-			using namespace Components;
-			ECS_COLUMN(iter, Transform, transform, 1);
+			Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
-				transform[i].Position += glm::vec3{ 0.2f, 0.0f, 0.0f } *deltaTime;
+				transform[i].Position += glm::vec3{ 0.2f, 0.0f, 0.0f } * deltaTime;
 			}
 		});
 	}

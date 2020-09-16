@@ -36,7 +36,8 @@ World::World()
 
 	// Register all systems
 	//RegisterSystem<Components::Transform>(Systems::MoveSystem::Run);
-	m_Systems.emplace_back(new Systems::MoveSystem);
+	//m_Systems.emplace_back(new Systems::MoveSystem);
+	m_Systems.emplace_back(new Systems::BoidsSystem);
 }
 
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
@@ -51,10 +52,6 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 
 	graph.Compile();
 	graph.Execute(jobSystem);
-
-	// TODO: make this part of flecs systems
-	//Systems::BoidsSystem boids;
-	//boids.Run(m_EntityWorld, deltaTime);
 }
 
 void World::LoadFromLevel(const char* data, size_t size)

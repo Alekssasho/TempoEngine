@@ -28,6 +28,7 @@ struct ParallelQueryEach : TaskGraph::Task
 	{
 		assert(Query);
 		int jobCount = Query->GetMatchedArchetypesCount();
+		// TODO: This should be temporary memory
 		eastl::vector<Job::JobDecl> jobs(jobCount);
 		for (int i = 0; i < jobCount; ++i)
 		{

@@ -50,8 +50,7 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 		system->Update(deltaTime, graph);
 	}
 
-	graph.Compile();
-	graph.Execute(jobSystem);
+	graph.CompileAndExecute(jobSystem);
 }
 
 void World::LoadFromLevel(const char* data, size_t size)

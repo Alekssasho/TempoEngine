@@ -6,6 +6,8 @@
 #define NOMINMAX
 #include <Windows.h>
 
+//#define DEBUG_JOB_SYSTEM
+
 namespace Tempest
 {
 namespace Job
@@ -53,6 +55,9 @@ JobSystem::~JobSystem()
 JobSystem::JobSystem(uint32_t numWorkerThreads, uint32_t numFibers, uint32_t fiberStackSize)
 	: m_Quit(false)
 {
+#ifdef DEBUG_JOB_SYSTEM
+	return;
+#endif
 	// First create all the needed fibers
 	m_Fibers.reserve(numFibers);
 
@@ -92,6 +97,9 @@ void JobSystem::Quit()
 
 void JobSystem::WaitForCompletion()
 {
+#ifdef DEBUG_JOB_SYSTEM
+	return;
+#endif
 	for (auto& thread : m_WorkerThreads)
 	{
 		thread.join();
@@ -131,6 +139,13 @@ JobSystem::NextFreeFiber JobSystem::GetNextFreeFiber()
 
 void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Counter* counter, ThreadTag tag)
 {
+#ifdef DEBUG_JOB_SYSTEM
+	for (auto i = 0u; i < numJobs; ++i)
+	{
+		jobs[i].EntryPoint(i, jobs[i].Data);
+	}
+	return;
+#endif
 	if (counter)
 	{
 		counter->Value.store(numJobs);
@@ -144,6 +159,9 @@ void JobSystem::RunJobs(const char* name, JobDecl* jobs, uint32_t numJobs, Count
 
 void JobSystem::WaitForCounter(Counter* counter, uint32_t value)
 {
+#ifdef DEBUG_JOB_SYSTEM
+	return;
+#endif
 	assert(counter);
 	assert(tlsWorkerThreadData.CurrentJobName);
 	{
@@ -158,14 +176,13 @@ void JobSystem::WaitForCounter(Counter* counter, uint32_t value)
 		assert(counter->Value.load() > value);
 
 		// TODO: change this mutex with something better
-		// NB: if a counter is waited twice this will fail epicly.
-		auto& waitingFiber = m_WaitingFibers[counter];
-		waitingFiber.FiberId = tlsWorkerThreadData.CurrentFiberId;
-		waitingFiber.TargetValue = value;
-		waitingFiber.JobName = tlsWorkerThreadData.CurrentJobName;
-		waitingFiber.CanBeMadeReady = false;
+		auto waitingFiberItr = m_WaitingFibers.insert(counter);
+		waitingFiberItr->second.FiberId = tlsWorkerThreadData.CurrentFiberId;
+		waitingFiberItr->second.TargetValue = value;
+		waitingFiberItr->second.JobName = tlsWorkerThreadData.CurrentJobName;
+		waitingFiberItr->second.CanBeMadeReady = false;
 
-		tlsWorkerThreadData.CanBeMadeReadyFlag = &waitingFiber.CanBeMadeReady;
+		tlsWorkerThreadData.CanBeMadeReadyFlag = &waitingFiberItr->second.CanBeMadeReady;
 	}
 
 	auto freeFiber = GetNextFreeFiber();
@@ -228,9 +245,10 @@ bool JobSystem::FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues)
 				std::lock_guard<std::mutex> lock(system->m_WaitingFibersMutex);
 
 				jobData.Counter->Value.fetch_sub(1);
-				auto findIt = system->m_WaitingFibers.find(jobData.Counter);
-				if (findIt != system->m_WaitingFibers.end())
+				auto count = system->m_WaitingFibers.count(jobData.Counter);
+				for (auto i = 0; i < count; ++i)
 				{
+					auto findIt = system->m_WaitingFibers.find(jobData.Counter);
 					if (jobData.Counter->Value.load() <= findIt->second.TargetValue)
 					{
 						// Busy loop on this flag. If it is false, it means that

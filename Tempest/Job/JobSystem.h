@@ -117,7 +117,7 @@ private:
 
 	//
 	std::mutex m_WaitingFibersMutex;
-	eastl::unordered_map<Counter*, WaitingFiber> m_WaitingFibers;
+	eastl::unordered_multimap<Counter*, WaitingFiber> m_WaitingFibers;
 	//
 
 	static const unsigned INVALID_FIBER_ID = -1;

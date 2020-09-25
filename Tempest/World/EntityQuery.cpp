@@ -34,22 +34,25 @@ int EntityQuery::GetMatchedEntitiesCount()
 	while (ecs_query_next(&iter)) {
 		result += iter.count;
 	}
-	return iter.table_count;
+	return result;
 }
 
-ecs_iter_t EntityQuery::GetIterForAchetype(uint32_t index)
+eastl::pair<uint32_t, ecs_iter_t> EntityQuery::GetIterForAchetype(uint32_t index)
 {
 	if (!Query)
 	{
-		return {};
+		return { 0, {} };
 	}
 
 	ecs_iter_t iter = ecs_query_iter(Query);
-	int result = 0;
-	do {
+	ecs_query_next(&iter); // Go to the first archetype
+	uint32_t entityCount = 0;
+	while (index--)
+	{
+		entityCount += iter.count;
 		ecs_query_next(&iter);
-	} while (index--);
+	}
 
-	return iter;
+	return { entityCount, iter };
 }
 }

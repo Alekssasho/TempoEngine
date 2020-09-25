@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Defines.h>
+#include <EASTL/utility.h>
 
 struct ecs_query_t;
 struct ecs_iter_t;
@@ -18,6 +19,7 @@ struct EntityQuery
 
 	int GetMatchedEntitiesCount();
 	int GetMatchedArchetypesCount();
-	ecs_iter_t GetIterForAchetype(uint32_t index);
+	// Returns the number of entities before this one
+	eastl::pair<uint32_t, ecs_iter_t> GetIterForAchetype(uint32_t index);
 };
 }

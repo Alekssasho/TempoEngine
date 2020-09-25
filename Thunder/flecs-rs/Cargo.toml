@@ -12,3 +12,6 @@ cc = "1.0.58"
 
 [dependencies]
 components = { path="../Components" }
+
+optick = "1.3.4"
+optick-attr = "0.3.0"

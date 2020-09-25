@@ -23,6 +23,7 @@ impl Drop for FlecsState {
     }
 }
 
+#[optick_attr::profile]
 unsafe fn register_component_func<T>(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
     ecs_new_component(
         world,
@@ -56,6 +57,7 @@ impl Components {
     }
 }
 
+#[optick_attr::profile]
 fn get_component_name(component: &Components) -> String {
     match component {
         Components::Transform(_) => CStr::from_bytes_with_nul(Tempest_Components_Transform_Name)
@@ -77,9 +79,13 @@ impl FlecsState {
         }
     }
 
+    #[optick_attr::profile]
     pub fn new() -> Self {
         unsafe {
-            let world = ecs_init();
+            let world = {
+                optick::event!("ecs_init");
+                ecs_init()
+            };
             let mut component_entities = Vec::new();
             // Register all components
             component_entities.push(register_component!(
@@ -100,6 +106,7 @@ impl FlecsState {
         }
     }
 
+    #[optick_attr::profile]
     pub fn create_entity(&self, name: &str, components: &[Components]) -> (ecs_entity_t, CString) {
         unsafe {
             let mut component_signature = String::new();
@@ -133,6 +140,7 @@ impl FlecsState {
         }
     }
 
+    #[optick_attr::profile]
     pub fn write_to_buffer<W: std::io::Write>(&self, writer: &mut W) {
         unsafe {
             let mut reader = ecs_reader_init(self.world);

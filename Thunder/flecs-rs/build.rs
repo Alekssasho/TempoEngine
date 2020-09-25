@@ -5,6 +5,7 @@ fn main() {
     // Compile flecs
     cc::Build::new()
         .file("../../ThirdParty/flecs/flecs.c")
+        .opt_level(3)
         .compile("flecs-rs");
 
     // Create binding for flecs

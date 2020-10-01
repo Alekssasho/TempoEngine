@@ -6,6 +6,7 @@
 
 // TODO: Find a better way than just to include them
 #include <Graphics/Features/RectFeature.h>
+#include <Graphics/Features/StaticMeshFeature.h>
 
 namespace Tempest
 {
@@ -13,6 +14,7 @@ Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
 {
 	RegisterFeature(GraphicsFeature::Rects::GetDescription());
+	RegisterFeature(GraphicsFeature::StaticMesh::GetDescription());
 }
 
 Renderer::~Renderer()

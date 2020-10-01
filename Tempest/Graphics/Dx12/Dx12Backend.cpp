@@ -184,6 +184,7 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 			commandListIterator += sizeof(RendererCommandDrawRect);
 		}
 		default:
+			assert(false);
 			break;
 		}
 

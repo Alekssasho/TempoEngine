@@ -104,6 +104,9 @@
     <ClInclude Include="World\EntityQueryImpl.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Features\StaticMeshFeature.h">
+      <Filter>Graphics\Features</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -161,6 +164,9 @@
     </ClCompile>
     <ClCompile Include="World\EntityQuery.cpp">
       <Filter>World</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp">
+      <Filter>Graphics\Features</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

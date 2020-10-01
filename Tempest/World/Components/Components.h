@@ -23,5 +23,12 @@ struct Rect
 	static constexpr const char* Name = "Rect";
 };
 
+struct StaticMesh
+{
+	MeshHandle Mesh;
+
+	static constexpr const char* Name = "StaticMesh";
+};
+
 }
 }

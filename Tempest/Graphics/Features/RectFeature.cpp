@@ -39,7 +39,7 @@ void Rects::GenerateCommands(const FrameData& data, RendererCommandList& command
 	{
 		RendererCommandDrawRect command;
 		command.Data = rect;
-		commandList.AddCommand<RendererCommandDrawRect>(command);
+		commandList.AddCommand(command);
 	}
 }
 

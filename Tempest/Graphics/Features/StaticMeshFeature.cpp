@@ -1,27 +1,34 @@
 #include <Graphics/Features/StaticMeshFeature.h>
+#include <Graphics/RendererCommandList.h>
+#include <Graphics/Managers/PipelineStateManager.h>
+#include <Graphics/Renderer.h>
 #include <World/World.h>
 #include <World/Components/Components.h>
-#include <Graphics/RendererCommandList.h>
+#include <World/EntityQueryImpl.h>
 
 namespace Tempest
 {
 namespace GraphicsFeature
 {
 
+void StaticMesh::Initialize(const World& world, Renderer& renderer)
+{
+	m_Query.Init<Components::Transform, Components::StaticMesh>(world);
+	m_Handle = renderer.Managers.PipelineState.RequestPipelineState(PipelineStateDescription{
+		"StaticMesh"
+	});
+}
+
 void StaticMesh::GatherData(const World& world, FrameData& frameData)
 {
-	// TODO: Maybe gather data will be better as a system which is executed directly
-	flecs::filter filter = flecs::filter(world.m_EntityWorld)
-		.include<Components::Transform>()
-		.include<Components::StaticMesh>()
-		.include_kind(flecs::MatchAll);
-
-	for (flecs::iter itr : world.m_EntityWorld.filter(filter))
+	int archetypeCount = m_Query.GetMatchedArchetypesCount();
+	for (int i = 0; i < archetypeCount; ++i)
 	{
-		flecs::column transforms = itr.table_column<Components::Transform>();
-		flecs::column staticMeshes = itr.table_column<Components::StaticMesh>();
-
-		for (int row : itr) {
+		auto [_, iter] = m_Query.GetIterForAchetype(i);
+		Components::Transform* transforms = ecs_column(&iter, Components::Transform, 1);
+		Components::StaticMesh* staticMeshes = ecs_column(&iter, Components::StaticMesh, 2);
+		for (int row = 0; row < iter.count; ++row)
+		{
 			frameData.StaticMeshes.push_back(FrameData::StaticMeshData{
 				staticMeshes[row].Mesh
 			});
@@ -34,18 +41,10 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 	for (const auto& mesh : data.StaticMeshes)
 	{
 		RendererCommandDrawStaticMesh command;
+		command.Pipeline = m_Handle;
 		command.Mesh = mesh.Mesh;
 		commandList.AddCommand(command);
 	}
-}
-
-GraphicsFeatureDescription StaticMesh::GetDescription()
-{
-	GraphicsFeatureDescription desc;
-	desc.Id = StaticMesh::ID;
-	desc.GatherData = &StaticMesh::GatherData;
-	desc.GenerateCommands = &StaticMesh::GenerateCommands;
-	return desc;
 }
 }
 }

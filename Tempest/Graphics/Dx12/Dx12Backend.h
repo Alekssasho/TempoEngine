@@ -25,7 +25,7 @@ private:
 	PipelineManager m_PipelineManager;
 
 	// Test Data
-	PipelineHandle m_RectsPipelineHandle;
+	Tempest::Backend::PipelineHandle m_RectsPipelineHandle;
 	ComPtr<ID3D12RootSignature> m_Signature;
 };
 }

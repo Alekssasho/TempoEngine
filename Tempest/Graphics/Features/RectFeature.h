@@ -1,20 +1,23 @@
 #pragma once
 
-#include <Graphics/RendererTypes.h>
+#include <Graphics/RenderFeature.h>
+#include <World/EntityQuery.h>
 
 namespace Tempest
 {
 namespace GraphicsFeature
 {
-struct Rects
+struct Rects : RenderFeature
 {
 	// TODO: Better ID
 	static const int64_t ID = 0;
 
-	static void GatherData(const World&, FrameData&);
-	static void GenerateCommands(const FrameData& data, RendererCommandList& commandList);
+	virtual void Initialize(const World& world, Renderer& renderer) override;
+	virtual void GatherData(const World&, FrameData&) override;
+	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList) override;
 
-	static GraphicsFeatureDescription GetDescription();
+private:
+	EntityQuery m_Query;
 };
 }
 }

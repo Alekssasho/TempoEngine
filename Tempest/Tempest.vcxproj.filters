@@ -107,6 +107,15 @@
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h">
       <Filter>Graphics\Features</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\RenderFeature.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Managers\PipelineStateManager.h">
+      <Filter>Graphics\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\BackendTypes.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -168,6 +177,9 @@
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp">
       <Filter>Graphics\Features</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics\Managers\PipelineStateManager.cpp">
+      <Filter>Graphics\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -215,9 +227,6 @@
     <Filter Include="Resources">
       <UniqueIdentifier>{65ffaaab-968a-4310-99ff-bdfcd864729b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Graphics\Shaders">
-      <UniqueIdentifier>{cf372380-5283-425a-9a88-d567a09cd0f9}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Graphics\Features">
       <UniqueIdentifier>{670010d7-9c07-4ee7-a140-d55ab9f9b310}</UniqueIdentifier>
     </Filter>
@@ -227,6 +236,12 @@
     <Filter Include="World\TaskGraph">
       <UniqueIdentifier>{d5c1e7df-fa88-48bc-8b8f-5e70e767c4bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Graphics\Managers">
+      <UniqueIdentifier>{48b6ea29-d806-446f-b8f8-a3587aa58089}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{cf372380-5283-425a-9a88-d567a09cd0f9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis">
@@ -235,7 +250,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Rects.hlsl">
-      <Filter>Graphics\Shaders</Filter>
+      <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\Mesh.hlsl" />
     <None Include="Shaders\UI.hlsl" />

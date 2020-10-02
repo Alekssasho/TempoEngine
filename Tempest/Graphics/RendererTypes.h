@@ -6,6 +6,9 @@
 
 namespace Tempest
 {
+
+using PipelineStateHandle = uint32_t;
+
 enum class RenderPhase : uint8_t
 {
 	Main
@@ -14,18 +17,6 @@ enum class RenderPhase : uint8_t
 class World;
 struct FrameData;
 struct RendererCommandList;
-
-using GatherDataFunc = void(*)(const World&, FrameData&);
-using PrepareDataFunc = void(*)();
-using GenerateCommandsFunc = void(*)(const FrameData&, RendererCommandList&);
-
-struct GraphicsFeatureDescription
-{
-	int64_t Id;
-	GatherDataFunc GatherData;
-	PrepareDataFunc PrepareData;
-	GenerateCommandsFunc GenerateCommands;
-};
 
 // TODO: Remove me
 struct RectData

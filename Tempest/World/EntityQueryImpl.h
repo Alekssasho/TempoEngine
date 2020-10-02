@@ -5,9 +5,10 @@
 namespace Tempest
 {
 template<typename... Components>
-void EntityQuery::Init(World& world)
+void EntityQuery::Init(const World& world)
 {
-	flecs::query<Components...> query(world.m_EntityWorld);
+	// TODO: Remove the const cast
+	flecs::query<Components...> query(const_cast<World&>(world).m_EntityWorld);
 	Query = query.c_ptr();
 }
 }

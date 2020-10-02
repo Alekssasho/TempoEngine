@@ -15,7 +15,7 @@ struct EntityQuery
 	~EntityQuery();
 
 	template<typename... Components>
-	void Init(class World& world);
+	void Init(const class World& world);
 
 	int GetMatchedEntitiesCount();
 	int GetMatchedArchetypesCount();

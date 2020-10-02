@@ -54,15 +54,15 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateD
 	return desc;
 }
 
-PipelineHandle PipelineManager::CreateGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
+Tempest::Backend::PipelineHandle PipelineManager::CreateGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
 {
-	PipelineHandle resultHandle = m_NextPipelineHandle++;
+	Tempest::Backend::PipelineHandle resultHandle = m_NextPipelineHandle++;
 	ComPtr<ID3D12PipelineState>& pipeline = m_Pipelines[resultHandle];
 	CHECK_SUCCESS(m_Device.GetDevice()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pipeline)));
 	return resultHandle;
 }
 
-ID3D12PipelineState* PipelineManager::GetPipeline(PipelineHandle handle)
+ID3D12PipelineState* PipelineManager::GetPipeline(Tempest::Backend::PipelineHandle handle)
 {
 	return m_Pipelines[handle].Get();
 }

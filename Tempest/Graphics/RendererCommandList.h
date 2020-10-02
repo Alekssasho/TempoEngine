@@ -29,6 +29,7 @@ struct RendererCommandDrawRect : RendererCommand<RendererCommandType::DrawRect>
 
 struct RendererCommandDrawStaticMesh : RendererCommand<RendererCommandType::DrawStaticMesh>
 {
+	PipelineStateHandle Pipeline;
 	MeshHandle Mesh;
 };
 

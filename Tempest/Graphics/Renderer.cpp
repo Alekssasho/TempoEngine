@@ -12,13 +12,23 @@ namespace Tempest
 {
 Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
+	, Managers(*this)
 {
-	RegisterFeature(GraphicsFeature::Rects::GetDescription());
-	RegisterFeature(GraphicsFeature::StaticMesh::GetDescription());
+	m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
+	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
 }
 
 Renderer::~Renderer()
 {
+}
+
+void Renderer::InitializeFeatures(const World& world)
+{
+	OPTICK_EVENT();
+	for (const auto& feature : m_RenderFeatures)
+	{
+		feature->Initialize(world, *this);
+	}
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -27,35 +37,34 @@ bool Renderer::CreateWindowSurface(WindowHandle handle)
 	return false;
 }
 
-void Renderer::RegisterFeature(const GraphicsFeatureDescription& description)
-{
-	// TODO: Find a better way to store this
-	m_FeatureDescriptions.push_back(description);
-}
-
 FrameData Renderer::GatherWorldData(const World& world)
 {
-	OPTICK_EVENT("Gather World Data");
+	OPTICK_EVENT();
 	// TODO: No need to return it.
 	FrameData frameData;
-	for (const auto& feature : m_FeatureDescriptions)
+	for (const auto& feature : m_RenderFeatures)
 	{
-		feature.GatherData(world, frameData);
+		feature->GatherData(world, frameData);
 	}
 	return frameData;
 }
 
 void Renderer::RenderFrame(const FrameData& data)
 {
-	OPTICK_EVENT("Render Frame");
+	OPTICK_EVENT();
 
 	RendererCommandList commandList;
-	for (const auto& feature : m_FeatureDescriptions)
+	for (const auto& feature : m_RenderFeatures)
 	{
-		feature.GenerateCommands(data, commandList);
+		feature->GenerateCommands(data, commandList);
 	}
 
 	m_Backend->RenderFrame(commandList);
+}
+
+RenderManagers::RenderManagers(Renderer& renderer)
+	: PipelineState(renderer)
+{
 }
 }
 

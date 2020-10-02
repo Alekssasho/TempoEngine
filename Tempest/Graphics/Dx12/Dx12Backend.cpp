@@ -182,6 +182,7 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 			frame.CommandList->DrawInstanced(4, 1, 0, 0);
 
 			commandListIterator += sizeof(RendererCommandDrawRect);
+			break;
 		}
 		default:
 			assert(false);

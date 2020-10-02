@@ -2,26 +2,28 @@
 #include <World/World.h>
 #include <World/Components/Components.h>
 #include <Graphics/RendererCommandList.h>
+#include <World/EntityQueryImpl.h>
 
 namespace Tempest
 {
 namespace GraphicsFeature
 {
 
+void Rects::Initialize(const World& world, Renderer& renderer)
+{
+	m_Query.Init<Components::Transform, Components::Rect>(world);
+}
+
 void Rects::GatherData(const World& world, FrameData& frameData)
 {
-	// TODO: Maybe gather data will be better as a system which is executed directly
-	flecs::filter filter = flecs::filter(world.m_EntityWorld)
-		.include<Components::Transform>()
-		.include<Components::Rect>()
-		.include_kind(flecs::MatchAll);
-
-	for (flecs::iter itr : world.m_EntityWorld.filter(filter))
+	int archetypeCount = m_Query.GetMatchedArchetypesCount();
+	for (int i = 0; i < archetypeCount; ++i)
 	{
-		flecs::column transforms = itr.table_column<Components::Transform>();
-		flecs::column rects = itr.table_column<Components::Rect>();
-
-		for (int row : itr) {
+		auto [_, iter] = m_Query.GetIterForAchetype(i);
+		Components::Transform* transforms = ecs_column(&iter, Components::Transform, 1);
+		Components::Rect* rects = ecs_column(&iter, Components::Rect, 2);
+		for (int row = 0; row < iter.count; ++row)
+		{
 			frameData.Rects.push_back(RectData{
 				transforms[row].Position.x,
 				transforms[row].Position.y,
@@ -41,15 +43,6 @@ void Rects::GenerateCommands(const FrameData& data, RendererCommandList& command
 		command.Data = rect;
 		commandList.AddCommand(command);
 	}
-}
-
-GraphicsFeatureDescription Rects::GetDescription()
-{
-	GraphicsFeatureDescription desc;
-	desc.Id = Rects::ID;
-	desc.GatherData = &Rects::GatherData;
-	desc.GenerateCommands = &Rects::GenerateCommands;
-	return desc;
 }
 }
 }

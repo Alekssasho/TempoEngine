@@ -32,6 +32,11 @@ public:
 		return m_World;
 	}
 
+	Renderer& GetRenderer()
+	{
+		return m_Renderer;
+	}
+
 	ResourceLoader& GetResourceLoader()
 	{
 		return m_ResourceLoader;

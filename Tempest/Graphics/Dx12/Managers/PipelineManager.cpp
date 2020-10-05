@@ -7,6 +7,26 @@ namespace Dx12
 PipelineManager::PipelineManager(Dx12Device& device)
 	: m_Device(device)
 {
+	D3D12_ROOT_PARAMETER rootParam;
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rootParam.Constants.Num32BitValues = 8;
+	rootParam.Constants.RegisterSpace = 0;
+	rootParam.Constants.ShaderRegister = 0;
+
+	D3D12_ROOT_PARAMETER params[1] = { rootParam };
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	rootSignatureDesc.NumParameters = 1;
+	rootSignatureDesc.pParameters = params;
+	rootSignatureDesc.NumStaticSamplers = 0;
+	rootSignatureDesc.pStaticSamplers = nullptr;
+
+	ComPtr<ID3DBlob> signature;
+	ComPtr<ID3DBlob> error;
+	CHECK_SUCCESS(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error));
+
+	CHECK_SUCCESS(m_Device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_Signature)));
 }
 
 D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateDesc()
@@ -54,17 +74,30 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateD
 	return desc;
 }
 
-Tempest::Backend::PipelineHandle PipelineManager::CreateGraphicsPipeline(const D3D12_GRAPHICS_PIPELINE_STATE_DESC& desc)
+PipelineStateHandle PipelineManager::CreateGraphicsPipeline(const GraphicsPipelineStateDescription& description)
 {
-	Tempest::Backend::PipelineHandle resultHandle = m_NextPipelineHandle++;
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC dx12Desc = PrepareDefaultPipelineStateDesc();
+	dx12Desc.VS.pShaderBytecode = description.VSCode;
+	dx12Desc.VS.BytecodeLength = description.VSCodeSize;
+	dx12Desc.PS.pShaderBytecode = description.PSCode;
+	dx12Desc.PS.BytecodeLength = description.PSCodeSize;
+
+	dx12Desc.pRootSignature = m_Signature.Get();
+
+	PipelineStateHandle resultHandle = ++m_NextPipelineHandle;
 	ComPtr<ID3D12PipelineState>& pipeline = m_Pipelines[resultHandle];
-	CHECK_SUCCESS(m_Device.GetDevice()->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pipeline)));
+	CHECK_SUCCESS(m_Device.GetDevice()->CreateGraphicsPipelineState(&dx12Desc, IID_PPV_ARGS(&pipeline)));
 	return resultHandle;
 }
 
-ID3D12PipelineState* PipelineManager::GetPipeline(Tempest::Backend::PipelineHandle handle)
+ID3D12PipelineState* PipelineManager::GetPipeline(PipelineStateHandle handle)
 {
 	return m_Pipelines[handle].Get();
+}
+
+ID3D12RootSignature* PipelineManager::GetSignature()
+{
+	return m_Signature.Get();
 }
 }
 }

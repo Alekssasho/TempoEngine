@@ -7,8 +7,19 @@
 namespace Tempest
 {
 struct RendererCommandList;
+struct RenderManagers;
 namespace Dx12
 {
+
+struct BackendManagers
+{
+	BackendManagers(Dx12Device& device)
+		: Pipeline(device)
+	{}
+
+	PipelineManager Pipeline;
+};
+
 class Backend
 {
 public:
@@ -18,15 +29,12 @@ public:
 	void Initialize(WindowHandle handle);
 	// TODO: It should take Render Graph structure for barriers & a vector of command lists as we will not put everything in one list
 	void RenderFrame(const RendererCommandList& commandList);
+
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
-
+public:
 	// Managers
-	PipelineManager m_PipelineManager;
-
-	// Test Data
-	Tempest::Backend::PipelineHandle m_RectsPipelineHandle;
-	ComPtr<ID3D12RootSignature> m_Signature;
+	BackendManagers Managers;
 };
 }
 }

@@ -97,7 +97,6 @@
     <ClInclude Include="EngineCore.h" />
     <ClInclude Include="Graphics\BackendTypes.h" />
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h" />
-    <ClInclude Include="Graphics\Managers\PipelineStateManager.h" />
     <ClInclude Include="Graphics\RendererCommandList.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Backend.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Common.h" />
@@ -141,7 +140,6 @@
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp" />
     <ClCompile Include="Graphics\Features\RectFeature.cpp" />
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp" />
-    <ClCompile Include="Graphics\Managers\PipelineStateManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />

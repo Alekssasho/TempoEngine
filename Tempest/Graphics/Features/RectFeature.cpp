@@ -3,6 +3,7 @@
 #include <World/Components/Components.h>
 #include <Graphics/RendererCommandList.h>
 #include <World/EntityQueryImpl.h>
+#include <Graphics/Renderer.h>
 
 namespace Tempest
 {
@@ -12,6 +13,9 @@ namespace GraphicsFeature
 void Rects::Initialize(const World& world, Renderer& renderer)
 {
 	m_Query.Init<Components::Transform, Components::Rect>(world);
+	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
+		"Rects"
+	});
 }
 
 void Rects::GatherData(const World& world, FrameData& frameData)
@@ -40,6 +44,7 @@ void Rects::GenerateCommands(const FrameData& data, RendererCommandList& command
 	for (const auto& rect : data.Rects)
 	{
 		RendererCommandDrawRect command;
+		command.Pipeline = m_Handle;
 		command.Data = rect;
 		commandList.AddCommand(command);
 	}

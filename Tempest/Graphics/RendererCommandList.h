@@ -8,7 +8,7 @@ namespace Tempest
 enum class RendererCommandType : uint8_t
 {
 	DrawRect, // TODO: Remove me
-	DrawStaticMesh,
+	DrawInstanced,
 	Count
 };
 
@@ -24,13 +24,15 @@ struct alignas(16) RendererCommand
 
 struct RendererCommandDrawRect : RendererCommand<RendererCommandType::DrawRect>
 {
+	PipelineStateHandle Pipeline;
 	RectData Data;
 };
 
-struct RendererCommandDrawStaticMesh : RendererCommand<RendererCommandType::DrawStaticMesh>
+struct RendererCommandDrawInstanced : RendererCommand<RendererCommandType::DrawInstanced>
 {
 	PipelineStateHandle Pipeline;
-	MeshHandle Mesh;
+	uint32_t VertexCountPerInstance;
+	uint32_t InstanceCount;
 };
 
 struct RendererCommandList

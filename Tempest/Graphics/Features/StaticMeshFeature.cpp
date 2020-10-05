@@ -1,6 +1,5 @@
 #include <Graphics/Features/StaticMeshFeature.h>
 #include <Graphics/RendererCommandList.h>
-#include <Graphics/Managers/PipelineStateManager.h>
 #include <Graphics/Renderer.h>
 #include <World/World.h>
 #include <World/Components/Components.h>
@@ -14,9 +13,9 @@ namespace GraphicsFeature
 void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
 	m_Query.Init<Components::Transform, Components::StaticMesh>(world);
-	m_Handle = renderer.Managers.PipelineState.RequestPipelineState(PipelineStateDescription{
-		"StaticMesh"
-	});
+	//m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
+	//	"StaticMesh"
+	//});
 }
 
 void StaticMesh::GatherData(const World& world, FrameData& frameData)
@@ -40,9 +39,10 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 {
 	for (const auto& mesh : data.StaticMeshes)
 	{
-		RendererCommandDrawStaticMesh command;
+		RendererCommandDrawInstanced command;
 		command.Pipeline = m_Handle;
-		command.Mesh = mesh.Mesh;
+		command.VertexCountPerInstance = 3;// TODO: Fill me up
+		command.InstanceCount = 1;
 		commandList.AddCommand(command);
 	}
 }

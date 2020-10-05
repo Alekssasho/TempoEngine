@@ -110,9 +110,6 @@
     <ClInclude Include="Graphics\RenderFeature.h">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Managers\PipelineStateManager.h">
-      <Filter>Graphics\Managers</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\BackendTypes.h">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -176,9 +173,6 @@
     </ClCompile>
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp">
       <Filter>Graphics\Features</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Managers\PipelineStateManager.cpp">
-      <Filter>Graphics\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

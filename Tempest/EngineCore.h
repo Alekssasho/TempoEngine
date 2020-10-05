@@ -49,8 +49,8 @@ private:
 	Job::JobSystem m_JobSystem;
 	WindowsPlatform m_Platform;
 	ResourceLoader m_ResourceLoader;
-	Renderer m_Renderer;
 	World m_World;
+	Renderer m_Renderer;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

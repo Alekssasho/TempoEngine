@@ -18,6 +18,7 @@ struct Rects : RenderFeature
 
 private:
 	EntityQuery m_Query;
+	PipelineStateHandle m_Handle;
 };
 }
 }

@@ -7,6 +7,7 @@
 namespace Tempest
 {
 
+static const uint32_t sInvalidHandle = 0;
 using PipelineStateHandle = uint32_t;
 
 enum class RenderPhase : uint8_t

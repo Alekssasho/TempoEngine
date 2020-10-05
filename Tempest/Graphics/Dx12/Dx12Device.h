@@ -11,6 +11,7 @@ namespace Dx12
 {
 struct Dx12FrameData
 {
+	uint32_t BackBufferIndex;
 	ID3D12GraphicsCommandList* CommandList;
 	ID3D12Resource* BackBufferResource;
 	D3D12_CPU_DESCRIPTOR_HANDLE BackBufferRTV;

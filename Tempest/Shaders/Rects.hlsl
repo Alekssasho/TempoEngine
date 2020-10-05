@@ -3,40 +3,38 @@ struct VertexInput
 	uint index : SV_VertexID;
 };
 
-cbuffer VertexPushs : register(b0)
+struct GeometryConstants
 {
 	float x;
 	float y;
 	float width;
 	float height;
+	float4 color;
 };
 
-cbuffer PixelPushs : register(b0)
-{
-	float4 color : packoffset(c1);
-};
+ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space0);
 
 float4 VertexShaderMain(VertexInput i) : SV_POSITION
 {
 	if (i.index == 0)
 	{
-		return float4(x, y, 0.0, 1.0);
+		return float4(g_Geometry.x, g_Geometry.y, 0.0, 1.0);
 	}
 	else if (i.index == 1)
 	{
-		return float4(x + width, y, 0.0, 1.0);
+		return float4(g_Geometry.x + g_Geometry.width, g_Geometry.y, 0.0, 1.0);
 	}
 	else if (i.index == 2)
 	{
-		return float4(x, y + height, 0.0, 1.0);
+		return float4(g_Geometry.x, g_Geometry.y + g_Geometry.height, 0.0, 1.0);
 	}
 	else
 	{
-		return float4(x + width, y + height, 0.0, 1.0);
+		return float4(g_Geometry.x + g_Geometry.width, g_Geometry.y + g_Geometry.height, 0.0, 1.0);
 	}
 }
 
 float4 PixelShaderMain(float4 pos : SV_POSITION) : SV_TARGET
 {
-	return color;
+	return g_Geometry.color;
 }

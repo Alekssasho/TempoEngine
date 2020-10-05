@@ -7,12 +7,12 @@ namespace Dx12
 PipelineManager::PipelineManager(Dx12Device& device)
 	: m_Device(device)
 {
+	// Geometry constant buffer
 	D3D12_ROOT_PARAMETER rootParam;
-	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	rootParam.Constants.Num32BitValues = 8;
-	rootParam.Constants.RegisterSpace = 0;
-	rootParam.Constants.ShaderRegister = 0;
+	rootParam.Descriptor.ShaderRegister = 0;
+	rootParam.Descriptor.RegisterSpace = 0;
 
 	D3D12_ROOT_PARAMETER params[1] = { rootParam };
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;

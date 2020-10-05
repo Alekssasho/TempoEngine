@@ -253,6 +253,7 @@ Dx12FrameData Dx12Device::StartNewFrame()
 	list.DxCommandList->ResourceBarrier(1, &barrier);
 
 	return Dx12FrameData{
+		index,
 		list.DxCommandList.Get(),
 		m_SwapChainImages[index].Resource.Get(),
 		m_SwapChainImages[index].RTVHandle,

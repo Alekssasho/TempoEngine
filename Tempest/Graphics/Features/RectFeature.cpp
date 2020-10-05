@@ -43,9 +43,11 @@ void Rects::GenerateCommands(const FrameData& data, RendererCommandList& command
 {
 	for (const auto& rect : data.Rects)
 	{
-		RendererCommandDrawRect command;
+		RendererCommandDrawInstanced command;
 		command.Pipeline = m_Handle;
-		command.Data = rect;
+		command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(rect);
+		command.VertexCountPerInstance = 4;
+		command.InstanceCount = 1;
 		commandList.AddCommand(command);
 	}
 }

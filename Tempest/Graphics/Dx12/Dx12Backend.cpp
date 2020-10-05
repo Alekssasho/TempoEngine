@@ -8,7 +8,6 @@
 #include <dxgidebug.h>
 #endif
 
-
 namespace Tempest
 {
 namespace Dx12
@@ -77,6 +76,39 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		}
 	};
 
+	// Prepare constant buffer data
+	// TODO: Make this not allocate every frame
+	if(commandList.m_ConstantBufferData.size() > 0)
+	{
+		m_ConstantBufferData[frame.BackBufferIndex].Reset();
+
+		D3D12_HEAP_PROPERTIES props;
+		::ZeroMemory(&props, sizeof(D3D12_HEAP_PROPERTIES));
+		props.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+		D3D12_RESOURCE_DESC desc;
+		::ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
+		desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+		desc.Width = commandList.m_ConstantBufferData.size();
+		desc.Height = 1;
+		desc.DepthOrArraySize = 1;
+		desc.MipLevels = 1;
+		desc.Format = DXGI_FORMAT_UNKNOWN;
+		desc.SampleDesc.Count = 1;
+		desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+		CHECK_SUCCESS(m_Device->GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&m_ConstantBufferData[frame.BackBufferIndex])));
+
+		D3D12_RANGE range;
+		::ZeroMemory(&range, sizeof(D3D12_RANGE)); // This will tell that we won't read the data from CPU
+		void* dataPointer = nullptr;
+		CHECK_SUCCESS(m_ConstantBufferData[frame.BackBufferIndex]->Map(0, &range, &dataPointer));
+
+		memcpy(dataPointer, commandList.m_ConstantBufferData.data(), commandList.m_ConstantBufferData.size());
+
+		m_ConstantBufferData[frame.BackBufferIndex]->Unmap(0, nullptr);
+	}
+
 	const uint8_t* commandListIterator = commandList.m_DataBuffer.begin();
 	while (commandListIterator && commandListIterator < commandList.m_DataBuffer.end())
 	{
@@ -84,22 +116,12 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		RendererCommandType type = reinterpret_cast<const RendererCommand<RendererCommandType::Count>*>(commandListIterator)->Type;
 		switch (type)
 		{
-		case RendererCommandType::DrawRect:
-		{
-			const RendererCommandDrawRect* command = reinterpret_cast<const RendererCommandDrawRect*>(commandListIterator);
-			setPipeline(command->Pipeline);
-			frame.CommandList->SetGraphicsRoot32BitConstants(0, 8, &command->Data, 0);
-			frame.CommandList->DrawInstanced(4, 1, 0, 0);
-
-			commandListIterator += sizeof(RendererCommandDrawRect);
-			break;
-		}
 		case RendererCommandType::DrawInstanced:
 		{
 			const RendererCommandDrawInstanced* command = reinterpret_cast<const RendererCommandDrawInstanced*>(commandListIterator);
 			setPipeline(command->Pipeline);
+			frame.CommandList->SetGraphicsRootConstantBufferView(0, m_ConstantBufferData[frame.BackBufferIndex]->GetGPUVirtualAddress() + command->ParameterView.GeometryConstantDataOffset);
 			frame.CommandList->DrawInstanced(command->VertexCountPerInstance, command->InstanceCount, 0, 0);
-			//frame.CommandList->SetGraphicsRoot32BitConstants(0, 8, &command->Data, 0);
 
 			commandListIterator += sizeof(RendererCommandDrawInstanced);
 			break;

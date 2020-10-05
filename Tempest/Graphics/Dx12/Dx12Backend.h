@@ -1,6 +1,7 @@
 #pragma once
 
 #include <EASTL/unique_ptr.h>
+#include <EASTL/array.h>
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/Dx12/Managers/PipelineManager.h>
 
@@ -32,6 +33,7 @@ public:
 
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
+	eastl::array<ComPtr<ID3D12Resource>, 2> m_ConstantBufferData;
 public:
 	// Managers
 	BackendManagers Managers;

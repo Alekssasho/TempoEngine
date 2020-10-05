@@ -8,7 +8,7 @@ struct VertexOutput
 	float4 Position : SV_POSITION;
 };
 
-cbuffer VertexPushs : register(b0)
+struct GeometryConstants
 {
 	//float4x4 WorldViewProjectionMatrix;
 	//float4x4 WorldMatrix;
@@ -18,11 +18,13 @@ cbuffer VertexPushs : register(b0)
 	uint vertexBufferOffset;
 };
 
+ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space0);
+
 ByteAddressBuffer vertexBuffers[] : register(t0);
 
 VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {
-	VertexLayout vertexData = vertexBuffers[vertexBufferIndex].Load<VertexLayout>(vertexBufferOffset + vertexId * sizeof(VertexLayout));
+	VertexLayout vertexData = vertexBuffers[g_Geometry.vertexBufferIndex].Load<VertexLayout>(g_Geometry.vertexBufferOffset + vertexId * sizeof(VertexLayout));
 
 	VertexOutput result;
 	//result.Position = mul(WorldViewProjectionMatrix, float4(input.Position, 1.0));

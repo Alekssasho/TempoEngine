@@ -36,6 +36,8 @@ public:
 	{
 		return m_Device.Get();
 	}
+
+	void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
 private:
 	ComPtr<IDXGIFactory4> m_Factory;
 	ComPtr<ID3D12Device> m_Device;
@@ -63,6 +65,8 @@ private:
 		ComPtr<ID3D12GraphicsCommandList> DxCommandList;
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
+
+	CommandList copyList;
 
 	// UI Stuff
 	ComPtr<ID3D12DescriptorHeap> m_SRVHeap;

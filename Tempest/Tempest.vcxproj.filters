@@ -113,6 +113,9 @@
     <ClInclude Include="Graphics\BackendTypes.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Managers\BufferManager.h">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -173,6 +176,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp">
       <Filter>Graphics\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Managers\BufferManager.cpp">
+      <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

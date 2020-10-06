@@ -24,13 +24,23 @@ Renderer::~Renderer()
 {
 }
 
-void Renderer::InitializeFeatures(const World& world)
+void Renderer::InitializeAfterLevelLoad(const World& world)
 {
 	OPTICK_EVENT();
 	for (const auto& feature : m_RenderFeatures)
 	{
 		feature->Initialize(world, *this);
 	}
+
+	// TODO: Load geometry database from level
+	glm::vec3 vertexData[] = {
+		{0.0f, -0.5f, 0.0f}, {-0.5f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f}
+	};
+
+	Dx12::BufferDescription bufferDescription;
+	bufferDescription.Size = sizeof(3 * sizeof(glm::vec3));
+	bufferDescription.Data = &vertexData;
+	m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)

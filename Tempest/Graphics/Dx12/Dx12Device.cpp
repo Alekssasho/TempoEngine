@@ -201,6 +201,17 @@ void Dx12Device::Initialize(WindowHandle handle)
 		m_MainCommandLists.push_back({ allocator, list });
 	}
 
+	{
+		// TODO: this could be copy only, but we cannot make any resource barriers on copy lists.
+		CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&copyList.CommandAllocator)));
+		copyList.CommandAllocator->SetName(L"Copy Command Allocator");
+
+		CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, copyList.CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&copyList.DxCommandList)));
+		copyList.DxCommandList->SetName(L"Copy Command List");
+
+		copyList.DxCommandList->Close();
+	}
+
 	// Initializa UI
 	{
 		auto& io = ImGui::GetIO();
@@ -305,6 +316,38 @@ void Dx12Device::Present()
 	if (m_Fence->GetCompletedValue() < m_FenceValue - 2)
 	{
 		m_Fence->SetEventOnCompletion(m_FenceValue - 2, m_FenceEvent);
+		WaitForSingleObject(m_FenceEvent, INFINITE);
+	}
+}
+
+void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState)
+{
+	copyList.CommandAllocator->Reset();
+	copyList.DxCommandList->Reset(copyList.CommandAllocator.Get(), nullptr);
+
+	copyList.DxCommandList->CopyResource(dst, src);
+
+	D3D12_RESOURCE_BARRIER barrier;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+	barrier.Transition.pResource = dst;
+	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+	barrier.Transition.StateAfter = requiredDstState;
+	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+	
+	copyList.DxCommandList->ResourceBarrier(1, &barrier);
+	
+	copyList.DxCommandList->Close();
+	ID3D12CommandList* cmdList = copyList.DxCommandList.Get();
+	m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
+	
+	const UINT64 fence = m_FenceValue;
+	m_GraphicsQueue->Signal(m_Fence.Get(), fence);
+	m_FenceValue++;
+
+	if(m_Fence->GetCompletedValue() < m_FenceValue - 1)
+	{
+		m_Fence->SetEventOnCompletion(m_FenceValue - 1, m_FenceEvent);
 		WaitForSingleObject(m_FenceEvent, INFINITE);
 	}
 }

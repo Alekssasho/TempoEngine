@@ -62,7 +62,7 @@ void EngineCore::InitializeWindowJob(uint32_t, void* data)
 
 		const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 		gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
-		gEngine->GetRenderer().InitializeFeatures(gEngine->GetWorld());
+		gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 	});
 
 	// Start the engine loop

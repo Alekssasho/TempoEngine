@@ -4,6 +4,7 @@
 #include <EASTL/array.h>
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/Dx12/Managers/PipelineManager.h>
+#include <Graphics/Dx12/Managers/BufferManager.h>
 
 namespace Tempest
 {
@@ -16,9 +17,11 @@ struct BackendManagers
 {
 	BackendManagers(Dx12Device& device)
 		: Pipeline(device)
+		, Buffer(device)
 	{}
 
 	PipelineManager Pipeline;
+	BufferManager Buffer;
 };
 
 class Backend

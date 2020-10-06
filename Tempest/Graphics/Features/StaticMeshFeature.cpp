@@ -13,9 +13,9 @@ namespace GraphicsFeature
 void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
 	m_Query.Init<Components::Transform, Components::StaticMesh>(world);
-	//m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
-	//	"StaticMesh"
-	//});
+	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
+		"StaticMesh"
+	});
 }
 
 void StaticMesh::GatherData(const World& world, FrameData& frameData)

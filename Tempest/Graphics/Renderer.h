@@ -26,7 +26,7 @@ public:
 	~Renderer();
 	bool CreateWindowSurface(WindowHandle handle);
 
-	void InitializeFeatures(const World& world);
+	void InitializeAfterLevelLoad(const World& world);
 	FrameData GatherWorldData(const World& world);
 	void RenderFrame(const FrameData& data);
 
@@ -39,6 +39,8 @@ private:
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
 
 	const Definition::ShaderLibrary* m_ShaderLibrary;
+
+	BufferHandle m_VertexData;
 };
 }
 

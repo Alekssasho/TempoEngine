@@ -20,7 +20,7 @@ struct GeometryConstants
 
 ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space0);
 
-ByteAddressBuffer vertexBuffers[] : register(t0);
+ByteAddressBuffer vertexBuffers[] : register(t0, space0);
 
 VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {

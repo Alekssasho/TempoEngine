@@ -63,6 +63,7 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 
 	// TODO: This should probably be part of the pipeline itself
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
+	frame.CommandList->SetGraphicsRootDescriptorTable(1, m_Device->GetSRVHeapStart());
 	frame.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	PipelineStateHandle currentPipeline = sInvalidHandle;

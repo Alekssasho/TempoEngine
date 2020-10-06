@@ -228,7 +228,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 		// TODO: Make this real code and remove imgui_impl_dx12
 
 		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = 1;
+		srvHeapDesc.NumDescriptors = 2; // TODO: This should be dynamic, or there should be another srv heap for UI and other data
 		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
@@ -252,6 +252,8 @@ Dx12FrameData Dx12Device::StartNewFrame()
 	CommandList& list = m_MainCommandLists[index];
 	list.CommandAllocator->Reset();
 	list.DxCommandList->Reset(list.CommandAllocator.Get(), nullptr);
+
+	list.DxCommandList->SetDescriptorHeaps(1, m_SRVHeap.GetAddressOf());
 
 	D3D12_RESOURCE_BARRIER barrier;
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -350,6 +352,28 @@ void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_R
 		m_Fence->SetEventOnCompletion(m_FenceValue - 1, m_FenceEvent);
 		WaitForSingleObject(m_FenceEvent, INFINITE);
 	}
+}
+
+void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes) const
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
+	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	desc.Format = DXGI_FORMAT_R32_TYPELESS; //DXGI_FORMAT_R32_TYPELESS DXGI_FORMAT_UNKNOWN
+	desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	desc.Buffer.FirstElement = 0;
+	desc.Buffer.NumElements = numBytes / 4;
+	desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+
+	// Go to second descriptor
+	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_SRVHeap->GetCPUDescriptorHandleForHeapStart());
+	handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	m_Device->CreateShaderResourceView(
+		resource,
+		&desc,
+		handle
+	);
 }
 }
 }

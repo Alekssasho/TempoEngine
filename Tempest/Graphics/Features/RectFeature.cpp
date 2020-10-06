@@ -39,7 +39,7 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 	}
 }
 
-void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList)
+void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer)
 {
 	for (const auto& rect : data.Rects)
 	{

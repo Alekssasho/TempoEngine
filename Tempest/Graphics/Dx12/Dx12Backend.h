@@ -34,6 +34,7 @@ public:
 	// TODO: It should take Render Graph structure for barriers & a vector of command lists as we will not put everything in one list
 	void RenderFrame(const RendererCommandList& commandList);
 
+	const Dx12Device* GetDevice() const { return m_Device.get(); }
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
 	eastl::array<ComPtr<ID3D12Resource>, 2> m_ConstantBufferData;

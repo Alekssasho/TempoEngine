@@ -98,6 +98,7 @@
     <ClInclude Include="Graphics\BackendTypes.h" />
     <ClInclude Include="Graphics\Dx12\Managers\BufferManager.h" />
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h" />
+    <ClInclude Include="Graphics\Managers\MeshManager.h" />
     <ClInclude Include="Graphics\RendererCommandList.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Backend.h" />
     <ClInclude Include="Graphics\Dx12\Dx12Common.h" />
@@ -142,6 +143,7 @@
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp" />
     <ClCompile Include="Graphics\Features\RectFeature.cpp" />
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp" />
+    <ClCompile Include="Graphics\Managers\MeshManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />
@@ -156,15 +158,17 @@
     <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Mesh.hlsl">
-      <FileType>Document</FileType>
-    </None>
     <None Include="Shaders\UI.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\Rects.hlsl">
+      <FileType>Document</FileType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\StaticMesh.hlsl">
       <FileType>Document</FileType>
     </None>
   </ItemGroup>

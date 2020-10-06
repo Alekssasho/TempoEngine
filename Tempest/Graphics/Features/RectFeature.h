@@ -14,7 +14,7 @@ struct Rects : RenderFeature
 
 	virtual void Initialize(const World& world, Renderer& renderer) override;
 	virtual void GatherData(const World&, FrameData&) override;
-	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList) override;
+	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer) override;
 
 private:
 	EntityQuery m_Query;

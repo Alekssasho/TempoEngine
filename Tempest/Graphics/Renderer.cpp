@@ -34,13 +34,19 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 
 	// TODO: Load geometry database from level
 	glm::vec3 vertexData[] = {
-		{0.0f, -0.5f, 0.0f}, {-0.5f, 0.0f, 0.0f}, {0.5f, 0.0f, 0.0f}
+		{0.0f, -0.5f, 0.0f},
+		{0.5f, 0.0f, 0.0f},
+		{-0.5f, 0.0f, 0.0f}
 	};
 
 	Dx12::BufferDescription bufferDescription;
-	bufferDescription.Size = sizeof(3 * sizeof(glm::vec3));
+	bufferDescription.Size = 3 * sizeof(glm::vec3);
 	bufferDescription.Data = &vertexData;
 	m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);
+	// TODO: This should not be here
+	m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size));
+
+	Meshes.CreateStaticMesh({ m_VertexData, 0, 3 });
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -79,7 +85,7 @@ void Renderer::RenderFrame(const FrameData& data)
 	RendererCommandList commandList;
 	for (const auto& feature : m_RenderFeatures)
 	{
-		feature->GenerateCommands(data, commandList);
+		feature->GenerateCommands(data, commandList, *this);
 	}
 
 	m_Backend->RenderFrame(commandList);

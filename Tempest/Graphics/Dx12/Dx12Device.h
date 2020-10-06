@@ -38,6 +38,14 @@ public:
 	}
 
 	void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
+	// TODO: This should be refactored
+	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes) const;
+	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHeapStart()
+	{
+		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
+		handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		return handle;
+	}
 private:
 	ComPtr<IDXGIFactory4> m_Factory;
 	ComPtr<ID3D12Device> m_Device;

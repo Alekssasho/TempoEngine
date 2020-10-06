@@ -27,7 +27,7 @@ PipelineStateHandle BufferManager::CreateBuffer(const BufferDescription& descrip
 	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
 
-	PipelineStateHandle resultHandle = ++m_NextHandle;
+	PipelineStateHandle resultHandle = m_NextHandle++;
 	ComPtr<ID3D12Resource>& buffer = m_Buffers[resultHandle];
 	D3D12_RESOURCE_STATES state = description.Data ? D3D12_RESOURCE_STATE_COPY_DEST : D3D12_RESOURCE_STATE_GENERIC_READ;
 	CHECK_SUCCESS(m_Device.GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, state, NULL, IID_PPV_ARGS(&buffer)));
@@ -79,7 +79,7 @@ void BufferManager::InitializeBufferData(ID3D12Resource* dst, size_t size, const
 	memcpy(stagingBufferData, data, size);
 
 	stagingBuffer->Unmap(0, nullptr);
-	
+
 	m_Device.CopyResources(dst, stagingBuffer.Get(), D3D12_RESOURCE_STATE_GENERIC_READ);
 }
 }

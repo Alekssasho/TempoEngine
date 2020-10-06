@@ -5,6 +5,7 @@
 
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/RendererTypes.h>
+#include <Graphics/Managers/MeshManager.h>
 
 namespace Tempest
 {
@@ -34,6 +35,9 @@ public:
 
 	// TODO: potentially this could be moved someplace else
 	PipelineStateHandle RequestPipelineState(const PipelineStateDescription& description);
+
+	// Managers
+	MeshManager Meshes;
 private:
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;

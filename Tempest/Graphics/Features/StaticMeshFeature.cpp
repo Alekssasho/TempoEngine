@@ -35,13 +35,26 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 	}
 }
 
-void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList)
+void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer)
 {
+	struct GeometryConstants
+	{
+		uint32_t vertexBufferIndex;
+		uint32_t vertexBufferOffset;
+	};
+
 	for (const auto& mesh : data.StaticMeshes)
 	{
+		MeshManager::MeshData meshData = renderer.Meshes.GetMeshData(mesh.Mesh);
+
+		GeometryConstants constants;
+		constants.vertexBufferIndex = meshData.VertexBuffer; // TODO: This should be an index of sort
+		constants.vertexBufferOffset = meshData.OffsetInVertexBuffer;
+
 		RendererCommandDrawInstanced command;
 		command.Pipeline = m_Handle;
-		command.VertexCountPerInstance = 3;// TODO: Fill me up
+		command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
+		command.VertexCountPerInstance = meshData.VertexCount;
 		command.InstanceCount = 1;
 		commandList.AddCommand(command);
 	}

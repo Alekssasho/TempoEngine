@@ -116,6 +116,9 @@
     <ClInclude Include="Graphics\Dx12\Managers\BufferManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Managers\MeshManager.h">
+      <Filter>Graphics\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -179,6 +182,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Dx12\Managers\BufferManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Managers\MeshManager.cpp">
+      <Filter>Graphics\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -252,7 +258,11 @@
     <None Include="Shaders\Rects.hlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\Mesh.hlsl" />
-    <None Include="Shaders\UI.hlsl" />
+    <None Include="Shaders\UI.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\StaticMesh.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

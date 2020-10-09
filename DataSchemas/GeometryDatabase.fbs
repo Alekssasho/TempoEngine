@@ -1,0 +1,18 @@
+namespace Tempest.Definition;
+
+table MeshMapping
+{
+    index : uint(key);
+    vertex_offset : uint;
+    vertex_count : uint;
+}
+
+table GeometryDatabase
+{
+    vertex_buffer : [ubyte];
+    mappings : [MeshMapping];
+}
+
+file_identifier "TGDB";
+file_extension "tgb";
+root_type GeometryDatabase;

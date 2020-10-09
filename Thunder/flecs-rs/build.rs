@@ -26,4 +26,7 @@ fn main() {
     bindings
         .write_to_file(out_path.join("flecs-binding.rs"))
         .expect("Couldn't write bindings!");
+
+    println!("cargo:rerun-if-changed=build.rs");
+    println!("cargo:rerun-if-changed=../../ThirdParty/flecs/flecs.h");
 }

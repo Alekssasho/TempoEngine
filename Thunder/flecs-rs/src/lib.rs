@@ -46,6 +46,7 @@ macro_rules! register_component {
 pub enum Components {
     Transform(Tempest_Components_Transform),
     Rect(Tempest_Components_Rect),
+    StaticMesh(Tempest_Components_StaticMesh),
 }
 
 impl Components {
@@ -53,6 +54,7 @@ impl Components {
         match self {
             Components::Transform(d) => d as *const _ as *const c_void,
             Components::Rect(d) => d as *const _ as *const c_void,
+            Components::StaticMesh(d) => d as *const _ as *const c_void,
         }
     }
 }
@@ -68,6 +70,10 @@ fn get_component_name(component: &Components) -> String {
             .unwrap()
             .to_string_lossy()
             .into_owned(),
+        Components::StaticMesh(_) => CStr::from_bytes_with_nul(Tempest_Components_StaticMesh_Name)
+            .unwrap()
+            .to_string_lossy()
+            .into_owned(),
     }
 }
 
@@ -76,6 +82,7 @@ impl FlecsState {
         match component {
             Components::Transform(_) => self.component_entities[0],
             Components::Rect(_) => self.component_entities[1],
+            Components::StaticMesh(_) => self.component_entities[2],
         }
     }
 
@@ -97,6 +104,11 @@ impl FlecsState {
                 world,
                 Tempest_Components_Rect,
                 Tempest_Components_Rect_Name
+            ));
+            component_entities.push(register_component!(
+                world,
+                Tempest_Components_StaticMesh,
+                Tempest_Components_StaticMesh_Name
             ));
 
             FlecsState {

@@ -24,6 +24,7 @@ struct Rect
 	static constexpr const char* Name = "Rect";
 };
 
+// Static mesh component for rendering
 struct StaticMesh
 {
 	MeshHandle Mesh;

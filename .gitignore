@@ -421,3 +421,4 @@ MigrationBackup/
 *.tslb
 /.vscode/launch.json
 /.vscode/settings.json
+*.tgb

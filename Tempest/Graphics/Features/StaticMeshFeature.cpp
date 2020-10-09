@@ -1,6 +1,7 @@
 #include <Graphics/Features/StaticMeshFeature.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>
+#include <Graphics/FrameData.h>
 #include <World/World.h>
 #include <World/Components/Components.h>
 #include <World/EntityQueryImpl.h>

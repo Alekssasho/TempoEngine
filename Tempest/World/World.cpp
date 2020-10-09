@@ -55,16 +55,8 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 
 void World::LoadFromLevel(const char* data, size_t size)
 {
-	// TODO: return after fixes for meshes
-	//flecs::writer writer(m_EntityWorld);
-	//writer.write(data, size);
-
-	flecs::component<Components::Transform>(m_EntityWorld);
-	flecs::component<Components::StaticMesh>(m_EntityWorld);
-
-	flecs::entity rect1 = flecs::entity(m_EntityWorld)
-		.set<Components::Transform>({ glm::vec3(-0.75f, -0.75f, 0.0f) })
-		.set<Components::StaticMesh>({MeshHandle(0)});
+	flecs::writer writer(m_EntityWorld);
+	writer.write(data, size);
 
 	for (const auto& system : m_Systems)
 	{

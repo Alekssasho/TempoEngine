@@ -4,6 +4,8 @@
 
 #include <imgui.h>
 
+#include <Graphics/FrameData.h>
+
 #include <DataDefinitions/Level_generated.h>
 
 namespace Tempest
@@ -50,7 +52,17 @@ void EngineCore::InitializeWindowJob(uint32_t, void* data)
 	gEngine->m_JobSystem.WaitSingleJob("Level Load", Job::ThreadTag::Worker, gEngine->m_Options.LevelToLoad, [](const char* levelToLoad) {
 		const Definition::Level* level = gEngine->GetResourceLoader().LoadResource<Definition::Level>(levelToLoad);
 		const char* levelName = level->name()->c_str();
+		const char* geometryDatabase = level->geometry_database_file()->c_str();
 		FORMAT_LOG(Info, EngineCore, "Loading Level \"%s\".", levelName);
+
+		// Async Load the geometry database
+		Job::Counter geometryDatabaseCounter;
+		{
+			Job::JobDecl loadGeometryDatabase{ [](uint32_t, void* geometryDatabaseName) {
+				gEngine->GetRenderer().LoadGeometryDatabase((const char*)geometryDatabaseName);
+			}, (void*)geometryDatabase };
+			gEngine->m_JobSystem.RunJobs("Load Geometry Database", &loadGeometryDatabase, 1, &geometryDatabaseCounter);
+		}
 
 		// Runs async to loading the world
 		{
@@ -62,6 +74,9 @@ void EngineCore::InitializeWindowJob(uint32_t, void* data)
 
 		const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 		gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
+
+		// Wait for the loading of the geometry before initializing it
+		gEngine->m_JobSystem.WaitForCounter(&geometryDatabaseCounter, 0);
 		gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 	});
 

@@ -4,12 +4,14 @@
 #include <optick.h>
 
 #include <Graphics/RendererCommandList.h>
+#include <Graphics/FrameData.h>
 
 // TODO: Find a better way than just to include them
 #include <Graphics/Features/RectFeature.h>
 #include <Graphics/Features/StaticMeshFeature.h>
 
 #include <DataDefinitions/ShaderLibrary_generated.h>
+#include <DataDefinitions/GeometryDatabase_generated.h>
 
 namespace Tempest
 {
@@ -31,22 +33,6 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 	{
 		feature->Initialize(world, *this);
 	}
-
-	// TODO: Load geometry database from level
-	glm::vec3 vertexData[] = {
-		{0.0f, -0.5f, 0.0f},
-		{0.5f, 0.0f, 0.0f},
-		{-0.5f, 0.0f, 0.0f}
-	};
-
-	Dx12::BufferDescription bufferDescription;
-	bufferDescription.Size = 3 * sizeof(glm::vec3);
-	bufferDescription.Data = &vertexData;
-	m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);
-	// TODO: This should not be here
-	m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size));
-
-	Meshes.CreateStaticMesh({ m_VertexData, 0, 3 });
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -110,6 +96,27 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 	desc.PSCodeSize = psShader->code()->size();
 
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
+}
+
+void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
+{
+	const Definition::GeometryDatabase* geometryDatabase = gEngine->GetResourceLoader().LoadResource<Definition::GeometryDatabase>(geometryDatabaseName);
+
+	Dx12::BufferDescription bufferDescription;
+	bufferDescription.Size = geometryDatabase->vertex_buffer()->size();
+	bufferDescription.Data = geometryDatabase->vertex_buffer()->data();
+	m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);
+
+	// TODO: This should not be here
+	m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size));
+
+	for(const auto& meshMapping : *geometryDatabase->mappings())
+	{
+		// All static meshes should have the vertex buffer from the geometry database
+		Meshes.CreateStaticMesh(
+			MeshHandle(meshMapping->index()),
+			{ m_VertexData, meshMapping->vertex_offset(), meshMapping->vertex_count() });
+	}
 }
 }
 

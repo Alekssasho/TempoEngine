@@ -119,6 +119,9 @@
     <ClInclude Include="Graphics\Managers\MeshManager.h">
       <Filter>Graphics\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\FrameData.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />

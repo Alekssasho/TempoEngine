@@ -2,6 +2,7 @@
 
 #include <Defines.h>
 #include <EASTL/unique_ptr.h>
+#include <EASTL/vector.h>
 
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/RendererTypes.h>
@@ -27,6 +28,7 @@ public:
 	~Renderer();
 	bool CreateWindowSurface(WindowHandle handle);
 
+	void LoadGeometryDatabase(const char* geometryDatabaseName);
 	void InitializeAfterLevelLoad(const World& world);
 	FrameData GatherWorldData(const World& world);
 	void RenderFrame(const FrameData& data);

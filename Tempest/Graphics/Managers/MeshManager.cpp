@@ -1,3 +1,5 @@
+#include <cassert>
+#include <Logging.h>
 #include <Graphics/Managers/MeshManager.h>
 
 namespace Tempest
@@ -13,10 +15,13 @@ MeshManager::MeshData MeshManager::GetMeshData(MeshHandle handle) const
 	return {};
 }
 
-MeshHandle MeshManager::CreateStaticMesh(MeshData data)
+void MeshManager::CreateStaticMesh(MeshHandle handle, MeshManager::MeshData data)
 {
-	MeshHandle handle = m_Handle++;
+	if(m_StaticMeshes.find(handle) != m_StaticMeshes.end())
+	{
+		LOG(Error, StaticMeshes, "Trying to insert a static mesh which is already registered!");
+		assert(false);
+	}
 	m_StaticMeshes.emplace(eastl::make_pair(handle, data));
-	return handle;
 }
 }

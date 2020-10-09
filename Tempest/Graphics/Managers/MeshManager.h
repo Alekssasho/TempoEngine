@@ -16,8 +16,7 @@ public:
 	};
 
 	MeshData GetMeshData(MeshHandle handle) const;
-	// TODO: This should probably be loaded from geometry database and not have an API for creation
-	MeshHandle CreateStaticMesh(MeshData data);
+	void CreateStaticMesh(MeshHandle handle, MeshData data);
 private:
 	MeshHandle m_Handle = 0;
 	eastl::unordered_map<MeshHandle, MeshData> m_StaticMeshes;

@@ -1,41 +1,19 @@
-use std::collections::HashMap;
+use super::compiler::CompiledResources;
+use super::compiler::CompilerGraph;
+use super::compiler::ResourceBox;
 
 pub mod level;
 
 pub trait Resource {
-    fn get_id(&self) -> ResourceId;
+    fn extract_dependencies(
+        &mut self,
+        compiler: &CompilerGraph,
+    ) -> Vec<(ResourceId, Option<ResourceBox>)>;
 
-    fn fill_dependancies(&self, registry: &mut ResourceRegistry);
-
-    // TODO: Add additional members when we know how we are going to compile stuff
-    fn compile(&self);
+    fn compile(&self, compiled_dependencies: &CompiledResources) -> Vec<u8>;
 }
 
 #[derive(Hash, Eq, PartialEq, Copy, Clone)]
-pub struct ResourceId(u64);
+pub struct ResourceId(pub usize);
 
-pub struct ResourceRegistry {
-    resources: HashMap<ResourceId, Box<dyn Resource>>,
-}
-
-impl ResourceRegistry {
-    pub fn new() -> Self {
-        Self {
-            resources: HashMap::new(),
-        }
-    }
-
-    pub fn has_resource(&self, id: ResourceId) -> bool {
-        self.resources.contains_key(&id)
-    }
-
-    pub fn add_resource(&mut self, id: ResourceId, resource: Box<dyn Resource>) {
-        resource.fill_dependancies(self);
-        self.resources.insert(id, resource);
-    }
-
-    // TODO: this should have a topological sort
-    pub fn compile_dependancies(&self) -> Vec<&Box<dyn Resource>> {
-        self.resources.values().collect::<Vec<&Box<dyn Resource>>>()
-    }
-}
+pub const INVALID_RESOURCE: ResourceId = ResourceId(0);

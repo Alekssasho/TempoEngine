@@ -101,6 +101,11 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 {
 	const Definition::GeometryDatabase* geometryDatabase = gEngine->GetResourceLoader().LoadResource<Definition::GeometryDatabase>(geometryDatabaseName);
+	if(!geometryDatabase)
+	{
+		LOG(Warning, Renderer, "Geometry Database is Invalid!");
+		return;
+	}
 
 	Dx12::BufferDescription bufferDescription;
 	bufferDescription.Size = geometryDatabase->vertex_buffer()->size();

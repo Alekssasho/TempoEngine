@@ -5,6 +5,7 @@ use petgraph::graph::node_index;
 
 use super::resources::{Resource, ResourceId};
 
+#[derive(Clone)]
 pub struct CompilerOptions {
     pub output_folder: PathBuf,
 }
@@ -41,6 +42,7 @@ impl GraphNode {
 }
 
 pub struct CompiledResources<'a> {
+    pub options: CompilerOptions,
     data: &'a HashMap<ResourceId, GraphNode>,
 }
 
@@ -69,7 +71,7 @@ fn add_resource_dependacy(
 
 pub fn compile(resource: ResourceBox, options: CompilerOptions) -> Vec<u8> {
     let mut context = CompilerGraph {
-        options,
+        options: options.clone(),
         graph: daggy::Dag::<usize, ()>::new(),
         current_resource_id: Cell::new(0),
     };
@@ -126,7 +128,7 @@ pub fn compile(resource: ResourceBox, options: CompilerOptions) -> Vec<u8> {
         .expect("Compiler graph is not a DAG!");
 
     // Start compilation phase
-    let compiled_dependencies = CompiledResources { data: &resources };
+    let compiled_dependencies = CompiledResources { options, data: &resources };
 
     for node in sorted_nodes {
         let compiled_data = resources
@@ -141,6 +143,10 @@ pub fn compile(resource: ResourceBox, options: CompilerOptions) -> Vec<u8> {
             .replace(compiled_data);
     }
 
-    let result = resources.get(&root_index).unwrap().compiled_data.replace(vec![]);
+    let result = resources
+        .get(&root_index)
+        .unwrap()
+        .compiled_data
+        .replace(vec![]);
     result
 }

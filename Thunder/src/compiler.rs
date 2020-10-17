@@ -1,4 +1,4 @@
-use std::{cell::Cell, cell::Ref, cell::RefCell, collections::HashMap, path::PathBuf};
+use std::{cell::Cell, collections::HashMap, path::PathBuf};
 
 use daggy::Walker;
 use petgraph::graph::node_index;
@@ -29,26 +29,26 @@ pub type ResourceBox = Box<dyn Resource>;
 
 struct GraphNode {
     resource: ResourceBox,
-    compiled_data: RefCell<Vec<u8>>,
+    compiled_data: Vec<u8>,
 }
 
 impl GraphNode {
     fn new(resource: ResourceBox) -> Self {
         Self {
             resource,
-            compiled_data: RefCell::new(Vec::new()),
+            compiled_data: Vec::new(),
         }
     }
 }
 
-pub struct CompiledResources<'a> {
+pub struct CompiledResources {
     pub options: CompilerOptions,
-    data: &'a HashMap<ResourceId, GraphNode>,
+    data: HashMap<ResourceId, GraphNode>,
 }
 
-impl<'a> CompiledResources<'a> {
-    pub fn get_resource_data(&self, id: ResourceId) -> Ref<'_, Vec<u8>> {
-        self.data.get(&id).unwrap().compiled_data.borrow()
+impl CompiledResources {
+    pub fn get_resource_data(&self, id: ResourceId) -> &[u8] {
+        self.data.get(&id).unwrap().compiled_data.as_slice()
     }
 }
 
@@ -128,25 +128,32 @@ pub fn compile(resource: ResourceBox, options: CompilerOptions) -> Vec<u8> {
         .expect("Compiler graph is not a DAG!");
 
     // Start compilation phase
-    let compiled_dependencies = CompiledResources { options, data: &resources };
+    let mut compiled_dependencies = CompiledResources {
+        options,
+        data: resources,
+    };
 
     for node in sorted_nodes {
-        let compiled_data = resources
+        let compiled_data = compiled_dependencies
+            .data
             .get(&ResourceId(node.index()))
             .unwrap()
             .resource
             .compile(&compiled_dependencies);
-        resources
-            .get(&ResourceId(node.index()))
+        compiled_dependencies
+            .data
+            .get_mut(&ResourceId(node.index()))
             .unwrap()
-            .compiled_data
-            .replace(compiled_data);
+            .compiled_data = compiled_data;
     }
 
-    let result = resources
-        .get(&root_index)
-        .unwrap()
-        .compiled_data
-        .replace(vec![]);
+    let result = Vec::from(
+        compiled_dependencies
+            .data
+            .get(&root_index)
+            .unwrap()
+            .compiled_data
+            .as_slice(),
+    );
     result
 }

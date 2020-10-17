@@ -1,5 +1,8 @@
 use super::*;
-use data_definition_generated::{GEOMETRY_DATABASE_EXTENSION, GEOMETRY_DATABASE_IDENTIFIER, GeometryDatabase, GeometryDatabaseArgs, LEVEL_IDENTIFIER, Level, LevelArgs, MeshMapping, MeshMappingArgs};
+use data_definition_generated::{
+    GeometryDatabase, GeometryDatabaseArgs, Level, LevelArgs, MeshMapping, MeshMappingArgs,
+    GEOMETRY_DATABASE_EXTENSION, GEOMETRY_DATABASE_IDENTIFIER, LEVEL_IDENTIFIER,
+};
 use flecs_rs::*;
 use std::{ffi::CString, io::Write, path::PathBuf};
 pub struct LevelResource {
@@ -44,16 +47,17 @@ impl Resource for LevelResource {
 
         let level_name_offset = builder.create_string(&self.name);
 
-        let geometry_database_compiled_data = compiled_dependencies.get_resource_data(self.geometry_database_id);
+        let geometry_database_compiled_data =
+            compiled_dependencies.get_resource_data(self.geometry_database_id);
         let mut output_file_path = compiled_dependencies.options.output_folder.clone();
         output_file_path.push(&self.name);
         output_file_path.set_extension(GEOMETRY_DATABASE_EXTENSION);
-        write_resource_to_file(geometry_database_compiled_data.as_slice(), output_file_path);
+        write_resource_to_file(geometry_database_compiled_data, output_file_path);
         let geometry_database_name = format!("{}.{}", self.name, GEOMETRY_DATABASE_EXTENSION);
         let geometry_database_name_offset = builder.create_string(&geometry_database_name);
 
         let entities_data = compiled_dependencies.get_resource_data(self.entities);
-        let entities_vector_offset = builder.create_vector(entities_data.as_slice());
+        let entities_vector_offset = builder.create_vector(entities_data);
 
         let root_level = Level::create(
             &mut builder,

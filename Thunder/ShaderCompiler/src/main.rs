@@ -1,17 +1,64 @@
 use data_definition_generated::ShaderType;
+use hassle_rs::{Dxc, DxcIncludeHandler, utils::HassleError};
 use regex::Regex;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-fn compile_hlsl_source(source: &str, shader_type: ShaderType) -> Option<Vec<u8>> {
+fn compile_with_include_handler(
+    source_name: &str,
+    shader_text: &str,
+    entry_point: &str,
+    target_profile: &str,
+    args: &[&str],
+    defines: &[(&str, Option<&str>)],
+    include_handler: &IncludeHandler,
+) -> Result<Vec<u8>, HassleError> {
+    let dxc = Dxc::new()?;
+
+    let compiler = dxc.create_compiler()?;
+    let library = dxc.create_library()?;
+
+    let blob = library
+        .create_blob_with_encoding_from_str(shader_text)
+        .map_err(HassleError::Win32Error)?;
+
+    let result = compiler.compile(
+        &blob,
+        source_name,
+        entry_point,
+        target_profile,
+        args,
+        Some(Box::new(include_handler.clone())),
+        defines,
+    );
+
+    match result {
+        Err(result) => {
+            let error_blob = result
+                .0
+                .get_error_buffer()
+                .map_err(HassleError::Win32Error)?;
+            Err(HassleError::CompileError(
+                library.get_blob_as_string(&error_blob),
+            ))
+        }
+        Ok(result) => {
+            let result_blob = result.get_result().map_err(HassleError::Win32Error)?;
+
+            Ok(result_blob.to_vec())
+        }
+    }
+}
+
+fn compile_hlsl_source(source: &str, shader_type: ShaderType, include_handler: &IncludeHandler) -> Option<Vec<u8>> {
     let (target_profile, entry_point) = match shader_type {
         ShaderType::Vertex => ("vs_6_0", "VertexShaderMain"),
         ShaderType::Pixel => ("ps_6_0", "PixelShaderMain"),
     };
 
-    let result = hassle_rs::compile_hlsl("Shader", source, entry_point, target_profile, &[], &[]);
+    let result = compile_with_include_handler("Shader", source, entry_point, target_profile, &[], &[], include_handler);
 
     match result {
         Ok(code) => Some(code),
@@ -43,6 +90,27 @@ struct CommandLineOptions {
     output_folder: PathBuf,
 }
 
+#[derive(Clone)]
+struct IncludeHandler
+{
+    shader_folder: PathBuf,
+}
+
+impl DxcIncludeHandler for IncludeHandler {
+    fn load_source(&self, filename: String) -> Option<String> {
+        let mut fullpath = self.shader_folder.clone();
+        fullpath.push(filename);
+        match std::fs::File::open(fullpath) {
+            Ok(mut f) => {
+                let mut content = String::new();
+                f.read_to_string(&mut content).unwrap();
+                Some(content)
+            }
+            Err(_) => None,
+        }
+    }
+}
+
 fn main() {
     let opt = CommandLineOptions::from_args();
 
@@ -72,12 +140,14 @@ fn main() {
         })
         .collect();
 
+    let include_handler = IncludeHandler{shader_folder: opt.input_folder.clone()};
+
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
     let mut shaders_offsets = Vec::with_capacity(input_hlsl_strings.len() * 2);
     for (hlsl_string, hlsl_file) in input_hlsl_strings {
         for (regex, shader_type, shader_extension) in shader_type_regex.iter() {
             if regex.is_match(&hlsl_string) {
-                let compiled_shader = compile_hlsl_source(&hlsl_string, *shader_type);
+                let compiled_shader = compile_hlsl_source(&hlsl_string, *shader_type, &include_handler);
 
                 let name = format!(
                     "{}-{}",

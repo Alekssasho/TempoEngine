@@ -31,12 +31,23 @@ Backend::~Backend()
 #endif
 }
 
+struct SceneConstantData
+{
+	glm::mat4x4 ViewProjection;
+};
+
 void Backend::Initialize(WindowHandle handle)
 {
 	m_Device->Initialize(handle);
+
+	// Allocate scene constant buffers
+	for (int i = 0; i < std::size(m_SceneConstantBufferData); ++i)
+	{
+		m_SceneConstantBufferData[i] = Managers.Buffer.CreateBuffer({ BufferType::Constant, sizeof(SceneConstantData), nullptr });
+	}
 }
 
-void Backend::RenderFrame(const RendererCommandList& commandList)
+void Backend::RenderFrame(const Camera* view, const RendererCommandList& commandList)
 {
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
 
@@ -63,7 +74,8 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 
 	// TODO: This should probably be part of the pipeline itself
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
-	frame.CommandList->SetGraphicsRootDescriptorTable(1, m_Device->GetSRVHeapStart());
+	// TODO: better support for indices of root parameters
+	frame.CommandList->SetGraphicsRootDescriptorTable(2, m_Device->GetSRVHeapStart());
 	frame.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	PipelineStateHandle currentPipeline = sInvalidHandle;
@@ -78,36 +90,21 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 	};
 
 	// Prepare constant buffer data
+	SceneConstantData sceneData{ view->GetViewProjection() };
+	Managers.Buffer.MapWriteData(m_SceneConstantBufferData[frame.BackBufferIndex], &sceneData, sizeof(SceneConstantData));
+
 	// TODO: Make this not allocate every frame
 	if(commandList.m_ConstantBufferData.size() > 0)
 	{
-		m_ConstantBufferData[frame.BackBufferIndex].Reset();
+		if(m_GeometryConstantBufferData[frame.BackBufferIndex] != sInvalidHandle)
+		{
+			Managers.Buffer.DestroyBuffer(m_GeometryConstantBufferData[frame.BackBufferIndex]);
+		}
 
-		D3D12_HEAP_PROPERTIES props;
-		::ZeroMemory(&props, sizeof(D3D12_HEAP_PROPERTIES));
-		props.Type = D3D12_HEAP_TYPE_UPLOAD;
+		BufferHandle bufferHandle = Managers.Buffer.CreateBuffer({ BufferType::Constant, commandList.m_ConstantBufferData.size(), nullptr });
+		m_GeometryConstantBufferData[frame.BackBufferIndex] = bufferHandle;
 
-		D3D12_RESOURCE_DESC desc;
-		::ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
-		desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-		desc.Width = commandList.m_ConstantBufferData.size();
-		desc.Height = 1;
-		desc.DepthOrArraySize = 1;
-		desc.MipLevels = 1;
-		desc.Format = DXGI_FORMAT_UNKNOWN;
-		desc.SampleDesc.Count = 1;
-		desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-		desc.Flags = D3D12_RESOURCE_FLAG_NONE;
-		CHECK_SUCCESS(m_Device->GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&m_ConstantBufferData[frame.BackBufferIndex])));
-
-		D3D12_RANGE range;
-		::ZeroMemory(&range, sizeof(D3D12_RANGE)); // This will tell that we won't read the data from CPU
-		void* dataPointer = nullptr;
-		CHECK_SUCCESS(m_ConstantBufferData[frame.BackBufferIndex]->Map(0, &range, &dataPointer));
-
-		memcpy(dataPointer, commandList.m_ConstantBufferData.data(), commandList.m_ConstantBufferData.size());
-
-		m_ConstantBufferData[frame.BackBufferIndex]->Unmap(0, nullptr);
+		Managers.Buffer.MapWriteData(bufferHandle, commandList.m_ConstantBufferData.data(), commandList.m_ConstantBufferData.size());
 	}
 
 	const uint8_t* commandListIterator = commandList.m_DataBuffer.begin();
@@ -121,7 +118,8 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		{
 			const RendererCommandDrawInstanced* command = reinterpret_cast<const RendererCommandDrawInstanced*>(commandListIterator);
 			setPipeline(command->Pipeline);
-			frame.CommandList->SetGraphicsRootConstantBufferView(0, m_ConstantBufferData[frame.BackBufferIndex]->GetGPUVirtualAddress() + command->ParameterView.GeometryConstantDataOffset);
+			frame.CommandList->SetGraphicsRootConstantBufferView(0, Managers.Buffer.GetGPUAddress(m_SceneConstantBufferData[frame.BackBufferIndex]));
+			frame.CommandList->SetGraphicsRootConstantBufferView(1, Managers.Buffer.GetGPUAddress(m_GeometryConstantBufferData[frame.BackBufferIndex]) + command->ParameterView.GeometryConstantDataOffset);
 			frame.CommandList->DrawInstanced(command->VertexCountPerInstance, command->InstanceCount, 0, 0);
 
 			commandListIterator += sizeof(RendererCommandDrawInstanced);

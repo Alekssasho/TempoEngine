@@ -7,18 +7,25 @@ namespace Dx12
 PipelineManager::PipelineManager(Dx12Device& device)
 	: m_Device(device)
 {
+	// Scene Constant buffer
+	D3D12_ROOT_PARAMETER sceneConstants;
+	sceneConstants.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	sceneConstants.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	sceneConstants.Descriptor.ShaderRegister = 0;
+	sceneConstants.Descriptor.RegisterSpace = 0;
+
 	// Geometry constant buffer
 	D3D12_ROOT_PARAMETER geometryConstants;
 	geometryConstants.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	geometryConstants.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	geometryConstants.Descriptor.ShaderRegister = 0;
-	geometryConstants.Descriptor.RegisterSpace = 0;
+	geometryConstants.Descriptor.RegisterSpace = 1;
 
 	D3D12_DESCRIPTOR_RANGE geometryDescritorRange;
 	geometryDescritorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
 	geometryDescritorRange.NumDescriptors = UINT_MAX; // Unbounded
 	geometryDescritorRange.BaseShaderRegister = 0;
-	geometryDescritorRange.RegisterSpace = 0;
+	geometryDescritorRange.RegisterSpace = 1;
 	geometryDescritorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	
 	D3D12_ROOT_PARAMETER geometryDescriptorTable;
@@ -27,10 +34,15 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	geometryDescriptorTable.DescriptorTable.NumDescriptorRanges = 1;
 	geometryDescriptorTable.DescriptorTable.pDescriptorRanges = &geometryDescritorRange;
 
-	D3D12_ROOT_PARAMETER params[2] = { geometryConstants, geometryDescriptorTable };
+	D3D12_ROOT_PARAMETER params[] = {
+		sceneConstants,
+		geometryConstants,
+		geometryDescriptorTable
+	};
+
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
-	rootSignatureDesc.NumParameters = 2;
+	rootSignatureDesc.NumParameters = UINT(std::size(params));
 	rootSignatureDesc.pParameters = params;
 	rootSignatureDesc.NumStaticSamplers = 0;
 	rootSignatureDesc.pStaticSamplers = nullptr;

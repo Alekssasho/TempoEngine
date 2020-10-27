@@ -5,6 +5,7 @@
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/Renderer.h>
 #include <World/World.h>
+#include <World/Camera.h>
 #include <Resources/ResourceLoader.h>
 
 namespace Tempest
@@ -41,6 +42,11 @@ public:
 	{
 		return m_ResourceLoader;
 	}
+
+	EngineCoreOptions& GetOptions()
+	{
+		return m_Options;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;
@@ -51,6 +57,7 @@ private:
 	ResourceLoader m_ResourceLoader;
 	World m_World;
 	Renderer m_Renderer;
+	Camera m_Camera;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

@@ -49,7 +49,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 		MeshManager::MeshData meshData = renderer.Meshes.GetMeshData(mesh.Mesh);
 
 		GeometryConstants constants;
-		constants.vertexBufferIndex = meshData.VertexBuffer; // TODO: This should be an index of sort
+		constants.vertexBufferIndex = 0;// meshData.VertexBuffer; // TODO: This should be an index of sort
 		constants.vertexBufferOffset = meshData.OffsetInVertexBuffer;
 
 		RendererCommandDrawInstanced command;

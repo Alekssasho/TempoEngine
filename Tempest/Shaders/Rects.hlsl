@@ -12,7 +12,7 @@ struct GeometryConstants
 	float4 color;
 };
 
-ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space0);
+ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space1);
 
 float4 VertexShaderMain(VertexInput i) : SV_POSITION
 {

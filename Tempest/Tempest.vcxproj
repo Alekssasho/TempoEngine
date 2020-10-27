@@ -117,6 +117,7 @@
     <ClInclude Include="Platform\WindowsPlatform.h" />
     <ClInclude Include="Resources\ResourceLoader.h" />
     <ClInclude Include="Utils\Graph.h" />
+    <ClInclude Include="World\Camera.h" />
     <ClInclude Include="World\Components\Components.h" />
     <ClInclude Include="World\EntityQuery.h" />
     <ClInclude Include="World\EntityQueryImpl.h" />
@@ -150,6 +151,7 @@
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Platform\WindowsPlatform.cpp" />
     <ClCompile Include="Resources\ResourceLoader.cpp" />
+    <ClCompile Include="World\Camera.cpp" />
     <ClCompile Include="World\EntityQuery.cpp" />
     <ClCompile Include="World\Systems\BoidsSystem.cpp" />
     <ClCompile Include="World\TaskGraph\TaskGraph.cpp" />
@@ -159,19 +161,29 @@
     <Natvis Include="..\ThirdParty\EASTL\include\EASTL.natvis" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\UI.hlsl">
+    <FxCompile Include="Shaders\Common.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+    <FxCompile Include="Shaders\UI.hlsl">
       <FileType>Document</FileType>
-    </None>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Rects.hlsl">
+    <FxCompile Include="Shaders\Rects.hlsl">
       <FileType>Document</FileType>
-    </None>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\StaticMesh.hlsl">
+    <FxCompile Include="Shaders\StaticMesh.hlsl">
       <FileType>Document</FileType>
-    </None>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

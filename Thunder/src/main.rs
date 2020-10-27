@@ -71,12 +71,12 @@ fn prepare_entities() -> resources::level::EntitiesWorldResource {
         0,
     ));
 
-    entity_names.push(create_mesh_entity(
-        &flecs_state,
-        "Mesh 2",
-        glm::vec3(0.0, 0.0, 0.0),
-        1,
-    ));
+    // entity_names.push(create_mesh_entity(
+    //     &flecs_state,
+    //     "Mesh 2",
+    //     glm::vec3(0.0, 0.0, 0.0),
+    //     1,
+    // ));
 
     resources::level::EntitiesWorldResource {
         flecs_state,

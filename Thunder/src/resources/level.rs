@@ -113,9 +113,42 @@ impl Resource for GeometryDatabaseResource {
 
     fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-        let vertex_buffer = vec![
-            0.0f32, -0.5f32, 0.0f32, 0.5f32, 0.0f32, 0.0f32, -0.5f32, 0.0f32, 0.0f32, 1.0f32,
-            -0.5f32, 1.0f32, 0.5f32, 0.0f32, 1.0f32, -0.5f32, 0.0f32, 1.0f32,
+        let vertex_buffer: Vec<f32> = vec![
+            // Front face
+            -1.0, -1.0,  1.0,
+            1.0, -1.0,  1.0,
+            1.0,  1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            
+            // Back face
+            -1.0, -1.0, -1.0,
+            -1.0,  1.0, -1.0,
+            1.0,  1.0, -1.0,
+            1.0, -1.0, -1.0,
+            
+            // Top face
+            -1.0,  1.0, -1.0,
+            -1.0,  1.0,  1.0,
+            1.0,  1.0,  1.0,
+            1.0,  1.0, -1.0,
+            
+            // Bottom face
+            -1.0, -1.0, -1.0,
+            1.0, -1.0, -1.0,
+            1.0, -1.0,  1.0,
+            -1.0, -1.0,  1.0,
+            
+            // Right face
+            1.0, -1.0, -1.0,
+            1.0,  1.0, -1.0,
+            1.0,  1.0,  1.0,
+            1.0, -1.0,  1.0,
+            
+            // Left face
+            -1.0, -1.0, -1.0,
+            -1.0, -1.0,  1.0,
+            -1.0,  1.0,  1.0,
+            -1.0,  1.0, -1.0,
         ];
 
         let vertex_buffer_bytes = unsafe { (&vertex_buffer[..].align_to::<u8>()).1 };
@@ -126,17 +159,17 @@ impl Resource for GeometryDatabaseResource {
                 &MeshMappingArgs {
                     index: 0,
                     vertex_offset: 0,
-                    vertex_count: 3,
+                    vertex_count: 24,
                 },
             ),
-            MeshMapping::create(
-                &mut builder,
-                &MeshMappingArgs {
-                    index: 1,
-                    vertex_offset: 36,
-                    vertex_count: 3,
-                },
-            ),
+            // MeshMapping::create(
+            //     &mut builder,
+            //     &MeshMappingArgs {
+            //         index: 1,
+            //         vertex_offset: 36,
+            //         vertex_count: 3,
+            //     },
+            // ),
         ];
 
         let mappings_offset = builder.create_vector(&mappings[..]);

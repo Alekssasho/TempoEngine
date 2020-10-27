@@ -122,6 +122,9 @@
     <ClInclude Include="Graphics\FrameData.h">
       <Filter>Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="World\Camera.h">
+      <Filter>World</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -188,6 +191,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Managers\MeshManager.cpp">
       <Filter>Graphics\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="World\Camera.cpp">
+      <Filter>World</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -258,14 +264,17 @@
     </Natvis>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\Rects.hlsl">
+    <FxCompile Include="Shaders\Rects.hlsl">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\UI.hlsl">
+    </FxCompile>
+    <FxCompile Include="Shaders\StaticMesh.hlsl">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\StaticMesh.hlsl">
+    </FxCompile>
+    <FxCompile Include="Shaders\UI.hlsl">
       <Filter>Shaders</Filter>
-    </None>
+    </FxCompile>
+    <FxCompile Include="Shaders\Common.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

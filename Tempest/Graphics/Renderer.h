@@ -11,6 +11,7 @@
 namespace Tempest
 {
 class World;
+class Camera;
 struct RenderFeature;
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
 namespace Dx12 { class Backend; }
@@ -33,7 +34,8 @@ public:
 	FrameData GatherWorldData(const World& world);
 	void RenderFrame(const FrameData& data);
 
-	void RegisterView();
+	void RegisterView(Camera* camera);
+	void UnregisterView(Camera* camera);
 
 	// TODO: potentially this could be moved someplace else
 	PipelineStateHandle RequestPipelineState(const PipelineStateDescription& description);
@@ -43,6 +45,7 @@ public:
 private:
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
+	eastl::vector<Camera*> m_Views;
 
 	const Definition::ShaderLibrary* m_ShaderLibrary;
 

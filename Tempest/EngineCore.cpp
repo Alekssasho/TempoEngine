@@ -19,6 +19,10 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 	, m_ResourceLoader(options.ResourceFolder)
 {
 	gEngine = this;
+
+	m_Camera.SetCamera(glm::vec3(3.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_Camera.SetPerspectiveProjection(float(options.Width) / float(options.Height), glm::radians(90.0f), 0.1f, 1000.0f);
+	m_Renderer.RegisterView(&m_Camera);
 }
 
 EngineCore::~EngineCore()

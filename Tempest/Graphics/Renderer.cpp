@@ -12,6 +12,7 @@
 
 #include <DataDefinitions/ShaderLibrary_generated.h>
 #include <DataDefinitions/GeometryDatabase_generated.h>
+#include <World/Camera.h>
 
 namespace Tempest
 {
@@ -57,6 +58,9 @@ FrameData Renderer::GatherWorldData(const World& world)
 	OPTICK_EVENT();
 	// TODO: No need to return it.
 	FrameData frameData;
+	assert(m_Views.size() == 1);
+	frameData.ViewProjection = m_Views[0]->GetViewProjection();
+
 	for (const auto& feature : m_RenderFeatures)
 	{
 		feature->GatherData(world, frameData);
@@ -74,7 +78,18 @@ void Renderer::RenderFrame(const FrameData& data)
 		feature->GenerateCommands(data, commandList, *this);
 	}
 
-	m_Backend->RenderFrame(commandList);
+	// TODO: more views
+	m_Backend->RenderFrame(m_Views[0], commandList);
+}
+
+void Renderer::RegisterView(Camera* camera)
+{
+	m_Views.emplace_back(camera);
+}
+
+void Renderer::UnregisterView(Camera* camera)
+{
+	m_Views.erase(eastl::remove(m_Views.begin(), m_Views.end(), camera), m_Views.end());
 }
 
 PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescription& description)
@@ -108,6 +123,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 	}
 
 	Dx12::BufferDescription bufferDescription;
+	bufferDescription.Type = Dx12::BufferType::Vertex;
 	bufferDescription.Size = geometryDatabase->vertex_buffer()->size();
 	bufferDescription.Data = geometryDatabase->vertex_buffer()->data();
 	m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);

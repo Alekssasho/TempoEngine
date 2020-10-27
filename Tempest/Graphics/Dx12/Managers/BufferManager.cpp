@@ -9,11 +9,25 @@ BufferManager::BufferManager(Dx12Device& device)
 {
 }
 
-PipelineStateHandle BufferManager::CreateBuffer(const BufferDescription& description)
+static D3D12_HEAP_TYPE GetHeapTypeFromBufferType(BufferType type)
+{
+	switch (type)
+	{
+	case BufferType::Constant:
+		return D3D12_HEAP_TYPE_UPLOAD;
+	case BufferType::Vertex:
+		return D3D12_HEAP_TYPE_DEFAULT;
+	default: assert(false);
+	}
+
+	return D3D12_HEAP_TYPE_DEFAULT;
+}
+
+BufferHandle BufferManager::CreateBuffer(const BufferDescription& description)
 {
 	D3D12_HEAP_PROPERTIES props;
 	::ZeroMemory(&props, sizeof(D3D12_HEAP_PROPERTIES));
-	props.Type = D3D12_HEAP_TYPE_DEFAULT;
+	props.Type = GetHeapTypeFromBufferType(description.Type);
 
 	D3D12_RESOURCE_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
@@ -43,6 +57,31 @@ PipelineStateHandle BufferManager::CreateBuffer(const BufferDescription& descrip
 ID3D12Resource* BufferManager::GetBuffer(BufferHandle handle)
 {
 	return m_Buffers[handle].Get();
+}
+
+void BufferManager::MapWriteData(BufferHandle handle, const void* data, size_t size)
+{
+	ID3D12Resource* buffer = GetBuffer(handle);
+	assert(buffer);
+
+	D3D12_RANGE range;
+	::ZeroMemory(&range, sizeof(D3D12_RANGE)); // This will tell that we won't read the data from CPU
+	void* dataPointer = nullptr;
+	CHECK_SUCCESS(buffer->Map(0, &range, &dataPointer));
+
+	memcpy(dataPointer, data, size);
+
+	buffer->Unmap(0, nullptr);
+}
+
+void BufferManager::DestroyBuffer(BufferHandle handle)
+{
+	m_Buffers.erase(handle);
+}
+
+D3D12_GPU_VIRTUAL_ADDRESS BufferManager::GetGPUAddress(BufferHandle handle)
+{
+	return m_Buffers[handle]->GetGPUVirtualAddress();
 }
 
 ComPtr<ID3D12Resource> BufferManager::CreateStagingBuffer(size_t size)

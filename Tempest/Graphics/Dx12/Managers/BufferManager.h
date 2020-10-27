@@ -10,8 +10,15 @@ namespace Tempest
 namespace Dx12
 {
 
+enum class BufferType
+{
+	Constant,
+	Vertex
+};
+
 struct BufferDescription
 {
+	BufferType Type;
 	size_t Size;
 	const void* Data;
 };
@@ -21,9 +28,14 @@ class BufferManager
 public:
 	BufferManager(Dx12Device& device);
 
-	PipelineStateHandle CreateBuffer(const BufferDescription& description);
+	BufferHandle CreateBuffer(const BufferDescription& description);
 
 	ID3D12Resource* GetBuffer(BufferHandle handle);
+	void MapWriteData(BufferHandle handle, const void* data, size_t size);
+
+	void DestroyBuffer(BufferHandle handle);
+
+	D3D12_GPU_VIRTUAL_ADDRESS GetGPUAddress(BufferHandle handle);
 private:
 	ComPtr<ID3D12Resource> CreateStagingBuffer(size_t size);
 	void InitializeBufferData(ID3D12Resource* dst, size_t size, const void* data);

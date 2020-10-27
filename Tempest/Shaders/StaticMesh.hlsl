@@ -1,3 +1,5 @@
+#include "Common.hlsl"
+
 struct VertexLayout
 {
 	float3 Position;
@@ -18,17 +20,16 @@ struct GeometryConstants
 	uint vertexBufferOffset;
 };
 
-ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space0);
+ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space1);
 
-ByteAddressBuffer vertexBuffers[] : register(t0, space0);
+ByteAddressBuffer vertexBuffers[] : register(t0, space1);
 
 VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {
 	VertexLayout vertexData = vertexBuffers[g_Geometry.vertexBufferIndex].Load<VertexLayout>(g_Geometry.vertexBufferOffset + vertexId * sizeof(VertexLayout));
 
 	VertexOutput result;
-	//result.Position = mul(WorldViewProjectionMatrix, float4(input.Position, 1.0));
-	result.Position = float4(vertexData.Position, 1.0);
+	result.Position = mul(g_Scene.ViewProjection, float4(vertexData.Position, 1.0));
 
 	return result;
 }

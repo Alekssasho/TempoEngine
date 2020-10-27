@@ -31,6 +31,5 @@ struct StaticMesh
 
 	static constexpr const char* Name = "StaticMesh";
 };
-
 }
 }

@@ -64,6 +64,7 @@ private:
 	void InitializeWindow();
 
 	static void DoFrameJob(uint32_t, void*);
+	void UpdateInput();
 	void DoFrame();
 };
 

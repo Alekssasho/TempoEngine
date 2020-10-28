@@ -8,6 +8,7 @@ struct VertexLayout
 struct VertexOutput
 {
 	float4 Position : SV_POSITION;
+	float3 PositionWorld : POSITION;
 };
 
 struct GeometryConstants
@@ -30,12 +31,31 @@ VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 
 	VertexOutput result;
 	result.Position = mul(g_Scene.ViewProjection, float4(vertexData.Position, 1.0));
+	result.PositionWorld = vertexData.Position;
 
 	return result;
 }
 
+struct DirectionalLight
+{
+	float3 Direction;
+};
+
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
-	// Ugly magenta
-	return float4(1.0, 0.0, 1.0, 1.0);
+	DirectionalLight light;
+	light.Direction = normalize(float3(-1.0f, 0.0f, -1.0f));
+
+	float3 worldPositionDDX = ddx(input.PositionWorld);
+	float3 worldPositionDDY = ddy(input.PositionWorld);
+	float3 normal = normalize(cross(worldPositionDDX, worldPositionDDY));
+
+	float diffuseFactor = saturate(dot(normal, -light.Direction));
+
+	float ambientFactor = 0.1f;
+
+	float4 color = 1.0f;
+
+	return (color * diffuseFactor)
+			+ (color * ambientFactor);
 }

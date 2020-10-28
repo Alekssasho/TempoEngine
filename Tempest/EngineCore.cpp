@@ -20,7 +20,9 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 {
 	gEngine = this;
 
-	m_Camera.SetCamera(glm::vec3(3.0f, 0.0f, 3.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	m_Camera.Position = glm::vec3(3.0f, 0.0f, 3.0f);
+	m_Camera.Forward = glm::vec3(-0.7f, 0.0f, -0.7f);
+	m_Camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
 	m_Camera.SetPerspectiveProjection(float(options.Width) / float(options.Height), glm::radians(90.0f), 0.1f, 1000.0f);
 	m_Renderer.RegisterView(&m_Camera);
 }
@@ -105,6 +107,49 @@ void EngineCore::DoFrameJob(uint32_t, void* data)
 	gEngine->m_JobSystem.RunJobs("Frame", &frameJob, 1, nullptr);
 }
 
+void EngineCore::UpdateInput()
+{
+	// TODO: There should be some action system and direct input handling
+	// Update camera stuff
+	auto& io = ImGui::GetIO();
+
+	auto cameraForward = glm::normalize(m_Camera.Forward);
+	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
+	auto speed = 0.05f;
+
+	// Speed bump
+	if(io.KeyShift)
+	{
+		speed *= 4.0f;
+	}
+
+	// Change position of camera
+	if(io.KeysDown['W'])
+	{
+		m_Camera.Position += cameraForward * speed;
+	}
+	if(io.KeysDown['S'])
+	{
+		m_Camera.Position += -cameraForward * speed;
+	}
+	if (io.KeysDown['A'])
+	{
+		m_Camera.Position += -cameraRight * speed;
+	}
+	if (io.KeysDown['D'])
+	{
+		m_Camera.Position += cameraRight * speed;
+	}
+
+	// Change target
+	if(io.MouseDown[0])
+	{
+		m_Camera.Forward = glm::rotate(m_Camera.Forward, io.MouseDelta.x * 0.002f, m_Camera.Up);
+		m_Camera.Forward = glm::rotate(m_Camera.Forward, io.MouseDelta.y * 0.002f, cameraRight);
+		m_Camera.Up = glm::cross(m_Camera.Forward, cameraRight);
+	}
+}
+
 void EngineCore::InitializeWindow()
 {
 	m_Platform.SpawnWindow(m_Options.Width, m_Options.Height, "Tempest Engine", this);
@@ -127,6 +172,9 @@ void EngineCore::DoFrame()
 
 	// Test Code
 	//ImGui::ShowDemoWindow();
+
+	// Input Handling
+	UpdateInput();
 
 	// TODO: add real delta time
 	m_World.Update(1.0f / 60.0f, m_JobSystem);

@@ -1,5 +1,5 @@
 use data_definition_generated::ShaderType;
-use hassle_rs::{Dxc, DxcIncludeHandler, utils::HassleError};
+use hassle_rs::{utils::HassleError, Dxc, DxcIncludeHandler};
 use regex::Regex;
 use std::fs::File;
 use std::io::prelude::*;
@@ -52,13 +52,25 @@ fn compile_with_include_handler(
     }
 }
 
-fn compile_hlsl_source(source: &str, shader_type: ShaderType, include_handler: &IncludeHandler) -> Option<Vec<u8>> {
+fn compile_hlsl_source(
+    source: &str,
+    shader_type: ShaderType,
+    include_handler: &IncludeHandler,
+) -> Option<Vec<u8>> {
     let (target_profile, entry_point) = match shader_type {
         ShaderType::Vertex => ("vs_6_0", "VertexShaderMain"),
         ShaderType::Pixel => ("ps_6_0", "PixelShaderMain"),
     };
 
-    let result = compile_with_include_handler("Shader", source, entry_point, target_profile, &[], &[], include_handler);
+    let result = compile_with_include_handler(
+        "Shader",
+        source,
+        entry_point,
+        target_profile,
+        &[],
+        &[],
+        include_handler,
+    );
 
     match result {
         Ok(code) => Some(code),
@@ -91,8 +103,7 @@ struct CommandLineOptions {
 }
 
 #[derive(Clone)]
-struct IncludeHandler
-{
+struct IncludeHandler {
     shader_folder: PathBuf,
 }
 
@@ -140,14 +151,17 @@ fn main() {
         })
         .collect();
 
-    let include_handler = IncludeHandler{shader_folder: opt.input_folder.clone()};
+    let include_handler = IncludeHandler {
+        shader_folder: opt.input_folder.clone(),
+    };
 
     let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
     let mut shaders_offsets = Vec::with_capacity(input_hlsl_strings.len() * 2);
     for (hlsl_string, hlsl_file) in input_hlsl_strings {
         for (regex, shader_type, shader_extension) in shader_type_regex.iter() {
             if regex.is_match(&hlsl_string) {
-                let compiled_shader = compile_hlsl_source(&hlsl_string, *shader_type, &include_handler);
+                let compiled_shader =
+                    compile_hlsl_source(&hlsl_string, *shader_type, &include_handler);
 
                 let name = format!(
                     "{}-{}",

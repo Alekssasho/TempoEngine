@@ -1,6 +1,6 @@
 use std::path::Path;
 
-struct Scene {
+pub struct Scene {
     document: gltf::Document,
     buffers: Vec<gltf::buffer::Data>,
     _images: Vec<gltf::image::Data>,
@@ -55,7 +55,7 @@ impl Scene {
     }
 }
 
-struct Mesh<'a> {
+pub struct Mesh<'a> {
     scene: &'a Scene,
     mesh: gltf::Mesh<'a>,
 }
@@ -99,7 +99,7 @@ impl<'a> Mesh<'a> {
     }
 }
 
-fn main() -> Result<(), gltf::Error> {
+fn _main_test() -> Result<(), gltf::Error> {
     let scene = Scene::new("Duck.gltf").unwrap();
 
     let meshes = scene.gather_meshes();

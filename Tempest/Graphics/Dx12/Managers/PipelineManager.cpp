@@ -61,7 +61,7 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateD
 
 	desc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	desc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	desc.RasterizerState.FrontCounterClockwise = TRUE;
+	desc.RasterizerState.FrontCounterClockwise = FALSE;
 	desc.RasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
 	desc.RasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
 	desc.RasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
@@ -84,7 +84,7 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateD
 	for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
 		desc.BlendState.RenderTarget[i] = defaultRenderTargetBlendDesc;
 
-	desc.DepthStencilState.DepthEnable = FALSE;
+	desc.DepthStencilState.DepthEnable = TRUE;
 	desc.DepthStencilState.StencilEnable = FALSE;
 	desc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	desc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
@@ -93,7 +93,7 @@ D3D12_GRAPHICS_PIPELINE_STATE_DESC PipelineManager::PrepareDefaultPipelineStateD
 	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	desc.NumRenderTargets = 1;
 	desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+	desc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 	desc.SampleDesc.Count = 1;
 
 	return desc;

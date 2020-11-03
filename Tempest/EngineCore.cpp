@@ -20,7 +20,8 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 {
 	gEngine = this;
 
-	m_Camera.Position = glm::vec3(3.0f, 0.0f, 3.0f);
+	//m_Camera.Position = glm::vec3(3.0f, 0.0f, 3.0f);
+	m_Camera.Position = glm::vec3(263.0f, -260.0f, 263.0f);
 	m_Camera.Forward = glm::vec3(-0.7f, 0.0f, -0.7f);
 	m_Camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
 	m_Camera.SetPerspectiveProjection(float(options.Width) / float(options.Height), glm::radians(90.0f), 0.1f, 1000.0f);
@@ -115,7 +116,7 @@ void EngineCore::UpdateInput()
 
 	auto cameraForward = glm::normalize(m_Camera.Forward);
 	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
-	auto speed = 0.05f;
+	auto speed = 0.5f;
 
 	// Speed bump
 	if(io.KeyShift)

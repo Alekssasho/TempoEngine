@@ -53,9 +53,9 @@ void Backend::RenderFrame(const Camera* view, const RendererCommandList& command
 
 	const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
 	frame.CommandList->ClearRenderTargetView(frame.BackBufferRTV, clearColor, 0, nullptr);
+	frame.CommandList->ClearDepthStencilView(frame.BackBufferDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
-	// Draw Rects
-	frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, 0, nullptr);
+	frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, 0, &frame.BackBufferDSV);
 	D3D12_VIEWPORT viewport;
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
@@ -76,7 +76,7 @@ void Backend::RenderFrame(const Camera* view, const RendererCommandList& command
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
 	// TODO: better support for indices of root parameters
 	frame.CommandList->SetGraphicsRootDescriptorTable(2, m_Device->GetSRVHeapStart());
-	frame.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	frame.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	PipelineStateHandle currentPipeline = sInvalidHandle;
 	auto setPipeline = [&](PipelineStateHandle requestedHandle) {

@@ -4,6 +4,7 @@ use data_definition_generated::{
     GEOMETRY_DATABASE_EXTENSION, GEOMETRY_DATABASE_IDENTIFIER, LEVEL_IDENTIFIER,
 };
 use flecs_rs::*;
+use gltf_loader::*;
 use std::{ffi::CString, io::Write, path::PathBuf};
 pub struct LevelResource {
     name: String,
@@ -113,67 +114,48 @@ impl Resource for GeometryDatabaseResource {
 
     fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
         let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-        let vertex_buffer: Vec<f32> = vec![
-            // Front face
-            -1.0, -1.0,  1.0,
-            1.0, -1.0,  1.0,
-            1.0,  1.0,  1.0,
-            -1.0,  1.0,  1.0,
-            
-            // Back face
-            -1.0, -1.0, -1.0,
-            -1.0,  1.0, -1.0,
-            1.0,  1.0, -1.0,
-            1.0, -1.0, -1.0,
-            
-            // Top face
-            -1.0,  1.0, -1.0,
-            -1.0,  1.0,  1.0,
-            1.0,  1.0,  1.0,
-            1.0,  1.0, -1.0,
-            
-            // Bottom face
-            -1.0, -1.0, -1.0,
-            1.0, -1.0, -1.0,
-            1.0, -1.0,  1.0,
-            -1.0, -1.0,  1.0,
-            
-            // Right face
-            1.0, -1.0, -1.0,
-            1.0,  1.0, -1.0,
-            1.0,  1.0,  1.0,
-            1.0, -1.0,  1.0,
-            
-            // Left face
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0,  1.0,
-            -1.0,  1.0,  1.0,
-            -1.0,  1.0, -1.0,
-        ];
+        let mut vertex_buffer = Vec::<f32>::new();
+        //TODO: Add intput folder
+        let scene = Scene::new("Duck.gltf").unwrap();
+        let meshes = scene.gather_meshes();
 
-        let vertex_buffer_bytes = unsafe { (&vertex_buffer[..].align_to::<u8>()).1 };
-
-        let mappings = vec![
-            MeshMapping::create(
+        let mut mappings = Vec::new();
+        let mut current_offset = 0;
+        for (index, mesh) in meshes.iter().enumerate() {
+            assert!(mesh.primitive_count() == 1);
+            let indices_counts = mesh.indices_counts();
+            let position_counts = mesh.position_counts();
+            mappings.push(MeshMapping::create(
                 &mut builder,
                 &MeshMappingArgs {
-                    index: 0,
-                    vertex_offset: 0,
-                    vertex_count: 24,
+                    index: index as u32,
+                    vertex_offset: current_offset,
+                    vertex_count: indices_counts[0] as u32,
                 },
-            ),
-            // MeshMapping::create(
-            //     &mut builder,
-            //     &MeshMappingArgs {
-            //         index: 1,
-            //         vertex_offset: 36,
-            //         vertex_count: 3,
-            //     },
-            // ),
-        ];
+            ));
+
+            // Fill up the vertex buffer
+            let indices = if let Some(indices) = mesh.indices(0) {
+                indices
+            } else {
+                (0..position_counts[0] as u32).collect()
+            };
+
+            let positions = mesh.positions(0).unwrap();
+            vertex_buffer.reserve(indices.len() * 3);
+            for index in indices {
+                let position = positions[index as usize];
+                vertex_buffer.push(position[0]);
+                vertex_buffer.push(position[1]);
+                vertex_buffer.push(position[2]);
+            }
+
+            // 3 is 3 float and 4 is num bytes for float
+            current_offset += (indices_counts[0] as u32) * 3 * 4;
+        }
 
         let mappings_offset = builder.create_vector(&mappings[..]);
-
+        let vertex_buffer_bytes = unsafe { (&vertex_buffer[..].align_to::<u8>()).1 };
         let vertex_buffer_offset = builder.create_vector(vertex_buffer_bytes);
         let root_level = GeometryDatabase::create(
             &mut builder,

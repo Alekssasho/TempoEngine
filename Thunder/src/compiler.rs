@@ -8,6 +8,7 @@ use super::resources::{Resource, ResourceId};
 #[derive(Clone)]
 pub struct CompilerOptions {
     pub output_folder: PathBuf,
+    pub input_folder: PathBuf,
 }
 
 pub struct CompilerGraph {

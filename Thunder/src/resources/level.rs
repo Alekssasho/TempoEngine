@@ -1,44 +1,56 @@
 use super::*;
-use data_definition_generated::{
-    GeometryDatabase, GeometryDatabaseArgs, Level, LevelArgs, MeshMapping, MeshMappingArgs,
-    GEOMETRY_DATABASE_EXTENSION, GEOMETRY_DATABASE_IDENTIFIER, LEVEL_IDENTIFIER,
-};
+use crate::resources::geometry_database::GeometryDatabaseResource;
+use components::*;
+use data_definition_generated::{Level, LevelArgs, GEOMETRY_DATABASE_EXTENSION, LEVEL_IDENTIFIER};
 use flecs_rs::*;
-use gltf_loader::*;
-use std::{ffi::CString, io::Write, path::PathBuf};
+use gltf_loader::Scene;
+use std::{
+    ffi::CString,
+    io::Write,
+    path::PathBuf,
+    rc::{Rc, Weak},
+};
 pub struct LevelResource {
     name: String,
     entities: ResourceId,
-    // TODO: Remove me, when we start reading this from a file
-    prepare_entitites: fn() -> EntitiesWorldResource,
     geometry_database_id: ResourceId,
+    scene: Option<Rc<Scene>>,
 }
 
 impl LevelResource {
-    pub fn new(name: String, prepare_entitites: fn() -> EntitiesWorldResource) -> Self {
+    pub fn new(name: String) -> Self {
         Self {
             name,
             entities: INVALID_RESOURCE,
-            prepare_entitites,
             geometry_database_id: INVALID_RESOURCE,
+            scene: None,
         }
     }
 }
 
 impl Resource for LevelResource {
-    fn extract_dependencies(
-        &mut self,
+    fn extract_dependencies<'a>(
+        &'a mut self,
         compiler: &CompilerGraph,
     ) -> Vec<(ResourceId, Option<ResourceBox>)> {
-        self.entities = compiler.get_next_resource_id();
-        let entities_resource_data = (self.prepare_entitites)();
+        let mut level_scene_file_name = compiler.options.input_folder.clone();
+        level_scene_file_name.push(&self.name);
+        level_scene_file_name.set_extension("gltf");
+        self.scene = Some(Rc::new(Scene::new(level_scene_file_name)));
 
+        self.entities = compiler.get_next_resource_id();
         self.geometry_database_id = compiler.get_next_resource_id();
+
+        let entities_resource_data =
+            EntitiesWorldResource::new(Rc::downgrade(self.scene.as_ref().unwrap()));
+        let geometry_database_data =
+            GeometryDatabaseResource::new(Rc::downgrade(self.scene.as_ref().unwrap()));
+
         vec![
             (self.entities, Some(Box::new(entities_resource_data))),
             (
                 self.geometry_database_id,
-                Some(Box::new(GeometryDatabaseResource {})),
+                Some(Box::new(geometry_database_data)),
             ),
         ]
     }
@@ -75,8 +87,15 @@ impl Resource for LevelResource {
 }
 
 pub struct EntitiesWorldResource {
-    pub flecs_state: flecs_rs::FlecsState,
-    pub entities_names: Vec<(ecs_entity_t, CString)>,
+    scene: Weak<Scene>,
+}
+
+impl EntitiesWorldResource {
+    pub fn new(scene: Weak<Scene>) -> Self {
+        Self {
+            scene,
+        }
+    }
 }
 
 impl Resource for EntitiesWorldResource {
@@ -89,10 +108,72 @@ impl Resource for EntitiesWorldResource {
     }
 
     fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
+        let flecs_state = FlecsState::new();
+        let mut entity_names = Vec::new();
+        // //Old boids example
+        // for i in 0..50 {
+        //     let name = format!("Rect {}", i);
+        //     entity_names.push(create_entity(
+        //         &flecs_state,
+        //         &name,
+        //         glm::vec3(-0.8 + ((i as f32) * 0.03), -1.0, 0.0),
+        //         glm::vec4(0.0, 0.0, 1.0, 1.0),
+        //     ));
+        // }
+
+        // Mesh example
+        entity_names.push(create_mesh_entity(
+            &flecs_state,
+            "Mesh",
+            glm::vec3(0.0, 0.0, 0.0),
+            0,
+        ));
+
+        // entity_names.push(create_mesh_entity(
+        //     &flecs_state,
+        //     "Mesh 2",
+        //     glm::vec3(0.0, 0.0, 0.0),
+        //     1,
+        // ));
+
         let mut binary_data = Vec::<u8>::new();
-        self.flecs_state.write_to_buffer(&mut binary_data);
+        flecs_state.write_to_buffer(&mut binary_data);
         binary_data
     }
+}
+
+#[allow(dead_code)]
+fn create_entity(
+    state: &FlecsState,
+    name: &str,
+    pos: glm_vec3,
+    color: glm_vec4,
+) -> (ecs_entity_t, CString) {
+    let transform = Components::Transform(Tempest_Components_Transform {
+        Position: pos,
+        Heading: glm::vec3(1.0, 0.0, 0.0),
+    });
+    let rect = Components::Rect(Tempest_Components_Rect {
+        width: 0.02f32,
+        height: 0.02f32,
+        color,
+    });
+    state.create_entity(name, &[transform, rect])
+}
+
+#[allow(dead_code)]
+fn create_mesh_entity(
+    state: &FlecsState,
+    name: &str,
+    pos: glm_vec3,
+    mesh_index: u32,
+) -> (ecs_entity_t, CString) {
+    let transform = Components::Transform(Tempest_Components_Transform {
+        Position: pos,
+        Heading: glm::vec3(1.0, 0.0, 0.0),
+    });
+    let static_mesh = Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
+    state.create_entity(name, &[transform, static_mesh])
 }
 
 pub fn write_resource_to_file(data_to_write: &[u8], path: PathBuf) {
@@ -100,71 +181,4 @@ pub fn write_resource_to_file(data_to_write: &[u8], path: PathBuf) {
     output_file
         .write_all(data_to_write)
         .expect("Cannot write output data");
-}
-
-struct GeometryDatabaseResource {}
-
-impl Resource for GeometryDatabaseResource {
-    fn extract_dependencies(
-        &mut self,
-        _compiler: &CompilerGraph,
-    ) -> Vec<(ResourceId, Option<ResourceBox>)> {
-        vec![]
-    }
-
-    fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
-        let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-        let mut vertex_buffer = Vec::<f32>::new();
-        //TODO: Add intput folder
-        let scene = Scene::new("Duck.gltf").unwrap();
-        let meshes = scene.gather_meshes();
-
-        let mut mappings = Vec::new();
-        let mut current_offset = 0;
-        for (index, mesh) in meshes.iter().enumerate() {
-            assert!(mesh.primitive_count() == 1);
-            let indices_counts = mesh.indices_counts();
-            let position_counts = mesh.position_counts();
-            mappings.push(MeshMapping::create(
-                &mut builder,
-                &MeshMappingArgs {
-                    index: index as u32,
-                    vertex_offset: current_offset,
-                    vertex_count: indices_counts[0] as u32,
-                },
-            ));
-
-            // Fill up the vertex buffer
-            let indices = if let Some(indices) = mesh.indices(0) {
-                indices
-            } else {
-                (0..position_counts[0] as u32).collect()
-            };
-
-            let positions = mesh.positions(0).unwrap();
-            vertex_buffer.reserve(indices.len() * 3);
-            for index in indices {
-                let position = positions[index as usize];
-                vertex_buffer.push(position[0]);
-                vertex_buffer.push(position[1]);
-                vertex_buffer.push(position[2]);
-            }
-
-            // 3 is 3 float and 4 is num bytes for float
-            current_offset += (indices_counts[0] as u32) * 3 * 4;
-        }
-
-        let mappings_offset = builder.create_vector(&mappings[..]);
-        let vertex_buffer_bytes = unsafe { (&vertex_buffer[..].align_to::<u8>()).1 };
-        let vertex_buffer_offset = builder.create_vector(vertex_buffer_bytes);
-        let root_level = GeometryDatabase::create(
-            &mut builder,
-            &GeometryDatabaseArgs {
-                vertex_buffer: Some(vertex_buffer_offset),
-                mappings: Some(mappings_offset),
-            },
-        );
-        builder.finish(root_level, Some(GEOMETRY_DATABASE_IDENTIFIER));
-        Vec::from(builder.finished_data())
-    }
 }

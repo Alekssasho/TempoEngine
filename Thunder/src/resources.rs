@@ -2,6 +2,7 @@ use super::compiler::CompiledResources;
 use super::compiler::CompilerGraph;
 use super::compiler::ResourceBox;
 
+mod geometry_database;
 pub mod level;
 
 pub trait Resource {

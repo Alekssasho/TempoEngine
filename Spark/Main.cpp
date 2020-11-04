@@ -9,10 +9,9 @@ int main()
 	//options.NumWorkerThreads = 1;
 	options.Width = 1280;
 	options.Height = 720;
-	// TODO: Only resource for now are shaders so just point to that folder.
 	// Make real resource folder
 	options.ResourceFolder = "../../Tempest/Shaders/";
-	options.LevelToLoad = "Level_Rects.tlb";
+	options.LevelToLoad = "Level_Duck.tlb";
 
 	{
 		Tempest::EngineCore engine(options);

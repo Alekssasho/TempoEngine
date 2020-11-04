@@ -7,18 +7,18 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new<P>(path: P) -> Option<Self>
+    pub fn new<P>(path: P) -> Self
     where
         P: AsRef<Path>,
     {
         if let Ok((document, buffers, images)) = gltf::import(path) {
-            Some(Scene {
+            Scene {
                 document,
                 buffers,
                 _images: images,
-            })
+            }
         } else {
-            None
+            panic!("Cannot find scene file to load");
         }
     }
 
@@ -53,6 +53,18 @@ impl Scene {
             })
             .collect()
     }
+
+    pub fn gather_nodes(&self) -> Vec<Node> {
+        self.document
+            .nodes()
+            .map(|node| Node { scene: self, node })
+            .collect()
+    }
+}
+
+pub struct Node<'a> {
+    scene: &'a Scene,
+    node: gltf::Node<'a>,
 }
 
 pub struct Mesh<'a> {
@@ -100,7 +112,7 @@ impl<'a> Mesh<'a> {
 }
 
 fn _main_test() -> Result<(), gltf::Error> {
-    let scene = Scene::new("Duck.gltf").unwrap();
+    let scene = Scene::new("Duck.gltf");
 
     let meshes = scene.gather_meshes();
     for mesh in &meshes {

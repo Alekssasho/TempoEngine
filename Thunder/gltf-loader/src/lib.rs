@@ -67,12 +67,22 @@ pub struct Node<'a> {
     node: gltf::Node<'a>,
 }
 
+impl<'a> Node<'a> {
+    pub fn mesh_index(&self) -> Option<u32> {
+        self.node.mesh().and_then(|mesh| Some(mesh.index() as u32))
+    }
+}
+
 pub struct Mesh<'a> {
     scene: &'a Scene,
     mesh: gltf::Mesh<'a>,
 }
 
 impl<'a> Mesh<'a> {
+    pub fn index(&self) -> u32 {
+        self.mesh.index() as u32
+    }
+
     pub fn primitive_count(&self) -> usize {
         self.mesh.primitives().count()
     }

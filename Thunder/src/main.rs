@@ -5,7 +5,7 @@ use structopt::StructOpt;
 mod compiler;
 mod resources;
 
-use resources::level::{write_resource_to_file, LevelResource};
+use resources::{level::LevelResource, write_resource_to_file};
 
 #[derive(StructOpt)]
 struct CommandLineOptions {

@@ -36,14 +36,14 @@ impl Resource for GeometryDatabaseResource {
 
         let mut mappings = Vec::new();
         let mut current_offset = 0;
-        for (index, mesh) in meshes.iter().enumerate() {
+        for mesh in meshes {
             assert!(mesh.primitive_count() == 1);
             let indices_counts = mesh.indices_counts();
             let position_counts = mesh.position_counts();
             mappings.push(MeshMapping::create(
                 &mut builder,
                 &MeshMappingArgs {
-                    index: index as u32,
+                    index: mesh.index(),
                     vertex_offset: current_offset,
                     vertex_count: indices_counts[0] as u32,
                 },

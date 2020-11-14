@@ -27,7 +27,7 @@ struct FrameData
 	// TODO: This should not be part of this. This class should only be a memory pool in which every feature writes arbirtrary data.
 	struct StaticMeshData {
 		MeshHandle Mesh;
-		//glm::mat4x4 Transform;
+		glm::mat4x4 Transform;
 	};
 	eastl::vector<StaticMeshData> StaticMeshes;
 };

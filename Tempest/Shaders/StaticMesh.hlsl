@@ -13,8 +13,7 @@ struct VertexOutput
 
 struct GeometryConstants
 {
-	//float4x4 WorldViewProjectionMatrix;
-	//float4x4 WorldMatrix;
+	float4x4 WorldMatrix;
 
 	// TOOD: This could be lower bits and packed with something else probably
 	uint vertexBufferIndex;
@@ -29,8 +28,9 @@ VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {
 	VertexLayout vertexData = vertexBuffers[g_Geometry.vertexBufferIndex].Load<VertexLayout>(g_Geometry.vertexBufferOffset + vertexId * sizeof(VertexLayout));
 
+	float4x4 mvp = mul(g_Scene.ViewProjection, g_Geometry.WorldMatrix);
 	VertexOutput result;
-	result.Position = mul(g_Scene.ViewProjection, float4(vertexData.Position, 1.0));
+	result.Position = mul(mvp, float4(vertexData.Position, 1.0));
 	result.PositionWorld = vertexData.Position;
 
 	return result;
@@ -44,7 +44,7 @@ struct DirectionalLight
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
 	DirectionalLight light;
-	light.Direction = normalize(float3(-1.0f, 0.0f, -1.0f));
+	light.Direction = normalize(float3(-1.0f, -1.0f, 0.0f));
 
 	float3 worldPositionDDX = ddx(input.PositionWorld);
 	float3 worldPositionDDY = ddy(input.PositionWorld);
@@ -52,7 +52,7 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 
 	float diffuseFactor = saturate(dot(normal, -light.Direction));
 
-	float ambientFactor = 0.1f;
+	float ambientFactor = 0.15f;
 
 	float4 color = 1.0f;
 

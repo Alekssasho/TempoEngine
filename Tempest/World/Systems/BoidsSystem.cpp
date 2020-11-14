@@ -69,13 +69,13 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 			Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
-				cellAlignment[index] = transform[i].Heading; // InitialCellAlignmentJob
-				cellSeparation[index] = transform[i].Position; // Initial Cell Separation Job
+				cellAlignment[index] = transform[i].Matrix[2]; // InitialCellAlignmentJob
+				cellSeparation[index] = transform[i].Matrix[3]; // Initial Cell Separation Job
 				cellCount[index] = 1; // Initial Cell Count Job
 
 				// Populate Hash Map Job
 				std::hash<glm::ivec3> hasher;
-				int hash = int(hasher(glm::ivec3(glm::floor((transform[i].Position * 100.0f) / settings.cellRadius))));
+				int hash = int(hasher(glm::ivec3(glm::floor((transform[i].Matrix[3] * 100.0f) / settings.cellRadius))));
 				//TODO: this is not thread safe
 				hashMap->insert(eastl::make_pair(hash, index));
 
@@ -114,8 +114,8 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 			for (int i = 0; i < iter->count; ++i)
 			{
 				// temporarily storing the values for code readability
-				glm::vec3 forward = transform[i].Heading;
-				glm::vec3 currentPosition = transform[i].Position;
+				glm::vec3 forward = transform[i].Matrix[2];
+				glm::vec3 currentPosition = transform[i].Matrix[3];
 				int cellIndex = cellIndices[index];
 				int neighborCount = cellCount[cellIndex];
 				glm::vec3 alignment = cellAlignment[cellIndex];
@@ -146,8 +146,8 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 				// updates using the newly calculated heading direction
 				glm::vec3 nextHeading = normalize_safe(forward + deltaTime * (targetForward - forward));
 
-				transform[i].Heading = nextHeading;
-				transform[i].Position = transform[i].Position + (nextHeading * settings.MoveSpeed * deltaTime);
+				transform[i].Matrix[2].xyz() = nextHeading;
+				transform[i].Matrix[3].xyz() = transform[i].Matrix[3].xyz() + (nextHeading * settings.MoveSpeed * deltaTime);
 
 				++index;
 			}

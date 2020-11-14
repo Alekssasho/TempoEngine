@@ -1,6 +1,14 @@
 #pragma once
 
+#ifndef BINDGEN
 #include <Math/Math.h>
+#else
+namespace glm
+{
+struct vec4{};
+struct mat4x4{};
+}
+#endif
 #include <Graphics/RendererTypes.h>
 
 namespace Tempest
@@ -9,9 +17,8 @@ namespace Components
 {
 struct Transform
 {
-	// TODO: Change to transforms
-	glm::vec3 Position;
-	glm::vec3 Heading;
+	// TODO: Consider decomposed variant
+	glm::mat4x4 Matrix;
 	static constexpr const char* Name = "Transform";
 };
 

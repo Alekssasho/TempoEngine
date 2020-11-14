@@ -71,6 +71,27 @@ impl<'a> Node<'a> {
     pub fn mesh_index(&self) -> Option<u32> {
         self.node.mesh().and_then(|mesh| Some(mesh.index() as u32))
     }
+
+    pub fn name(&self) -> String {
+        self.node
+            .name()
+            .map_or(Some(format!("Node-{}", self.node.index())), |str| {
+                Some(String::from(str))
+            })
+            .unwrap()
+    }
+
+    pub fn transform(&self) -> nalgebra_glm::Mat4x4 {
+        let matrix = self
+            .node
+            .transform()
+            .matrix()
+            .iter()
+            .flat_map(|array| array.iter())
+            .cloned()
+            .collect::<Vec<f32>>();
+        nalgebra_glm::make_mat4x4(&matrix)
+    }
 }
 
 pub struct Mesh<'a> {

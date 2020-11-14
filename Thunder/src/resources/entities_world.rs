@@ -20,13 +20,10 @@ impl EntitiesWorldResource {
     fn create_mesh_entity(
         state: &FlecsState,
         name: &str,
-        pos: glm_vec3,
+        transform: glm_mat4x4,
         mesh_index: u32,
     ) -> (ecs_entity_t, CString) {
-        let transform = Components::Transform(Tempest_Components_Transform {
-            Position: pos,
-            Heading: glm::vec3(1.0, 0.0, 0.0),
-        });
+        let transform = Components::Transform(Tempest_Components_Transform { Matrix: transform });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
         state.create_entity(name, &[transform, static_mesh])
@@ -53,8 +50,8 @@ impl Resource for EntitiesWorldResource {
             if let Some(mesh_index) = node.mesh_index() {
                 entity_names.push(EntitiesWorldResource::create_mesh_entity(
                     &flecs_state,
-                    "Mesh",
-                    glm::vec3(0.0, 0.0, 0.0),
+                    &node.name(),
+                    node.transform(),
                     mesh_index,
                 ));
             }

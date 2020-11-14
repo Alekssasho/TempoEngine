@@ -30,7 +30,8 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 		for (int row = 0; row < iter.count; ++row)
 		{
 			frameData.StaticMeshes.push_back(FrameData::StaticMeshData{
-				staticMeshes[row].Mesh
+				staticMeshes[row].Mesh,
+				transforms[row].Matrix
 			});
 		}
 	}
@@ -40,6 +41,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 {
 	struct GeometryConstants
 	{
+		glm::mat4x4 worldMatrix;
 		uint32_t vertexBufferIndex;
 		uint32_t vertexBufferOffset;
 	};
@@ -49,6 +51,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 		MeshManager::MeshData meshData = renderer.Meshes.GetMeshData(mesh.Mesh);
 
 		GeometryConstants constants;
+		constants.worldMatrix = mesh.Transform;
 		constants.vertexBufferIndex = 0;// meshData.VertexBuffer; // TODO: This should be an index of sort
 		constants.vertexBufferOffset = meshData.OffsetInVertexBuffer;
 

@@ -29,9 +29,10 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 		Components::Rect* rects = ecs_column(&iter, Components::Rect, 2);
 		for (int row = 0; row < iter.count; ++row)
 		{
+			glm::vec3 position(transforms[row].Matrix[3]);
 			frameData.Rects.push_back(RectData{
-				transforms[row].Position.x,
-				transforms[row].Position.y,
+				position.x,
+				position.y,
 				rects[row].width,
 				rects[row].height,
 				rects[row].color,

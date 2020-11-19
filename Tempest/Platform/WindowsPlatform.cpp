@@ -153,6 +153,22 @@ void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* t
 		io.KeyMap[ImGuiKey_Z] = 'Z';
 	}
 
+	// Enable virtual terminal support for colored output
+	auto enableVirtualTerminal = [](HANDLE handle)
+	{
+		DWORD dwMode = 0;
+		if (!GetConsoleMode(handle, &dwMode))
+			return;
+
+		dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+		SetConsoleMode(handle, dwMode);
+	};
+
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	enableVirtualTerminal(hOut);
+	HANDLE hErr = GetStdHandle(STD_ERROR_HANDLE);
+	enableVirtualTerminal(hErr);
+
 	m_Handle = WindowHandle(hWnd);
 }
 

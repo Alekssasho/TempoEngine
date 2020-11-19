@@ -1,5 +1,6 @@
 #include <World/EntityQuery.h>
 
+#define FLECS_NO_CPP
 #include <flecs.h>
 
 namespace Tempest

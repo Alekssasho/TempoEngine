@@ -1,6 +1,7 @@
 #pragma once
 
 // TODO: check if we can remove this from this header
+#define FLECS_NO_CPP
 #include <flecs.h>
 
 #include <EASTL/vector.h>
@@ -16,13 +17,14 @@ class World
 {
 public:
 	World();
+	~World();
 
 	void Update(float deltaTime, Job::JobSystem& jobSystem);
 
 	void LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better
 //private:
-	flecs::world m_EntityWorld;
+	ecs_world_t* m_EntityWorld = nullptr;
 	eastl::vector<eastl::unique_ptr<System>> m_Systems;
 };
 }

@@ -7645,7 +7645,7 @@ public:
      * @param col The column id.
      */
     int32_t column_size(int32_t col) const {
-        return ecs_column_size(m_iter, col);
+        return int32_t(ecs_column_size(m_iter, col));
     }    
 
     /** Return delta_time of current frame. 
@@ -11584,7 +11584,7 @@ public:
     }
 
     std::size_t read(char *buffer, std::size_t size) {
-        return ecs_reader_read(buffer, size, &m_reader);
+        return ecs_reader_read(buffer, ecs_size_t(size), &m_reader);
     }
 
 private:
@@ -11603,7 +11603,7 @@ public:
     }
 
     int write(const char *buffer, std::size_t size) {
-        return ecs_writer_write(buffer, size, &m_writer);
+        return ecs_writer_write(buffer, ecs_size_t(size), &m_writer);
     }
 
 private:

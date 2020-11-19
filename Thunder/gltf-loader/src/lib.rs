@@ -90,7 +90,11 @@ impl<'a> Node<'a> {
             .flat_map(|array| array.iter())
             .cloned()
             .collect::<Vec<f32>>();
-        nalgebra_glm::make_mat4x4(&matrix)
+        let result = nalgebra_glm::make_mat4x4(&matrix);
+        // GLTF uses right handed system, and we need to invert X to align
+        // properly with what Tempest is using
+        let handness_transform = nalgebra_glm::scale(&nalgebra_glm::identity(), &nalgebra_glm::vec3(-1.0, 1.0, 1.0));
+        handness_transform * result
     }
 }
 

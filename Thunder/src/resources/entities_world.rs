@@ -26,7 +26,7 @@ impl EntitiesWorldResource {
         let transform = Components::Transform(Tempest_Components_Transform { Matrix: transform });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
-        state.create_entity(name, &[transform, static_mesh])
+        state.create_entity(name, &[transform, static_mesh], &[Tags::Boids])
     }
 }
 
@@ -53,6 +53,7 @@ impl Resource for EntitiesWorldResource {
                     &node.name(),
                     node.transform(),
                     mesh_index,
+                    //node.is_boids()
                 ));
             }
         }

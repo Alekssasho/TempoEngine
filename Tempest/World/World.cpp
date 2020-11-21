@@ -48,6 +48,7 @@ World::World()
 
 World::~World()
 {
+	m_Systems.clear();
 	ecs_fini(m_EntityWorld);
 	m_EntityWorld = nullptr;
 }

@@ -13,6 +13,7 @@ fn cstr(input: &str) -> CString {
 pub struct FlecsState {
     world: *mut ecs_world_t,
     component_entities: Vec<(ecs_entity_t, u64)>,
+    _tag_entities: Vec<ecs_entity_t>,
 }
 
 impl Drop for FlecsState {
@@ -21,6 +22,10 @@ impl Drop for FlecsState {
             ecs_fini(self.world);
         }
     }
+}
+
+unsafe fn register_tag(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
+    ecs_new_entity(world, 0, CStr::from_bytes_with_nul(name).unwrap().as_ptr(), std::ptr::null())
 }
 
 #[optick_attr::profile]
@@ -47,6 +52,10 @@ pub enum Components {
     Transform(Tempest_Components_Transform),
     Rect(Tempest_Components_Rect),
     StaticMesh(Tempest_Components_StaticMesh),
+}
+
+pub enum Tags {
+    Boids,
 }
 
 impl Components {
@@ -77,6 +86,15 @@ fn get_component_name(component: &Components) -> String {
     }
 }
 
+fn get_tag_name(tag: &Tags) -> String {
+    match tag {
+        Tags::Boids => CStr::from_bytes_with_nul(Tempest_Tags_Boids_Name)
+            .unwrap()
+            .to_string_lossy()
+            .into_owned(),
+    }
+}
+
 impl FlecsState {
     fn get_component_entity(&self, component: &Components) -> (ecs_entity_t, u64) {
         match component {
@@ -94,6 +112,7 @@ impl FlecsState {
                 ecs_init()
             };
             let mut component_entities = Vec::new();
+            let mut tag_entities = Vec::new();
             // Register all components
             component_entities.push(register_component!(
                 world,
@@ -111,20 +130,29 @@ impl FlecsState {
                 Tempest_Components_StaticMesh_Name
             ));
 
+            // Register all tags
+            tag_entities.push(register_tag(world, Tempest_Tags_Boids_Name));
+
             FlecsState {
                 world,
                 component_entities,
+                _tag_entities: tag_entities
             }
         }
     }
 
     #[optick_attr::profile]
-    pub fn create_entity(&self, name: &str, components: &[Components]) -> (ecs_entity_t, CString) {
+    pub fn create_entity(&self, name: &str, components: &[Components], tags: &[Tags]) -> (ecs_entity_t, CString) {
         unsafe {
             let mut component_signature = String::new();
+            // TODO: we can ignore this and just set the data and the tags directly without the need to build a component signature
             for component in components {
                 component_signature.push_str(&get_component_name(&component));
-                component_signature.push(',')
+                component_signature.push(',');
+            }
+            for tag in tags {
+                component_signature.push_str(&get_tag_name(&tag));
+                component_signature.push(',');
             }
             component_signature.pop();
 

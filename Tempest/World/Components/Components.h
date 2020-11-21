@@ -39,4 +39,12 @@ struct StaticMesh
 	static constexpr const char* Name = "StaticMesh";
 };
 }
+
+namespace Tags
+{
+struct Boids
+{
+	static constexpr const char* Name = "Boids";
+};
+}
 }

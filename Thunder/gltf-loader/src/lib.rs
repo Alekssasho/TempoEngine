@@ -57,13 +57,13 @@ impl Scene {
     pub fn gather_nodes(&self) -> Vec<Node> {
         self.document
             .nodes()
-            .map(|node| Node { scene: self, node })
+            .map(|node| Node { _scene: self, node })
             .collect()
     }
 }
 
 pub struct Node<'a> {
-    scene: &'a Scene,
+    _scene: &'a Scene,
     node: gltf::Node<'a>,
 }
 

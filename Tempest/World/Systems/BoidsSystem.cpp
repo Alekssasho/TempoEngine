@@ -24,7 +24,7 @@ glm::vec3 normalize_safe(glm::vec3 input)
 
 void BoidsSystem::PrepareQueries(World& world)
 {
-	m_Query.Init<Components::Transform>(world);
+	m_Query.Init<Components::Transform, Tags::Boids>(world);
 }
 
 void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
@@ -146,8 +146,8 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 				// updates using the newly calculated heading direction
 				glm::vec3 nextHeading = normalize_safe(forward + deltaTime * (targetForward - forward));
 
-				transform[i].Matrix[2].xyz() = nextHeading;
-				transform[i].Matrix[3].xyz() = transform[i].Matrix[3].xyz() + (nextHeading * settings.MoveSpeed * deltaTime);
+				transform[i].Matrix[2] = glm::vec4(nextHeading, 0.0f);
+				transform[i].Matrix[3] = transform[i].Matrix[3] + glm::vec4((nextHeading * settings.MoveSpeed * deltaTime), 0.0f);
 
 				++index;
 			}

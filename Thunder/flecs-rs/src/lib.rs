@@ -3,6 +3,9 @@
 #![allow(non_snake_case)]
 include!(concat!(env!("OUT_DIR"), "/flecs-binding.rs"));
 
+#[macro_use]
+extern crate flecs_rs_derive;
+
 use components::*;
 use std::ffi::{c_void, CStr, CString};
 
@@ -13,7 +16,7 @@ fn cstr(input: &str) -> CString {
 pub struct FlecsState {
     world: *mut ecs_world_t,
     component_entities: Vec<(ecs_entity_t, u64)>,
-    _tag_entities: Vec<ecs_entity_t>,
+    tag_entities: Vec<ecs_entity_t>,
 }
 
 impl Drop for FlecsState {
@@ -25,82 +28,68 @@ impl Drop for FlecsState {
 }
 
 unsafe fn register_tag(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
-    ecs_new_entity(world, 0, CStr::from_bytes_with_nul(name).unwrap().as_ptr(), std::ptr::null())
-}
-
-#[optick_attr::profile]
-unsafe fn register_component_func<T>(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
-    ecs_new_component(
+    ecs_new_entity(
         world,
         0,
         CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
-        std::mem::size_of::<T>() as u64,
-        std::mem::align_of::<T>() as u64,
+        std::ptr::null(),
     )
 }
 
-macro_rules! register_component {
-    ($world:ident, $component_type:ty, $component_name:ident) => {
+fn register_component<T>(world: *mut ecs_world_t, name: &[u8]) -> (ecs_entity_t, u64) {
+    unsafe {
         (
-            register_component_func::<$component_type>($world, $component_name),
-            std::mem::size_of::<$component_type>() as u64,
+            ecs_new_component(
+                world,
+                0,
+                CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
+                std::mem::size_of::<T>() as u64,
+                std::mem::align_of::<T>() as u64,
+            ),
+            std::mem::size_of::<T>() as u64,
         )
-    };
+    }
 }
 
+#[derive(Components)]
 pub enum Components {
     Transform(Tempest_Components_Transform),
     Rect(Tempest_Components_Rect),
     StaticMesh(Tempest_Components_StaticMesh),
 }
 
+impl Components {
+    fn register_components(world: *mut ecs_world_t) -> Vec<(ecs_entity_t, u64)> {
+        let mut component_entities = Vec::new();
+        // Register all components
+        component_entities.push(register_component::<Tempest_Components_Transform>(
+            world,
+            Tempest_Components_Transform_Name,
+        ));
+        component_entities.push(register_component::<Tempest_Components_Rect>(
+            world,
+            Tempest_Components_Rect_Name,
+        ));
+        component_entities.push(register_component::<Tempest_Components_StaticMesh>(
+            world,
+            Tempest_Components_StaticMesh_Name,
+        ));
+        component_entities
+    }
+}
+
 pub enum Tags {
     Boids,
 }
 
-impl Components {
-    fn get_pointer(&self) -> *const c_void {
-        match self {
-            Components::Transform(d) => d as *const _ as *const c_void,
-            Components::Rect(d) => d as *const _ as *const c_void,
-            Components::StaticMesh(d) => d as *const _ as *const c_void,
-        }
-    }
-}
-
-#[optick_attr::profile]
-fn get_component_name(component: &Components) -> String {
-    match component {
-        Components::Transform(_) => CStr::from_bytes_with_nul(Tempest_Components_Transform_Name)
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-        Components::Rect(_) => CStr::from_bytes_with_nul(Tempest_Components_Rect_Name)
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-        Components::StaticMesh(_) => CStr::from_bytes_with_nul(Tempest_Components_StaticMesh_Name)
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-    }
-}
-
-fn get_tag_name(tag: &Tags) -> String {
-    match tag {
-        Tags::Boids => CStr::from_bytes_with_nul(Tempest_Tags_Boids_Name)
-            .unwrap()
-            .to_string_lossy()
-            .into_owned(),
-    }
-}
-
 impl FlecsState {
     fn get_component_entity(&self, component: &Components) -> (ecs_entity_t, u64) {
-        match component {
-            Components::Transform(_) => self.component_entities[0],
-            Components::Rect(_) => self.component_entities[1],
-            Components::StaticMesh(_) => self.component_entities[2],
+        self.component_entities[component.get_index()]
+    }
+
+    fn get_tag_entity(&self, tag: &Tags) -> ecs_entity_t {
+        match tag {
+            Tags::Boids => self.tag_entities[0],
         }
     }
 
@@ -111,24 +100,9 @@ impl FlecsState {
                 optick::event!("ecs_init");
                 ecs_init()
             };
-            let mut component_entities = Vec::new();
             let mut tag_entities = Vec::new();
             // Register all components
-            component_entities.push(register_component!(
-                world,
-                Tempest_Components_Transform,
-                Tempest_Components_Transform_Name
-            ));
-            component_entities.push(register_component!(
-                world,
-                Tempest_Components_Rect,
-                Tempest_Components_Rect_Name
-            ));
-            component_entities.push(register_component!(
-                world,
-                Tempest_Components_StaticMesh,
-                Tempest_Components_StaticMesh_Name
-            ));
+            let component_entities = Components::register_components(world);
 
             // Register all tags
             tag_entities.push(register_tag(world, Tempest_Tags_Boids_Name));
@@ -136,34 +110,21 @@ impl FlecsState {
             FlecsState {
                 world,
                 component_entities,
-                _tag_entities: tag_entities
+                tag_entities,
             }
         }
     }
 
     #[optick_attr::profile]
-    pub fn create_entity(&self, name: &str, components: &[Components], tags: &[Tags]) -> (ecs_entity_t, CString) {
+    pub fn create_entity(
+        &self,
+        name: &str,
+        components: &[Components],
+        tags: &[Tags],
+    ) -> (ecs_entity_t, CString) {
         unsafe {
-            let mut component_signature = String::new();
-            // TODO: we can ignore this and just set the data and the tags directly without the need to build a component signature
-            for component in components {
-                component_signature.push_str(&get_component_name(&component));
-                component_signature.push(',');
-            }
-            for tag in tags {
-                component_signature.push_str(&get_tag_name(&tag));
-                component_signature.push(',');
-            }
-            component_signature.pop();
-
             let name = cstr(name);
-            let component_signature_cstr = cstr(&component_signature);
-            let entity = ecs_new_entity(
-                self.world,
-                0,
-                name.as_ptr(),
-                component_signature_cstr.as_ptr(),
-            );
+            let entity = ecs_new_entity(self.world, 0, name.as_ptr(), std::ptr::null());
 
             for component in components {
                 let (component_entity, size) = self.get_component_entity(&component);
@@ -174,6 +135,10 @@ impl FlecsState {
                     size,
                     component.get_pointer(),
                 );
+            }
+
+            for tag in tags {
+                ecs_add_entity(self.world, entity, self.get_tag_entity(&tag));
             }
 
             (entity, name)

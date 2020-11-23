@@ -6,5 +6,6 @@ members = [
     "Thunder/DataDefinitionGenerated",
     "Thunder/Components",
     "Thunder/flecs-rs",
+    "Thunder/flecs-rs-derive",
     "Thunder/gltf-loader",
 ]

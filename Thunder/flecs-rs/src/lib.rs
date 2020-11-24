@@ -27,13 +27,15 @@ impl Drop for FlecsState {
     }
 }
 
-unsafe fn register_tag(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
-    ecs_new_entity(
-        world,
-        0,
-        CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
-        std::ptr::null(),
-    )
+fn register_tag(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
+    unsafe {
+        ecs_new_entity(
+            world,
+            0,
+            CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
+            std::ptr::null(),
+        )
+    }
 }
 
 fn register_component<T>(world: *mut ecs_world_t, name: &[u8]) -> (ecs_entity_t, u64) {
@@ -58,26 +60,7 @@ pub enum Components {
     StaticMesh(Tempest_Components_StaticMesh),
 }
 
-impl Components {
-    fn register_components(world: *mut ecs_world_t) -> Vec<(ecs_entity_t, u64)> {
-        let mut component_entities = Vec::new();
-        // Register all components
-        component_entities.push(register_component::<Tempest_Components_Transform>(
-            world,
-            Tempest_Components_Transform_Name,
-        ));
-        component_entities.push(register_component::<Tempest_Components_Rect>(
-            world,
-            Tempest_Components_Rect_Name,
-        ));
-        component_entities.push(register_component::<Tempest_Components_StaticMesh>(
-            world,
-            Tempest_Components_StaticMesh_Name,
-        ));
-        component_entities
-    }
-}
-
+#[derive(Tags)]
 pub enum Tags {
     Boids,
 }
@@ -88,9 +71,7 @@ impl FlecsState {
     }
 
     fn get_tag_entity(&self, tag: &Tags) -> ecs_entity_t {
-        match tag {
-            Tags::Boids => self.tag_entities[0],
-        }
+        self.tag_entities[tag.get_index()]
     }
 
     #[optick_attr::profile]
@@ -100,12 +81,9 @@ impl FlecsState {
                 optick::event!("ecs_init");
                 ecs_init()
             };
-            let mut tag_entities = Vec::new();
-            // Register all components
+            // Register all components / tags
             let component_entities = Components::register_components(world);
-
-            // Register all tags
-            tag_entities.push(register_tag(world, Tempest_Tags_Boids_Name));
+            let tag_entities = Tags::register_tags(world);
 
             FlecsState {
                 world,

@@ -1,0 +1,3 @@
+[submodule "ThirdParty/gltf"]
+	path = ThirdParty/gltf
+	url = https://github.com/Alekssasho/gltf

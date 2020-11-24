@@ -1,5 +1,4 @@
 [workspace]
-
 members = [
     "Thunder",
     "Thunder/ShaderCompiler",
@@ -9,3 +8,6 @@ members = [
     "Thunder/flecs-rs-derive",
     "Thunder/gltf-loader",
 ]
+
+[patch.crates-io]
+gltf = {path = "ThirdParty/gltf" }

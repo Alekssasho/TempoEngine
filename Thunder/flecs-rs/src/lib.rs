@@ -99,10 +99,21 @@ impl FlecsState {
         name: &str,
         components: &[Components],
         tags: &[Tags],
-    ) -> (ecs_entity_t, CString) {
+    ) -> ecs_entity_t {
         unsafe {
             let name = cstr(name);
-            let entity = ecs_new_entity(self.world, 0, name.as_ptr(), std::ptr::null());
+            let sep = cstr(".");
+            let entity = ecs_new_entity(self.world, 0, std::ptr::null(), std::ptr::null());
+
+            // Set name
+            ecs_add_path_w_sep(
+                self.world,
+                entity,
+                0,
+                name.as_ptr(),
+                sep.as_ptr(),
+                std::ptr::null(),
+            );
 
             for component in components {
                 let (component_entity, size) = self.get_component_entity(&component);
@@ -119,7 +130,7 @@ impl FlecsState {
                 ecs_add_entity(self.world, entity, self.get_tag_entity(&tag));
             }
 
-            (entity, name)
+            entity
         }
     }
 

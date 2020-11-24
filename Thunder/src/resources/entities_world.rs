@@ -1,4 +1,4 @@
-use std::{ffi::CString, rc::Weak};
+use std::rc::Weak;
 
 use components::*;
 use flecs_rs::*;
@@ -22,7 +22,7 @@ impl EntitiesWorldResource {
         name: &str,
         transform: glm_mat4x4,
         mesh_index: u32,
-    ) -> (ecs_entity_t, CString) {
+    ) -> ecs_entity_t {
         let transform = Components::Transform(Tempest_Components_Transform { Matrix: transform });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
@@ -41,20 +41,19 @@ impl Resource for EntitiesWorldResource {
 
     fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
         let flecs_state = FlecsState::new();
-        let mut entity_names = Vec::new();
 
         let scene = self.scene.upgrade().unwrap();
         let nodes = scene.gather_nodes();
 
         for node in nodes {
             if let Some(mesh_index) = node.mesh_index() {
-                entity_names.push(EntitiesWorldResource::create_mesh_entity(
+                EntitiesWorldResource::create_mesh_entity(
                     &flecs_state,
                     &node.name(),
                     node.transform(),
                     mesh_index,
                     //node.is_boids()
-                ));
+                );
             }
         }
 

@@ -30,7 +30,7 @@ fn gather_components(input: &syn::DeriveInput) -> Vec<Component> {
 
             result.push(Component {
                 name: variant.ident.clone(),
-                data_name
+                data_name,
             });
         }
         result
@@ -68,7 +68,9 @@ fn generate_components_get_index_function(
     }
 }
 
-fn generate_components_register_components_function(components: &Vec<Component>) -> proc_macro2::TokenStream {
+fn generate_components_register_components_function(
+    components: &Vec<Component>,
+) -> proc_macro2::TokenStream {
     let component_ident = components.iter().map(|comp| &comp.data_name);
     let component_name_ident = components.iter().map(|comp| comp.get_data_name_string());
     quote! {
@@ -90,8 +92,10 @@ pub fn derive_components(input: TokenStream) -> TokenStream {
     let components = gather_components(&parsed_input);
     let get_component_data_function =
         generate_components_get_component_data_function(&components_enum_name, &components);
-    let get_index_function = generate_components_get_index_function(&components_enum_name, &components);
-    let register_components_function = generate_components_register_components_function(&components);
+    let get_index_function =
+        generate_components_get_index_function(&components_enum_name, &components);
+    let register_components_function =
+        generate_components_register_components_function(&components);
     let result = quote! {
         impl #components_enum_name {
             #get_component_data_function

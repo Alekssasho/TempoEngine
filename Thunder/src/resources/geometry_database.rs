@@ -1,7 +1,7 @@
 use std::rc::Weak;
 
 use data_definition_generated::{
-    GeometryDatabase, GeometryDatabaseArgs, MeshMapping, MeshMappingArgs,
+    flatbuffers, GeometryDatabase, GeometryDatabaseArgs, MeshMapping, MeshMappingArgs,
     GEOMETRY_DATABASE_IDENTIFIER,
 };
 use gltf_loader::Scene;

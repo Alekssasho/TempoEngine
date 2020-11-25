@@ -2,10 +2,13 @@ use super::*;
 use crate::resources::entities_world::EntitiesWorldResource;
 use crate::resources::geometry_database::GeometryDatabaseResource;
 
-use data_definition_generated::{Level, LevelArgs, GEOMETRY_DATABASE_EXTENSION, LEVEL_IDENTIFIER};
+use data_definition_generated::{
+    flatbuffer_derive::FlatbufferSerialize, GEOMETRY_DATABASE_EXTENSION,
+};
 
 use gltf_loader::Scene;
 use std::rc::Rc;
+
 pub struct LevelResource {
     name: String,
     entities: ResourceId,
@@ -52,32 +55,30 @@ impl Resource for LevelResource {
     }
 
     fn compile(&self, compiled_dependencies: &CompiledResources) -> Vec<u8> {
-        let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-
-        let level_name_offset = builder.create_string(&self.name);
-
+        // Write geometry database to a file
         let geometry_database_compiled_data =
             compiled_dependencies.get_resource_data(self.geometry_database_id);
         let mut output_file_path = compiled_dependencies.options.output_folder.clone();
         output_file_path.push(&self.name);
         output_file_path.set_extension(GEOMETRY_DATABASE_EXTENSION);
         write_resource_to_file(geometry_database_compiled_data, output_file_path);
+
+        // Generate geometry database filename to write in resource
         let geometry_database_name = format!("{}.{}", self.name, GEOMETRY_DATABASE_EXTENSION);
-        let geometry_database_name_offset = builder.create_string(&geometry_database_name);
 
-        let entities_data = compiled_dependencies.get_resource_data(self.entities);
-        let entities_vector_offset = builder.create_vector(entities_data);
+        #[derive(FlatbufferSerialize)]
+        struct Level<'a> {
+            name: &'a str,
+            entities: &'a [u8],
+            geometry_database_file: &'a str,
+        }
 
-        let root_level = Level::create(
-            &mut builder,
-            &LevelArgs {
-                name: Some(level_name_offset),
-                entities: Some(entities_vector_offset),
-                geometry_database_file: Some(geometry_database_name_offset),
-            },
-        );
-        builder.finish(root_level, Some(LEVEL_IDENTIFIER));
+        let level = Level {
+            name: &self.name,
+            entities: compiled_dependencies.get_resource_data(self.entities),
+            geometry_database_file: &geometry_database_name,
+        };
 
-        Vec::from(builder.finished_data())
+        level.serialize_root()
     }
 }

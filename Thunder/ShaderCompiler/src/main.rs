@@ -1,4 +1,4 @@
-use data_definition_generated::ShaderType;
+use data_definition_generated::{flatbuffers, ShaderType};
 use hassle_rs::{utils::HassleError, Dxc, DxcIncludeHandler};
 use regex::Regex;
 use std::fs::File;

@@ -22,11 +22,13 @@ impl EntitiesWorldResource {
         name: &str,
         transform: glm_mat4x4,
         mesh_index: u32,
+        is_boids: bool,
     ) -> ecs_entity_t {
         let transform = Components::Transform(Tempest_Components_Transform { Matrix: transform });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
-        state.create_entity(name, &[transform, static_mesh], &[Tags::Boids])
+        let tags = if is_boids { vec![Tags::Boids] } else { vec![] };
+        state.create_entity(name, &[transform, static_mesh], &tags)
     }
 }
 
@@ -52,7 +54,7 @@ impl Resource for EntitiesWorldResource {
                     &node.name(),
                     node.transform(),
                     mesh_index,
-                    //node.is_boids()
+                    node.is_boids(),
                 );
             }
         }

@@ -103,7 +103,7 @@ impl FlecsState {
         unsafe {
             let name = cstr(name);
             let sep = cstr(".");
-            let entity = ecs_new_entity(self.world, 0, std::ptr::null(), std::ptr::null());
+            let entity = ecs_new_w_type(self.world, std::ptr::null());
 
             // Set name
             ecs_add_path_w_sep(

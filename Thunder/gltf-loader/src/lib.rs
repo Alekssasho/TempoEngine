@@ -99,6 +99,10 @@ impl<'a> Node<'a> {
         );
         handness_transform * result
     }
+
+    pub fn is_boids(&self) -> bool {
+        self.node.boids().unwrap_or(false)
+    }
 }
 
 pub struct Mesh<'a> {

@@ -16,6 +16,7 @@ pub trait CreateInBuilder<'fbb> {
     ) -> flatbuffers::WIPOffset<Self::Item>;
 }
 
+// String and &str impl
 impl<'fbb> CreateInBuilder<'fbb> for &str {
     type Item = &'fbb str;
 
@@ -27,6 +28,18 @@ impl<'fbb> CreateInBuilder<'fbb> for &str {
     }
 }
 
+impl<'fbb> CreateInBuilder<'fbb> for String {
+    type Item = &'fbb str;
+
+    fn create_in_builder(
+        &self,
+        builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
+    ) -> flatbuffers::WIPOffset<Self::Item> {
+        builder.create_string(&self)
+    }
+}
+
+// Special case for Vec & slice of u8
 impl<'fbb> CreateInBuilder<'fbb> for &[u8] {
     type Item = flatbuffers::Vector<'fbb, u8>;
 
@@ -35,6 +48,57 @@ impl<'fbb> CreateInBuilder<'fbb> for &[u8] {
         builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
     ) -> flatbuffers::WIPOffset<Self::Item> {
         builder.create_vector(self)
+    }
+}
+
+impl<'fbb> CreateInBuilder<'fbb> for Vec<u8> {
+    type Item = flatbuffers::Vector<'fbb, u8>;
+
+    fn create_in_builder(
+        &self,
+        builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
+    ) -> flatbuffers::WIPOffset<Self::Item> {
+        builder.create_vector(self.as_slice())
+    }
+}
+
+// Generic Vec<T> & [T] where T is another CreateInBuilder struct
+// TODO: Possible this can be just a single implementation somehow
+impl<'fbb, T> CreateInBuilder<'fbb> for &[T]
+where
+    T: CreateInBuilder<'fbb>,
+    T: 'fbb,
+{
+    type Item = flatbuffers::Vector<'fbb, flatbuffers::ForwardsUOffset<T::Item>>;
+
+    fn create_in_builder(
+        &self,
+        builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
+    ) -> flatbuffers::WIPOffset<Self::Item> {
+        let offsets = self
+            .iter()
+            .map(|value| value.create_in_builder(builder))
+            .collect::<Vec<flatbuffers::WIPOffset<T::Item>>>();
+        builder.create_vector(offsets.as_slice())
+    }
+}
+
+impl<'fbb, T> CreateInBuilder<'fbb> for Vec<T>
+where
+    T: CreateInBuilder<'fbb>,
+    T: 'fbb,
+{
+    type Item = flatbuffers::Vector<'fbb, flatbuffers::ForwardsUOffset<T::Item>>;
+
+    fn create_in_builder(
+        &self,
+        builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
+    ) -> flatbuffers::WIPOffset<Self::Item> {
+        let offsets = self
+            .iter()
+            .map(|value| value.create_in_builder(builder))
+            .collect::<Vec<flatbuffers::WIPOffset<T::Item>>>();
+        builder.create_vector(offsets.as_slice())
     }
 }
 

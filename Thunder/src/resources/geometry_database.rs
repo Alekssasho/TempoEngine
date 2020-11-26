@@ -1,9 +1,6 @@
 use std::rc::Weak;
 
-use data_definition_generated::{
-    flatbuffers, GeometryDatabase, GeometryDatabaseArgs, MeshMapping, MeshMappingArgs,
-    GEOMETRY_DATABASE_IDENTIFIER,
-};
+use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, FlatbufferSerializeRoot};
 use gltf_loader::Scene;
 
 use crate::compiler::{CompiledResources, CompilerGraph, ResourceBox};
@@ -19,6 +16,19 @@ impl GeometryDatabaseResource {
         Self { scene }
     }
 }
+#[derive(FlatbufferSerialize)]
+struct MeshMapping {
+    index: u32,
+    vertex_offset: u32,
+    vertex_count: u32,
+}
+#[derive(FlatbufferSerializeRoot)]
+struct GeometryDatabase<'a> {
+    #[offset]
+    vertex_buffer: &'a [u8],
+    #[offset]
+    mappings: Vec<MeshMapping>,
+}
 
 impl Resource for GeometryDatabaseResource {
     fn extract_dependencies(
@@ -29,7 +39,6 @@ impl Resource for GeometryDatabaseResource {
     }
 
     fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
-        let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
         let mut vertex_buffer = Vec::<f32>::new();
         let scene = self.scene.upgrade().unwrap();
         let meshes = scene.gather_meshes();
@@ -40,14 +49,11 @@ impl Resource for GeometryDatabaseResource {
             assert!(mesh.primitive_count() == 1);
             let indices_counts = mesh.indices_counts();
             let position_counts = mesh.position_counts();
-            mappings.push(MeshMapping::create(
-                &mut builder,
-                &MeshMappingArgs {
-                    index: mesh.index(),
-                    vertex_offset: current_offset,
-                    vertex_count: indices_counts[0] as u32,
-                },
-            ));
+            mappings.push(MeshMapping {
+                index: mesh.index(),
+                vertex_offset: current_offset,
+                vertex_count: indices_counts[0] as u32,
+            });
 
             // Fill up the vertex buffer
             let indices = if let Some(indices) = mesh.indices(0) {
@@ -69,17 +75,13 @@ impl Resource for GeometryDatabaseResource {
             current_offset += (indices_counts[0] as u32) * 3 * 4;
         }
 
-        let mappings_offset = builder.create_vector(&mappings[..]);
         let vertex_buffer_bytes = unsafe { (&vertex_buffer[..].align_to::<u8>()).1 };
-        let vertex_buffer_offset = builder.create_vector(vertex_buffer_bytes);
-        let root_level = GeometryDatabase::create(
-            &mut builder,
-            &GeometryDatabaseArgs {
-                vertex_buffer: Some(vertex_buffer_offset),
-                mappings: Some(mappings_offset),
-            },
-        );
-        builder.finish(root_level, Some(GEOMETRY_DATABASE_IDENTIFIER));
-        Vec::from(builder.finished_data())
+
+        let database = GeometryDatabase {
+            vertex_buffer: vertex_buffer_bytes,
+            mappings,
+        };
+
+        database.serialize_root()
     }
 }

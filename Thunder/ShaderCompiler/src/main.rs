@@ -1,4 +1,5 @@
-use data_definition_generated::{flatbuffers, ShaderType};
+use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, FlatbufferSerializeRoot};
+use data_definition_generated::ShaderType;
 use hassle_rs::{utils::HassleError, Dxc, DxcIncludeHandler};
 use regex::Regex;
 use std::fs::File;
@@ -121,6 +122,20 @@ impl DxcIncludeHandler for IncludeHandler {
         }
     }
 }
+#[derive(FlatbufferSerialize)]
+struct Shader {
+    #[offset]
+    name: String,
+    type_: ShaderType,
+    #[offset]
+    code: Vec<u8>,
+}
+
+#[derive(FlatbufferSerializeRoot)]
+struct ShaderLibrary {
+    #[offset]
+    shaders: Vec<Shader>,
+}
 
 fn main() {
     let opt = CommandLineOptions::from_args();
@@ -155,8 +170,7 @@ fn main() {
         shader_folder: opt.input_folder.clone(),
     };
 
-    let mut builder = flatbuffers::FlatBufferBuilder::new_with_capacity(1024 * 1024);
-    let mut shaders_offsets = Vec::with_capacity(input_hlsl_strings.len() * 2);
+    let mut shaders = Vec::with_capacity(input_hlsl_strings.len() * 2);
     for (hlsl_string, hlsl_file) in input_hlsl_strings {
         for (regex, shader_type, shader_extension) in shader_type_regex.iter() {
             if regex.is_match(&hlsl_string) {
@@ -168,37 +182,20 @@ fn main() {
                     hlsl_file.file_stem().unwrap().to_str().unwrap(),
                     shader_extension
                 );
-                let name_offset = builder.create_string(&name);
-                let code_offset = builder.create_vector(&compiled_shader.unwrap()[..]);
-                let shader_offset = data_definition_generated::Shader::create(
-                    &mut builder,
-                    &data_definition_generated::ShaderArgs {
-                        name: Some(name_offset),
-                        type_: *shader_type,
-                        code: Some(code_offset),
-                    },
-                );
-                shaders_offsets.push((name, shader_offset));
+
+                shaders.push(Shader {
+                    name,
+                    type_: *shader_type,
+                    code: compiled_shader.unwrap(),
+                });
             }
         }
     }
     // We are reading the vectors with binary searches from engine side, so we need a sort here.
-    shaders_offsets.sort_unstable_by(|lhs, rhs| lhs.0.cmp(&rhs.0));
-    let sorted_vector: Vec<flatbuffers::WIPOffset<data_definition_generated::Shader>> =
-        shaders_offsets.into_iter().map(|x| x.1).collect();
+    shaders.sort_unstable_by(|lhs, rhs| lhs.name.cmp(&rhs.name));
 
-    let shaders_vector_offset = builder.create_vector(&sorted_vector[..]);
-    let root_shader_library = data_definition_generated::ShaderLibrary::create(
-        &mut builder,
-        &data_definition_generated::ShaderLibraryArgs {
-            shaders: Some(shaders_vector_offset),
-        },
-    );
-    builder.finish(
-        root_shader_library,
-        Some(data_definition_generated::SHADER_LIBRARY_IDENTIFIER),
-    );
-    let data = builder.finished_data();
+    let shader_library = ShaderLibrary { shaders };
+    let data = shader_library.serialize_root();
 
     // Write the output data
     let mut output_file_path = opt.output_folder;
@@ -206,6 +203,6 @@ fn main() {
     output_file_path.set_extension(data_definition_generated::SHADER_LIBRARY_EXTENSION);
     let mut output_file = File::create(output_file_path).expect("Cannot create output file");
     output_file
-        .write_all(data)
+        .write_all(data.as_slice())
         .expect("Cannot write output data");
 }

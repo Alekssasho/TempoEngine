@@ -3,7 +3,7 @@ use crate::resources::entities_world::EntitiesWorldResource;
 use crate::resources::geometry_database::GeometryDatabaseResource;
 
 use data_definition_generated::{
-    flatbuffer_derive::FlatbufferSerialize, GEOMETRY_DATABASE_EXTENSION,
+    flatbuffer_derive::FlatbufferSerializeRoot, GEOMETRY_DATABASE_EXTENSION,
 };
 
 use gltf_loader::Scene;
@@ -66,17 +66,20 @@ impl Resource for LevelResource {
         // Generate geometry database filename to write in resource
         let geometry_database_name = format!("{}.{}", self.name, GEOMETRY_DATABASE_EXTENSION);
 
-        #[derive(FlatbufferSerialize)]
+        #[derive(FlatbufferSerializeRoot)]
         struct Level<'a> {
+            #[offset]
             name: &'a str,
+            #[offset]
             entities: &'a [u8],
-            geometry_database_file: &'a str,
+            #[offset]
+            geometry_database_file: String,
         }
 
         let level = Level {
             name: &self.name,
             entities: compiled_dependencies.get_resource_data(self.entities),
-            geometry_database_file: &geometry_database_name,
+            geometry_database_file: geometry_database_name,
         };
 
         level.serialize_root()

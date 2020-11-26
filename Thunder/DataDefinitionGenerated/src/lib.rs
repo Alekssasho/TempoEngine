@@ -47,7 +47,7 @@ impl<'fbb> CreateInBuilder<'fbb> for &[u8] {
         &self,
         builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
     ) -> flatbuffers::WIPOffset<Self::Item> {
-        builder.create_vector(self)
+        builder.create_vector_direct(self)
     }
 }
 
@@ -58,7 +58,7 @@ impl<'fbb> CreateInBuilder<'fbb> for Vec<u8> {
         &self,
         builder: &mut flatbuffers::FlatBufferBuilder<'fbb>,
     ) -> flatbuffers::WIPOffset<Self::Item> {
-        builder.create_vector(self.as_slice())
+        builder.create_vector_direct(self.as_slice())
     }
 }
 

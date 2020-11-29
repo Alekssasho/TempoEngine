@@ -2,7 +2,7 @@ use std::rc::Weak;
 
 use components::*;
 use flecs_rs::*;
-use gltf_loader::Scene;
+use gltf_loader::{Scene, TRS};
 
 use crate::compiler::{CompiledResources, CompilerGraph, ResourceBox};
 
@@ -20,11 +20,15 @@ impl EntitiesWorldResource {
     fn create_mesh_entity(
         state: &FlecsState,
         name: &str,
-        transform: glm_mat4x4,
+        transform: TRS,
         mesh_index: u32,
         is_boids: bool,
     ) -> ecs_entity_t {
-        let transform = Components::Transform(Tempest_Components_Transform { Matrix: transform });
+        let transform = Components::Transform(Tempest_Components_Transform {
+            Position: transform.translate,
+            Scale: transform.scale,
+            Rotation: transform.rotate,
+        });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
         let tags = if is_boids { vec![Tags::Boids] } else { vec![] };

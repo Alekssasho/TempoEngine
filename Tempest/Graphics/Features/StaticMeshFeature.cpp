@@ -1,3 +1,4 @@
+#include <Logging.h>
 #include <Graphics/Features/StaticMeshFeature.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>
@@ -29,9 +30,13 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 		Components::StaticMesh* staticMeshes = ecs_column(&iter, Components::StaticMesh, 2);
 		for (int row = 0; row < iter.count; ++row)
 		{
+			const glm::mat4x4 scale = glm::scale(transforms[row].Scale);
+			const glm::mat4x4 rotate = glm::toMat4(transforms[row].Rotation);
+			const glm::mat4x4 translate = glm::translate(transforms[row].Position);
+
 			frameData.StaticMeshes.push_back(FrameData::StaticMeshData{
 				staticMeshes[row].Mesh,
-				transforms[row].Matrix
+				translate * rotate * scale
 			});
 		}
 	}

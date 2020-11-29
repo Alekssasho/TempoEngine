@@ -5,7 +5,9 @@
 #else
 namespace glm
 {
+struct vec3{};
 struct vec4{};
+struct quat{};
 struct mat4x4{};
 }
 #endif
@@ -17,8 +19,9 @@ namespace Components
 {
 struct Transform
 {
-	// TODO: Consider decomposed variant
-	glm::mat4x4 Matrix;
+	glm::quat Rotation;
+	glm::vec3 Position;
+	glm::vec3 Scale;
 	static constexpr const char* Name = "Transform";
 };
 

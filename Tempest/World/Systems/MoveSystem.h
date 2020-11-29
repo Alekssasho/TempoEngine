@@ -25,7 +25,7 @@ struct MoveSystem : public System
 				Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
 				for (int i = 0; i < iter->count; ++i)
 				{
-					transform[i].Matrix = translate(transform[i].Matrix, glm::vec3{ 0.2f, 0.0f, 0.0f } * deltaTime);
+					transform[i].Position += glm::vec3{ 0.2f, 0.0f, 0.0f } * deltaTime;
 				}
 			});
 	}

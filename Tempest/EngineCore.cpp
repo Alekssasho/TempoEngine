@@ -20,9 +20,9 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 {
 	gEngine = this;
 
-	m_Camera.Position = glm::vec3(3.0f, 0.0f, 3.0f);
+	m_Camera.Position = glm::vec3(3.0f, 3.0f, -3.0f);
 	//m_Camera.Position = glm::vec3(263.0f, -260.0f, 263.0f);
-	m_Camera.Forward = glm::vec3(-0.7f, 0.0f, -0.7f);
+	m_Camera.Forward = glm::normalize(glm::vec3(-0.7f, -0.5f, 0.7f));
 	m_Camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
 	m_Camera.SetPerspectiveProjection(float(options.Width) / float(options.Height), glm::radians(90.0f), 0.1f, 1000.0f);
 	m_Renderer.RegisterView(&m_Camera);

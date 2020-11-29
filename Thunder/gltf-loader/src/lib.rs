@@ -67,6 +67,12 @@ pub struct Node<'a> {
     node: gltf::Node<'a>,
 }
 
+pub struct TRS {
+    pub translate: nalgebra_glm::Vec3,
+    pub rotate: nalgebra_glm::Quat,
+    pub scale: nalgebra_glm::Vec3,
+}
+
 impl<'a> Node<'a> {
     pub fn mesh_index(&self) -> Option<u32> {
         self.node.mesh().and_then(|mesh| Some(mesh.index() as u32))
@@ -81,23 +87,15 @@ impl<'a> Node<'a> {
             .unwrap()
     }
 
-    pub fn transform(&self) -> nalgebra_glm::Mat4x4 {
-        let matrix = self
-            .node
-            .transform()
-            .matrix()
-            .iter()
-            .flat_map(|array| array.iter())
-            .cloned()
-            .collect::<Vec<f32>>();
-        let result = nalgebra_glm::make_mat4x4(&matrix);
-        // GLTF uses right handed system, and we need to invert X to align
+    pub fn transform(&self) -> TRS {
+        let (translate, rotate, scale) = self.node.transform().decomposed();
+        // GLTF uses right handed system, and we need to invert Z to align
         // properly with what Tempest is using
-        let handness_transform = nalgebra_glm::scale(
-            &nalgebra_glm::identity(),
-            &nalgebra_glm::vec3(-1.0, 1.0, 1.0),
-        );
-        handness_transform * result
+        TRS {
+            translate: nalgebra_glm::vec3(translate[0], translate[1], -translate[2]),
+            rotate: nalgebra_glm::quat(rotate[3], rotate[0], rotate[1], rotate[2]),
+            scale: nalgebra_glm::vec3(scale[0], scale[1], scale[2]),
+        }
     }
 
     pub fn is_boids(&self) -> bool {
@@ -146,7 +144,9 @@ impl<'a> Mesh<'a> {
         let reader = primitive.reader(|buffer| Some(&self.scene.buffers[buffer.index()]));
         reader.read_positions().and_then(|iter| {
             Some(
-                iter.map(|vertex| nalgebra_glm::vec3(vertex[0], vertex[1], vertex[2]))
+                // GLTF uses right handed system, and we need to invert Y to align, This is due to the way Blender GLTF exporter is written
+                // properly with what Tempest is using
+                iter.map(|vertex| nalgebra_glm::vec3(vertex[0], -vertex[1], vertex[2]))
                     .collect(),
             )
         })

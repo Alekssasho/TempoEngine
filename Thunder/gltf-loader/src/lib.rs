@@ -7,9 +7,7 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new<P>(path: P) -> Self
-    where
-        P: AsRef<Path>,
+    pub fn new(path: impl AsRef<Path>) -> Self
     {
         if let Ok((document, buffers, images)) = gltf::import(path) {
             Scene {

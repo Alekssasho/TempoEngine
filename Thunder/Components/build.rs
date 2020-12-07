@@ -13,7 +13,6 @@ fn main() {
         .ignore_functions()
         .ignore_methods()
         //.layout_tests(false) // This could be used to disable layout tests
-        .clang_arg("-DBINDGEN")
         // Add input dir for Math.h and glm headers
         .clang_arg("-I../../Tempest")
         .clang_arg("-I../../ThirdParty/glm/include")

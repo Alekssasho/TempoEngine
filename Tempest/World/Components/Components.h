@@ -1,16 +1,6 @@
 #pragma once
 
-#ifndef BINDGEN
 #include <Math/Math.h>
-#else
-namespace glm
-{
-struct vec3{};
-struct vec4{};
-struct quat{};
-struct mat4x4{};
-}
-#endif
 #include <Graphics/RendererTypes.h>
 
 namespace Tempest

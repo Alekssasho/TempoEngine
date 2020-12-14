@@ -1,12 +1,12 @@
-use std::rc::Weak;
+use std::sync::Weak;
 
 use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, FlatbufferSerializeRoot};
 use gltf_loader::Scene;
 
-use crate::compiler::{CompiledResources, CompilerGraph, ResourceBox};
+use crate::compiler::AsyncCompiler;
 
-use super::{Resource, ResourceId};
-
+use super::Resource;
+#[derive(Debug)]
 pub struct GeometryDatabaseResource {
     scene: Weak<Scene>,
 }
@@ -30,15 +30,10 @@ struct GeometryDatabase<'a> {
     mappings: Vec<MeshMapping>,
 }
 
+#[async_trait]
 impl Resource for GeometryDatabaseResource {
-    fn extract_dependencies(
-        &mut self,
-        _compiler: &CompilerGraph,
-    ) -> Vec<(ResourceId, Option<ResourceBox>)> {
-        vec![]
-    }
-
-    fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
+    #[instrument]
+    async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Vec<u8> {
         let mut vertex_buffer = Vec::<f32>::new();
         let scene = self.scene.upgrade().unwrap();
         let meshes = scene.gather_meshes();

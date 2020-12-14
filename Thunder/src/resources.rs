@@ -1,30 +1,37 @@
-use std::{io::Write, path::PathBuf};
+use std::{fmt::Debug, path::PathBuf};
 
-use super::compiler::CompiledResources;
-use super::compiler::CompilerGraph;
-use super::compiler::ResourceBox;
+use super::compiler::AsyncCompiler;
+
+use tokio::io::AsyncWriteExt;
 
 mod entities_world;
 mod geometry_database;
 pub mod level;
 
+#[async_trait]
 pub trait Resource {
-    fn extract_dependencies(
-        &mut self,
-        compiler: &CompilerGraph,
-    ) -> Vec<(ResourceId, Option<ResourceBox>)>;
-
-    fn compile(&self, compiled_dependencies: &CompiledResources) -> Vec<u8>;
+    async fn compile(&self, compiler: std::sync::Arc<AsyncCompiler>) -> Vec<u8>;
 }
 
-#[derive(Hash, Eq, PartialEq, Copy, Clone)]
+impl Debug for dyn Resource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "dyn resource")
+    }
+}
+
+#[derive(Hash, Eq, PartialEq, Copy, Clone, Debug)]
 pub struct ResourceId(pub usize);
 
+#[allow(dead_code)]
 pub const INVALID_RESOURCE: ResourceId = ResourceId(0);
 
-pub fn write_resource_to_file(data_to_write: &[u8], path: PathBuf) {
-    let mut output_file = std::fs::File::create(path).expect("Cannot create output file");
+#[instrument]
+pub async fn write_resource_to_file(data_to_write: &[u8], path: PathBuf) {
+    let mut output_file = tokio::fs::File::create(path)
+        .await
+        .expect("Cannot crete output file");
     output_file
         .write_all(data_to_write)
-        .expect("Cannot write output data");
+        .await
+        .expect("Cannot write data");
 }

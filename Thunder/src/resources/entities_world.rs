@@ -1,13 +1,13 @@
-use std::rc::Weak;
+use std::sync::Weak;
 
 use components::*;
 use flecs_rs::*;
 use gltf_loader::{Scene, TRS};
 
-use crate::compiler::{CompiledResources, CompilerGraph, ResourceBox};
+use crate::compiler::AsyncCompiler;
 
-use super::{Resource, ResourceId};
-
+use super::Resource;
+#[derive(Debug)]
 pub struct EntitiesWorldResource {
     scene: Weak<Scene>,
 }
@@ -36,16 +36,10 @@ impl EntitiesWorldResource {
     }
 }
 
+#[async_trait]
 impl Resource for EntitiesWorldResource {
-    fn extract_dependencies(
-        &mut self,
-        _registry: &CompilerGraph,
-    ) -> Vec<(ResourceId, Option<ResourceBox>)> {
-        // No dependancies for this resource
-        vec![]
-    }
-
-    fn compile(&self, _compiled_dependencies: &CompiledResources) -> Vec<u8> {
+    #[instrument]
+    async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Vec<u8> {
         let flecs_state = FlecsState::new();
 
         let scene = self.scene.upgrade().unwrap();

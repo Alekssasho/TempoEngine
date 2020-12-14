@@ -74,13 +74,9 @@ impl FlecsState {
         self.tag_entities[tag.get_index()]
     }
 
-    #[optick_attr::profile]
     pub fn new() -> Self {
         unsafe {
-            let world = {
-                optick::event!("ecs_init");
-                ecs_init()
-            };
+            let world = ecs_init();
             // Register all components / tags
             let component_entities = Components::register_components(world);
             let tag_entities = Tags::register_tags(world);
@@ -93,7 +89,6 @@ impl FlecsState {
         }
     }
 
-    #[optick_attr::profile]
     pub fn create_entity(
         &self,
         name: &str,
@@ -134,7 +129,6 @@ impl FlecsState {
         }
     }
 
-    #[optick_attr::profile]
     pub fn write_to_buffer<W: std::io::Write>(&self, writer: &mut W) {
         unsafe {
             let mut reader = ecs_reader_init(self.world);

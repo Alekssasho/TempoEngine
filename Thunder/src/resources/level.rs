@@ -7,61 +7,57 @@ use data_definition_generated::{
 };
 
 use gltf_loader::Scene;
-use std::rc::Rc;
+use std::sync::Arc;
 
+use crate::ttrace;
+
+#[derive(Debug)]
 pub struct LevelResource {
     name: String,
-    entities: ResourceId,
-    geometry_database_id: ResourceId,
-    scene: Option<Rc<Scene>>,
 }
 
 impl LevelResource {
     pub fn new(name: String) -> Self {
-        Self {
-            name,
-            entities: INVALID_RESOURCE,
-            geometry_database_id: INVALID_RESOURCE,
-            scene: None,
-        }
+        Self { name }
     }
 }
 
+#[async_trait]
 impl Resource for LevelResource {
-    fn extract_dependencies<'a>(
-        &'a mut self,
-        compiler: &CompilerGraph,
-    ) -> Vec<(ResourceId, Option<ResourceBox>)> {
+    #[instrument]
+    async fn compile(&self, compiler: std::sync::Arc<AsyncCompiler>) -> Vec<u8> {
         let mut level_scene_file_name = compiler.options.input_folder.clone();
         level_scene_file_name.push(&self.name);
         level_scene_file_name.set_extension("gltf");
-        self.scene = Some(Rc::new(Scene::new(level_scene_file_name)));
-
-        self.entities = compiler.get_next_resource_id();
-        self.geometry_database_id = compiler.get_next_resource_id();
+        let scene = {
+            ttrace!("Load Scene");
+            Some(Arc::new(Scene::new(level_scene_file_name)))
+        };
 
         let entities_resource_data =
-            EntitiesWorldResource::new(Rc::downgrade(self.scene.as_ref().unwrap()));
+            EntitiesWorldResource::new(Arc::downgrade(scene.as_ref().unwrap()));
         let geometry_database_data =
-            GeometryDatabaseResource::new(Rc::downgrade(self.scene.as_ref().unwrap()));
+            GeometryDatabaseResource::new(Arc::downgrade(scene.as_ref().unwrap()));
 
-        vec![
-            (self.entities, Some(Box::new(entities_resource_data))),
-            (
-                self.geometry_database_id,
-                Some(Box::new(geometry_database_data)),
-            ),
-        ]
-    }
+        let geometry_compiler = compiler.clone();
+        let entities_compiler = compiler.clone();
+        let geometry_future =
+            tokio::spawn(async move { geometry_database_data.compile(geometry_compiler).await });
+        let entities_future =
+            tokio::spawn(async move { entities_resource_data.compile(entities_compiler).await });
 
-    fn compile(&self, compiled_dependencies: &CompiledResources) -> Vec<u8> {
+        let (geometry_database_compiled_data, entities_resource_compiled_data) =
+            tokio::try_join!(geometry_future, entities_future).unwrap();
+
         // Write geometry database to a file
-        let geometry_database_compiled_data =
-            compiled_dependencies.get_resource_data(self.geometry_database_id);
-        let mut output_file_path = compiled_dependencies.options.output_folder.clone();
+        //let geometry_database_compiled_data = geometry_database_data.compile_async(compiler).await;
+        let mut output_file_path = compiler.options.output_folder.clone();
         output_file_path.push(&self.name);
         output_file_path.set_extension(GEOMETRY_DATABASE_EXTENSION);
-        write_resource_to_file(geometry_database_compiled_data, output_file_path);
+        tokio::spawn(async move {
+            write_resource_to_file(geometry_database_compiled_data.as_slice(), output_file_path)
+                .await
+        });
 
         // Generate geometry database filename to write in resource
         let geometry_database_name = format!("{}.{}", self.name, GEOMETRY_DATABASE_EXTENSION);
@@ -78,7 +74,7 @@ impl Resource for LevelResource {
 
         let level = Level {
             name: &self.name,
-            entities: compiled_dependencies.get_resource_data(self.entities),
+            entities: entities_resource_compiled_data.as_slice(),
             geometry_database_file: geometry_database_name,
         };
 

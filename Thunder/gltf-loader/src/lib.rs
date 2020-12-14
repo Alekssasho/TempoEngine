@@ -1,5 +1,6 @@
 use std::path::Path;
 
+#[derive(Debug)]
 pub struct Scene {
     document: gltf::Document,
     buffers: Vec<gltf::buffer::Data>,
@@ -7,8 +8,7 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new(path: impl AsRef<Path>) -> Self
-    {
+    pub fn new(path: impl AsRef<Path>) -> Self {
         if let Ok((document, buffers, images)) = gltf::import(path) {
             Scene {
                 document,

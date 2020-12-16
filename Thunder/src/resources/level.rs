@@ -54,7 +54,7 @@ impl Resource for LevelResource {
         let mut output_file_path = compiler.options.output_folder.clone();
         output_file_path.push(&self.name);
         output_file_path.set_extension(GEOMETRY_DATABASE_EXTENSION);
-        tokio::spawn(async move {
+        let write_handle = tokio::spawn(async move {
             write_resource_to_file(geometry_database_compiled_data.as_slice(), output_file_path)
                 .await
         });
@@ -78,6 +78,11 @@ impl Resource for LevelResource {
             geometry_database_file: geometry_database_name,
         };
 
-        level.serialize_root()
+        let result = level.serialize_root();
+
+        // Wait for the write task to finish as well
+        write_handle.await.expect("Write task failed");
+
+        result
     }
 }

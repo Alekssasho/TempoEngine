@@ -125,6 +125,9 @@
     <ClInclude Include="World\Camera.h">
       <Filter>World</Filter>
     </ClInclude>
+    <ClInclude Include="Audio\AudioManager.h">
+      <Filter>Audio</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -195,6 +198,9 @@
     <ClCompile Include="World\Camera.cpp">
       <Filter>World</Filter>
     </ClCompile>
+    <ClCompile Include="Audio\AudioManager.cpp">
+      <Filter>Audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -256,6 +262,9 @@
     </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{cf372380-5283-425a-9a88-d567a09cd0f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Audio">
+      <UniqueIdentifier>{d9bfa414-8ba8-42fe-87bc-5f2428402b57}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

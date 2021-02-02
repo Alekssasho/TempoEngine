@@ -7,6 +7,7 @@
 #include <World/World.h>
 #include <World/Camera.h>
 #include <Resources/ResourceLoader.h>
+#include <Audio/AudioManager.h>
 
 namespace Tempest
 {
@@ -58,6 +59,7 @@ private:
 	World m_World;
 	Renderer m_Renderer;
 	Camera m_Camera;
+	AudioManager m_Audio;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

@@ -91,6 +91,7 @@
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_rectpack.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_textedit.h" />
     <ClInclude Include="..\ThirdParty\imgui\include\imstb_truetype.h" />
+    <ClInclude Include="Audio\AudioManager.h" />
     <ClInclude Include="DataDefinitions\Level_generated.h" />
     <ClInclude Include="DataDefinitions\ShaderLibrary_generated.h" />
     <ClInclude Include="Defines.h" />
@@ -138,6 +139,7 @@
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_draw.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_impl_dx12.cpp" />
     <ClCompile Include="..\ThirdParty\imgui\include\imgui_widgets.cpp" />
+    <ClCompile Include="Audio\AudioManager.cpp" />
     <ClCompile Include="EngineCore.cpp" />
     <ClCompile Include="Graphics\Dx12\Dx12Backend.cpp" />
     <ClCompile Include="Graphics\Dx12\Dx12Device.cpp" />

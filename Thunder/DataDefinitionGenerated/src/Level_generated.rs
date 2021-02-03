@@ -51,6 +51,9 @@ pub mod tempest {
                 args: &'args LevelArgs<'args>,
             ) -> flatbuffers::WIPOffset<Level<'bldr>> {
                 let mut builder = LevelBuilder::new(_fbb);
+                if let Some(x) = args.audio_database_file {
+                    builder.add_audio_database_file(x);
+                }
                 if let Some(x) = args.geometry_database_file {
                     builder.add_geometry_database_file(x);
                 }
@@ -66,6 +69,7 @@ pub mod tempest {
             pub const VT_NAME: flatbuffers::VOffsetT = 4;
             pub const VT_ENTITIES: flatbuffers::VOffsetT = 6;
             pub const VT_GEOMETRY_DATABASE_FILE: flatbuffers::VOffsetT = 8;
+            pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 10;
 
             #[inline]
             pub fn name(&self) -> Option<&'a str> {
@@ -88,12 +92,18 @@ pub mod tempest {
                     None,
                 )
             }
+            #[inline]
+            pub fn audio_database_file(&self) -> Option<&'a str> {
+                self._tab
+                    .get::<flatbuffers::ForwardsUOffset<&str>>(Level::VT_AUDIO_DATABASE_FILE, None)
+            }
         }
 
         pub struct LevelArgs<'a> {
             pub name: Option<flatbuffers::WIPOffset<&'a str>>,
             pub entities: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
             pub geometry_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
+            pub audio_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
         }
         impl<'a> Default for LevelArgs<'a> {
             #[inline]
@@ -102,6 +112,7 @@ pub mod tempest {
                     name: None,
                     entities: None,
                     geometry_database_file: None,
+                    audio_database_file: None,
                 }
             }
         }
@@ -131,6 +142,16 @@ pub mod tempest {
                 self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
                     Level::VT_GEOMETRY_DATABASE_FILE,
                     geometry_database_file,
+                );
+            }
+            #[inline]
+            pub fn add_audio_database_file(
+                &mut self,
+                audio_database_file: flatbuffers::WIPOffset<&'b str>,
+            ) {
+                self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                    Level::VT_AUDIO_DATABASE_FILE,
+                    audio_database_file,
                 );
             }
             #[inline]

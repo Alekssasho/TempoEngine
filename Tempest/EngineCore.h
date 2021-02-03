@@ -48,6 +48,11 @@ public:
 	{
 		return m_Options;
 	}
+
+	AudioManager& GetAudio()
+	{
+		return m_Audio;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;
@@ -68,6 +73,8 @@ private:
 	static void DoFrameJob(uint32_t, void*);
 	void UpdateInput();
 	void DoFrame();
+
+	static void LoadLevel(const char* levelToLoad);
 };
 
 extern EngineCore* gEngine;

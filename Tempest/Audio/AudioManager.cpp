@@ -2,6 +2,11 @@
 
 #include <Logging.h>
 #include <Math/Math.h>
+#include <EngineCore.h>
+#include <DataDefinitions/AudioDatabase_generated.h>
+
+#define STB_VORBIS_HEADER_ONLY
+#include <stb_vorbis.c>
 
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
@@ -9,6 +14,9 @@
 #include <limits>
 #include <mmdeviceapi.h>
 
+
+namespace Tempest
+{
 AudioManager::AudioManager()
 	: m_SampleCount(0)
 {
@@ -110,7 +118,7 @@ void AudioManager::Update()
 	uint32_t padding = 0;
 	m_AudioClient->GetCurrentPadding(&padding);
 	const uint32_t framesAvailable = m_MaxFramesInBuffer - padding;
-	
+
 	BYTE* pData = nullptr;
 	if (FAILED(hr = m_RenderClient->GetBuffer(framesAvailable, &pData)))
 	{
@@ -124,7 +132,7 @@ void AudioManager::Update()
 	{
 		float sineWave = sinf(m_SampleCount * 2.0f * glm::pi<float>() * 110.0f / float(m_SampleRate));
 		sineWave *= 0.1f;
-		
+
 		samples[i].leftSample = sineWave;
 		samples[i].rightSample = sineWave;
 		++m_SampleCount;
@@ -135,4 +143,19 @@ void AudioManager::Update()
 		LOG(Error, Audio, "Cannot release buffer");
 		return;
 	}
+}
+
+void AudioManager::LoadDatabase(const char* databaseName)
+{
+	const Definition::AudioDatabase* audioDatabase = gEngine->GetResourceLoader().LoadResource<Definition::AudioDatabase>(databaseName);
+	if (!audioDatabase)
+	{
+		LOG(Warning, Renderer, "Audio Database is Invalid!");
+		return;
+	}
+
+	m_Database = audioDatabase;
+
+	// TODO: initialize vorbis decoder
+}
 }

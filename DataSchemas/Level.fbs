@@ -5,6 +5,7 @@ table Level
     name: string;
     entities: [ubyte];
     geometry_database_file: string;
+    audio_database_file: string;
 }
 
 file_identifier "TLDB";

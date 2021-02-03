@@ -1,0 +1,10 @@
+namespace Tempest.Definition;
+
+table AudioDatabase
+{
+    background_music : [ubyte];
+}
+
+file_identifier "TADB";
+file_extension "tab";
+root_type AudioDatabase;

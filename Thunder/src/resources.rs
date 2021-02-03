@@ -4,6 +4,7 @@ use super::compiler::AsyncCompiler;
 
 use tokio::io::AsyncWriteExt;
 
+mod audio_database;
 mod entities_world;
 mod geometry_database;
 pub mod level;

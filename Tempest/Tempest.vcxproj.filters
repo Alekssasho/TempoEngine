@@ -128,6 +128,12 @@
     <ClInclude Include="Audio\AudioManager.h">
       <Filter>Audio</Filter>
     </ClInclude>
+    <ClInclude Include="DataDefinitions\AudioDatabase_generated.h">
+      <Filter>DataDefinitions</Filter>
+    </ClInclude>
+    <ClInclude Include="DataDefinitions\GeometryDatabase_generated.h">
+      <Filter>DataDefinitions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -201,6 +207,9 @@
     <ClCompile Include="Audio\AudioManager.cpp">
       <Filter>Audio</Filter>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\stb\stb_vorbis.c">
+      <Filter>ThirdParty\stb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -265,6 +274,9 @@
     </Filter>
     <Filter Include="Audio">
       <UniqueIdentifier>{d9bfa414-8ba8-42fe-87bc-5f2428402b57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\stb">
+      <UniqueIdentifier>{15bb183a-96a1-4b58-8312-ec29b4799aec}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

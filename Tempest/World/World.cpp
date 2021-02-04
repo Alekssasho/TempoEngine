@@ -21,7 +21,9 @@ World::World()
 	m_EntityWorld = ecs_init();
 	//ecs_os_api_t api;
 	//ecs_os_set_api(&api);
-	ecs_tracing_enable(3);
+
+	// Enable for debug
+	//ecs_tracing_enable(3);
 	ecs_set_target_fps(m_EntityWorld, 60);
 
 	// This is not needed when we are loading the world from serialized data

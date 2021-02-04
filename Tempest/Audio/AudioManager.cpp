@@ -19,6 +19,7 @@ namespace Tempest
 {
 AudioManager::AudioManager()
 	: m_SampleCount(0)
+	, m_VorbisDecoder(nullptr)
 {
 	HRESULT hr = S_OK;
 
@@ -100,6 +101,12 @@ AudioManager::AudioManager()
 
 AudioManager::~AudioManager()
 {
+	if(m_VorbisDecoder)
+	{
+		stb_vorbis_close(m_VorbisDecoder);
+		m_VorbisDecoder = nullptr;
+	}
+
 	m_AudioClient->Stop();
 	m_RenderClient->Release();
 	m_AudioClient->Release();
@@ -128,15 +135,23 @@ void AudioManager::Update()
 
 	auto samples = reinterpret_cast<AudioFrame*>(pData);
 
-	for (uint32_t i = 0; i < framesAvailable; ++i)
-	{
-		float sineWave = sinf(m_SampleCount * 2.0f * glm::pi<float>() * 110.0f / float(m_SampleRate));
-		sineWave *= 0.1f;
+	uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
 
-		samples[i].leftSample = sineWave;
-		samples[i].rightSample = sineWave;
-		++m_SampleCount;
+	if(framesDecoded < framesAvailable)
+	{
+		// Loop the background music
+		stb_vorbis_seek_start(m_VorbisDecoder);
+		stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData) + framesDecoded * 2, 2 * (framesAvailable - framesDecoded));
 	}
+
+	//for (uint32_t i = 0; i < framesAvailable; ++i)
+	//{
+	//	//float sineWave = sinf(m_SampleCount * 2.0f * glm::pi<float>() * 110.0f / float(m_SampleRate));
+	//	//sineWave *= 0.1f;
+	//	//samples[i].leftSample = sineWave;
+	//	//samples[i].rightSample = sineWave;
+	//	//++m_SampleCount;
+	//}
 
 	if (FAILED(hr = m_RenderClient->ReleaseBuffer(framesAvailable, 0)))
 	{
@@ -156,6 +171,18 @@ void AudioManager::LoadDatabase(const char* databaseName)
 
 	m_Database = audioDatabase;
 
-	// TODO: initialize vorbis decoder
+	// TODO: Add temp memory or some kind of managed memory
+	int vorbisError = 0;
+	m_VorbisDecoder = stb_vorbis_open_memory(m_Database->background_music()->data(), m_Database->background_music()->size(), &vorbisError, nullptr);
+	if(m_VorbisDecoder == nullptr)
+	{
+		LOG(Error, Audio, "Cannot vorbis decode background music");
+		return;
+	}
+	stb_vorbis_info backgroundMusicInfo = stb_vorbis_get_info(m_VorbisDecoder);
+
+	// We can only play 48kHz files. Thunder should have re-sampled it before adding to the database.
+	assert(backgroundMusicInfo.sample_rate == 48000 && backgroundMusicInfo.channels == 2);
+	FORMAT_LOG(Info, Audio, "Background music started decoding with %d channels and %d sample rate", backgroundMusicInfo.channels, backgroundMusicInfo.sample_rate);
 }
 }

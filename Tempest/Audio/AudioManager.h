@@ -3,6 +3,7 @@
 
 struct IAudioClient;
 struct IAudioRenderClient;
+struct stb_vorbis;
 
 namespace Tempest
 {
@@ -24,10 +25,11 @@ private:
 	uint32_t m_MaxFramesInBuffer = 0;
 	uint32_t m_SampleRate;
 
-	uint32_t m_SampleCount;
+	//uint32_t m_SampleCount;
 
 	const Definition::AudioDatabase* m_Database;
 	// Background music
+	stb_vorbis* m_VorbisDecoder;
 };
 }
 

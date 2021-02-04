@@ -415,10 +415,16 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,c++,rust
 
-
-# Custom generated files from flatbuffers
-*.tlb
-*.tslb
 /.vscode/launch.json
 /.vscode/settings.json
+
+# Custom generated files from flatbuffers specific to Tempo Engine
+*.tlb
+*.tslb
 *.tgb
+*.tab
+
+# Source Data which should be kept in something else
+*.gltf
+*.ogg
+*.blend

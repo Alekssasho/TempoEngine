@@ -18,8 +18,7 @@
 namespace Tempest
 {
 AudioManager::AudioManager()
-	: m_SampleCount(0)
-	, m_VorbisDecoder(nullptr)
+	: m_VorbisDecoder(nullptr)
 {
 	HRESULT hr = S_OK;
 

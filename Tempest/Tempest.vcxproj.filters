@@ -134,6 +134,9 @@
     <ClInclude Include="DataDefinitions\GeometryDatabase_generated.h">
       <Filter>DataDefinitions</Filter>
     </ClInclude>
+    <ClInclude Include="Physics\PhysicsManager.h">
+      <Filter>Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -210,6 +213,9 @@
     <ClCompile Include="..\ThirdParty\stb\stb_vorbis.c">
       <Filter>ThirdParty\stb</Filter>
     </ClCompile>
+    <ClCompile Include="Physics\PhysicsManager.cpp">
+      <Filter>Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">
@@ -277,6 +283,9 @@
     </Filter>
     <Filter Include="ThirdParty\stb">
       <UniqueIdentifier>{15bb183a-96a1-4b58-8312-ec29b4799aec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Physics">
+      <UniqueIdentifier>{7e02d7d9-1842-40f8-8051-e15d61163bd8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

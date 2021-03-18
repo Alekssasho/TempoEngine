@@ -8,6 +8,7 @@
 #include <World/Camera.h>
 #include <Resources/ResourceLoader.h>
 #include <Audio/AudioManager.h>
+#include <Physics/PhysicsManager.h>
 
 namespace Tempest
 {
@@ -65,6 +66,7 @@ private:
 	Renderer m_Renderer;
 	Camera m_Camera;
 	AudioManager m_Audio;
+	PhysicsManager m_Physics;
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

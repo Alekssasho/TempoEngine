@@ -9,8 +9,94 @@
 namespace Tempest {
 namespace Definition {
 
+struct Vec3;
+
+struct Camera;
+
 struct Level;
 struct LevelBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+  float z_;
+
+ public:
+  Vec3()
+      : x_(0),
+        y_(0),
+        z_(0) {
+  }
+  Vec3(float _x, float _y, float _z)
+      : x_(flatbuffers::EndianScalar(_x)),
+        y_(flatbuffers::EndianScalar(_y)),
+        z_(flatbuffers::EndianScalar(_z)) {
+  }
+  float x() const {
+    return flatbuffers::EndianScalar(x_);
+  }
+  float y() const {
+    return flatbuffers::EndianScalar(y_);
+  }
+  float z() const {
+    return flatbuffers::EndianScalar(z_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Vec3, 12);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
+ private:
+  float yfov_;
+  float znear_;
+  float zfar_;
+  float aspect_ratio_;
+  Tempest::Definition::Vec3 position_;
+  Tempest::Definition::Vec3 forward_;
+  Tempest::Definition::Vec3 up_;
+
+ public:
+  Camera()
+      : yfov_(0),
+        znear_(0),
+        zfar_(0),
+        aspect_ratio_(0),
+        position_(),
+        forward_(),
+        up_() {
+  }
+  Camera(float _yfov, float _znear, float _zfar, float _aspect_ratio, const Tempest::Definition::Vec3 &_position, const Tempest::Definition::Vec3 &_forward, const Tempest::Definition::Vec3 &_up)
+      : yfov_(flatbuffers::EndianScalar(_yfov)),
+        znear_(flatbuffers::EndianScalar(_znear)),
+        zfar_(flatbuffers::EndianScalar(_zfar)),
+        aspect_ratio_(flatbuffers::EndianScalar(_aspect_ratio)),
+        position_(_position),
+        forward_(_forward),
+        up_(_up) {
+  }
+  float yfov() const {
+    return flatbuffers::EndianScalar(yfov_);
+  }
+  float znear() const {
+    return flatbuffers::EndianScalar(znear_);
+  }
+  float zfar() const {
+    return flatbuffers::EndianScalar(zfar_);
+  }
+  float aspect_ratio() const {
+    return flatbuffers::EndianScalar(aspect_ratio_);
+  }
+  const Tempest::Definition::Vec3 &position() const {
+    return position_;
+  }
+  const Tempest::Definition::Vec3 &forward() const {
+    return forward_;
+  }
+  const Tempest::Definition::Vec3 &up() const {
+    return up_;
+  }
+};
+FLATBUFFERS_STRUCT_END(Camera, 52);
 
 struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef LevelBuilder Builder;
@@ -18,7 +104,8 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_NAME = 4,
     VT_ENTITIES = 6,
     VT_GEOMETRY_DATABASE_FILE = 8,
-    VT_AUDIO_DATABASE_FILE = 10
+    VT_AUDIO_DATABASE_FILE = 10,
+    VT_CAMERA = 12
   };
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
@@ -32,6 +119,9 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *audio_database_file() const {
     return GetPointer<const flatbuffers::String *>(VT_AUDIO_DATABASE_FILE);
   }
+  const Tempest::Definition::Camera *camera() const {
+    return GetStruct<const Tempest::Definition::Camera *>(VT_CAMERA);
+  }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
@@ -42,6 +132,7 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(geometry_database_file()) &&
            VerifyOffset(verifier, VT_AUDIO_DATABASE_FILE) &&
            verifier.VerifyString(audio_database_file()) &&
+           VerifyField<Tempest::Definition::Camera>(verifier, VT_CAMERA) &&
            verifier.EndTable();
   }
 };
@@ -62,6 +153,9 @@ struct LevelBuilder {
   void add_audio_database_file(flatbuffers::Offset<flatbuffers::String> audio_database_file) {
     fbb_.AddOffset(Level::VT_AUDIO_DATABASE_FILE, audio_database_file);
   }
+  void add_camera(const Tempest::Definition::Camera *camera) {
+    fbb_.AddStruct(Level::VT_CAMERA, camera);
+  }
   explicit LevelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -78,8 +172,10 @@ inline flatbuffers::Offset<Level> CreateLevel(
     flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> entities = 0,
     flatbuffers::Offset<flatbuffers::String> geometry_database_file = 0,
-    flatbuffers::Offset<flatbuffers::String> audio_database_file = 0) {
+    flatbuffers::Offset<flatbuffers::String> audio_database_file = 0,
+    const Tempest::Definition::Camera *camera = 0) {
   LevelBuilder builder_(_fbb);
+  builder_.add_camera(camera);
   builder_.add_audio_database_file(audio_database_file);
   builder_.add_geometry_database_file(geometry_database_file);
   builder_.add_entities(entities);
@@ -92,7 +188,8 @@ inline flatbuffers::Offset<Level> CreateLevelDirect(
     const char *name = nullptr,
     const std::vector<uint8_t> *entities = nullptr,
     const char *geometry_database_file = nullptr,
-    const char *audio_database_file = nullptr) {
+    const char *audio_database_file = nullptr,
+    const Tempest::Definition::Camera *camera = 0) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto entities__ = entities ? _fbb.CreateVector<uint8_t>(*entities) : 0;
   auto geometry_database_file__ = geometry_database_file ? _fbb.CreateString(geometry_database_file) : 0;
@@ -102,7 +199,8 @@ inline flatbuffers::Offset<Level> CreateLevelDirect(
       name__,
       entities__,
       geometry_database_file__,
-      audio_database_file__);
+      audio_database_file__,
+      camera);
 }
 
 inline const Tempest::Definition::Level *GetLevel(const void *buf) {

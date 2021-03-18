@@ -19,13 +19,6 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 	, m_ResourceLoader(options.ResourceFolder)
 {
 	gEngine = this;
-
-	m_Camera.Position = glm::vec3(3.0f, 3.0f, -3.0f);
-	//m_Camera.Position = glm::vec3(263.0f, -260.0f, 263.0f);
-	m_Camera.Forward = glm::normalize(glm::vec3(-0.7f, -0.5f, 0.7f));
-	m_Camera.Up = glm::vec3(0.0f, 1.0f, 0.0f);
-	m_Camera.SetPerspectiveProjection(float(options.Width) / float(options.Height), glm::radians(90.0f), 0.1f, 1000.0f);
-	m_Renderer.RegisterView(&m_Camera);
 }
 
 EngineCore::~EngineCore()
@@ -117,6 +110,14 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 	gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
 
+	auto camera = level->camera();
+
+	gEngine->m_Camera.Position = glm::vec3(camera->position().x(), camera->position().y(), camera->position().z());
+	gEngine->m_Camera.Forward = glm::normalize(glm::vec3(camera->forward().x(), camera->forward().y(), camera->forward().z()));
+	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
+	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
+	gEngine->m_Renderer.RegisterView(&gEngine->m_Camera);
+
 	// Wait for the loading of the geometry before initializing it
 	gEngine->m_JobSystem.WaitForCounter(&geometryDatabaseCounter, 0);
 	gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
@@ -133,7 +134,7 @@ void EngineCore::UpdateInput()
 
 	auto cameraForward = glm::normalize(m_Camera.Forward);
 	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
-	auto speed = 0.5f;
+	auto speed = 2.0f;
 
 	// Speed bump
 	if(io.KeyShift)

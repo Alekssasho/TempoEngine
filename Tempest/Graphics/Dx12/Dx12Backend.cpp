@@ -20,6 +20,7 @@ Backend::Backend()
 
 Backend::~Backend()
 {
+	// TODO: move to Init/deinit methods as using constructor/desctuctor is very rigid and cannot do things properly
 	// Reset it by hand to force cleaning of all Dx References and then report live objects to debug
 	m_Device.reset();
 #ifdef _DEBUG

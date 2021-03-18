@@ -23,6 +23,162 @@ pub mod tempest {
         extern crate flatbuffers;
         use self::flatbuffers::EndianScalar;
 
+        // struct Vec3, aligned to 4
+        #[repr(C, align(4))]
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct Vec3 {
+            x_: f32,
+            y_: f32,
+            z_: f32,
+        } // pub struct Vec3
+        impl flatbuffers::SafeSliceAccess for Vec3 {}
+        impl<'a> flatbuffers::Follow<'a> for Vec3 {
+            type Inner = &'a Vec3;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                <&'a Vec3>::follow(buf, loc)
+            }
+        }
+        impl<'a> flatbuffers::Follow<'a> for &'a Vec3 {
+            type Inner = &'a Vec3;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                flatbuffers::follow_cast_ref::<Vec3>(buf, loc)
+            }
+        }
+        impl<'b> flatbuffers::Push for Vec3 {
+            type Output = Vec3;
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(self as *const Vec3 as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+        impl<'b> flatbuffers::Push for &'b Vec3 {
+            type Output = Vec3;
+
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(*self as *const Vec3 as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+
+        impl Vec3 {
+            pub fn new<'a>(_x: f32, _y: f32, _z: f32) -> Self {
+                Vec3 {
+                    x_: _x.to_little_endian(),
+                    y_: _y.to_little_endian(),
+                    z_: _z.to_little_endian(),
+                }
+            }
+            pub fn x<'a>(&'a self) -> f32 {
+                self.x_.from_little_endian()
+            }
+            pub fn y<'a>(&'a self) -> f32 {
+                self.y_.from_little_endian()
+            }
+            pub fn z<'a>(&'a self) -> f32 {
+                self.z_.from_little_endian()
+            }
+        }
+
+        // struct Camera, aligned to 4
+        #[repr(C, align(4))]
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct Camera {
+            yfov_: f32,
+            znear_: f32,
+            zfar_: f32,
+            aspect_ratio_: f32,
+            position_: Vec3,
+            forward_: Vec3,
+            up_: Vec3,
+        } // pub struct Camera
+        impl flatbuffers::SafeSliceAccess for Camera {}
+        impl<'a> flatbuffers::Follow<'a> for Camera {
+            type Inner = &'a Camera;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                <&'a Camera>::follow(buf, loc)
+            }
+        }
+        impl<'a> flatbuffers::Follow<'a> for &'a Camera {
+            type Inner = &'a Camera;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                flatbuffers::follow_cast_ref::<Camera>(buf, loc)
+            }
+        }
+        impl<'b> flatbuffers::Push for Camera {
+            type Output = Camera;
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(self as *const Camera as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+        impl<'b> flatbuffers::Push for &'b Camera {
+            type Output = Camera;
+
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(*self as *const Camera as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+
+        impl Camera {
+            pub fn new<'a>(
+                _yfov: f32,
+                _znear: f32,
+                _zfar: f32,
+                _aspect_ratio: f32,
+                _position: &'a Vec3,
+                _forward: &'a Vec3,
+                _up: &'a Vec3,
+            ) -> Self {
+                Camera {
+                    yfov_: _yfov.to_little_endian(),
+                    znear_: _znear.to_little_endian(),
+                    zfar_: _zfar.to_little_endian(),
+                    aspect_ratio_: _aspect_ratio.to_little_endian(),
+                    position_: *_position,
+                    forward_: *_forward,
+                    up_: *_up,
+                }
+            }
+            pub fn yfov<'a>(&'a self) -> f32 {
+                self.yfov_.from_little_endian()
+            }
+            pub fn znear<'a>(&'a self) -> f32 {
+                self.znear_.from_little_endian()
+            }
+            pub fn zfar<'a>(&'a self) -> f32 {
+                self.zfar_.from_little_endian()
+            }
+            pub fn aspect_ratio<'a>(&'a self) -> f32 {
+                self.aspect_ratio_.from_little_endian()
+            }
+            pub fn position<'a>(&'a self) -> &'a Vec3 {
+                &self.position_
+            }
+            pub fn forward<'a>(&'a self) -> &'a Vec3 {
+                &self.forward_
+            }
+            pub fn up<'a>(&'a self) -> &'a Vec3 {
+                &self.up_
+            }
+        }
+
         pub enum LevelOffset {}
         #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -51,6 +207,9 @@ pub mod tempest {
                 args: &'args LevelArgs<'args>,
             ) -> flatbuffers::WIPOffset<Level<'bldr>> {
                 let mut builder = LevelBuilder::new(_fbb);
+                if let Some(x) = args.camera {
+                    builder.add_camera(x);
+                }
                 if let Some(x) = args.audio_database_file {
                     builder.add_audio_database_file(x);
                 }
@@ -70,6 +229,7 @@ pub mod tempest {
             pub const VT_ENTITIES: flatbuffers::VOffsetT = 6;
             pub const VT_GEOMETRY_DATABASE_FILE: flatbuffers::VOffsetT = 8;
             pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 10;
+            pub const VT_CAMERA: flatbuffers::VOffsetT = 12;
 
             #[inline]
             pub fn name(&self) -> Option<&'a str> {
@@ -97,6 +257,10 @@ pub mod tempest {
                 self._tab
                     .get::<flatbuffers::ForwardsUOffset<&str>>(Level::VT_AUDIO_DATABASE_FILE, None)
             }
+            #[inline]
+            pub fn camera(&self) -> Option<&'a Camera> {
+                self._tab.get::<Camera>(Level::VT_CAMERA, None)
+            }
         }
 
         pub struct LevelArgs<'a> {
@@ -104,6 +268,7 @@ pub mod tempest {
             pub entities: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
             pub geometry_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
             pub audio_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
+            pub camera: Option<&'a Camera>,
         }
         impl<'a> Default for LevelArgs<'a> {
             #[inline]
@@ -113,6 +278,7 @@ pub mod tempest {
                     entities: None,
                     geometry_database_file: None,
                     audio_database_file: None,
+                    camera: None,
                 }
             }
         }
@@ -153,6 +319,11 @@ pub mod tempest {
                     Level::VT_AUDIO_DATABASE_FILE,
                     audio_database_file,
                 );
+            }
+            #[inline]
+            pub fn add_camera(&mut self, camera: &'b Camera) {
+                self.fbb_
+                    .push_slot_always::<&Camera>(Level::VT_CAMERA, camera);
             }
             #[inline]
             pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> LevelBuilder<'a, 'b> {

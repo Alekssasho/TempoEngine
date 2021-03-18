@@ -87,6 +87,7 @@ pub struct TRS {
 
 impl TRS {
     pub fn new(mat: nalgebra_glm::Mat4x4) -> TRS {
+        // Tempest has LH and gltf uses RH, so we need to invert Z here.
         let to_tempest = nalgebra_glm::scale(&nalgebra_glm::identity(), &nalgebra_glm::vec3(1.0, 1.0, -1.0));
         let mat = to_tempest * mat;
         let mut matrix_iter = mat.iter();
@@ -120,8 +121,7 @@ impl TRS {
         };
 
         let (translate, rotate, scale) = transform.decomposed();
-        // GLTF uses right handed system, and we need to invert Z to align
-        // properly with what Tempest is using
+
         TRS {
             translate: nalgebra_glm::vec3(translate[0], translate[1], translate[2]),
             rotate: nalgebra_glm::quat(rotate[0], rotate[1], rotate[2], rotate[3]),

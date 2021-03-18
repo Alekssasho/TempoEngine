@@ -63,6 +63,7 @@ fn extract_camera_from_scene(scene: &Scene) -> Camera {
         if let Some((camera, transform)) = walk_nodes(&node, &components::glm::identity()) {
             let trs = gltf_loader::TRS::new(transform);
 
+            // TRS is in Tempest LH system, so we use Tempest oriented Up and Forward directions
             let rotated_up = components::glm::quat_cross_vec(&trs.rotate, &components::glm::vec3(0.0, 1.0, 0.0));
             let rotated_forward = components::glm::quat_cross_vec(&trs.rotate, &components::glm::vec3(0.0, 0.0, 1.0));
 

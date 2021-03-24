@@ -8,6 +8,7 @@ fn main() {
     let bindings = bindgen::Builder::default()
         // The input header we would like to generate
         // bindings for.
+        .header("../../Tempest/Math/Math.h")
         .header("../../Tempest/World/Components/Components.h")
         // We don't need any function or methods
         .ignore_functions()

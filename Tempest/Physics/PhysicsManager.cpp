@@ -1,5 +1,5 @@
-#include <Defines.h>
-#include <Logging.h>
+#include <CommonIncludes.h>
+
 #include <Physics/PhysicsManager.h>
 
 #include <PxPhysicsAPI.h>

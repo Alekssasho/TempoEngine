@@ -1,7 +1,7 @@
+#include <CommonIncludes.h>
 #include <Graphics/Renderer.h>
 #include <Graphics/Dx12/Dx12Backend.h>
 #include <EngineCore.h>
-#include <optick.h>
 
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/FrameData.h>

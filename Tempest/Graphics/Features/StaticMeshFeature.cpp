@@ -1,4 +1,5 @@
-#include <Logging.h>
+#include <CommonIncludes.h>
+
 #include <Graphics/Features/StaticMeshFeature.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>

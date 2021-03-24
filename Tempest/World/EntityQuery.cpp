@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <World/EntityQuery.h>
 
 #define FLECS_NO_CPP

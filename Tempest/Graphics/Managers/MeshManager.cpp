@@ -1,5 +1,5 @@
-#include <cassert>
-#include <Logging.h>
+#include <CommonIncludes.h>
+
 #include <Graphics/Managers/MeshManager.h>
 
 namespace Tempest

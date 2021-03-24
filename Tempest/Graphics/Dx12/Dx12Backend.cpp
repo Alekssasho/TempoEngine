@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Graphics/Dx12/Dx12Backend.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>

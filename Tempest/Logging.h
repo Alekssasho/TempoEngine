@@ -1,6 +1,4 @@
 #pragma once
-#include <Defines.h>
-#include <EASTL/string.h>
 
 namespace Tempest
 {

@@ -1,5 +1,6 @@
+#include <CommonIncludes.h>
+
 #include <Job/JobSystem.h>
-#include <optick.h>
 
 #ifdef TEMPEST_PLATFORM_WIN
 #define WIN32_LEAN_AND_MEAN

@@ -1,9 +1,5 @@
 #pragma once
 
-#include <Defines.h>
-#include <EASTL/unique_ptr.h>
-#include <EASTL/vector.h>
-
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/RendererTypes.h>
 #include <Graphics/Managers/MeshManager.h>

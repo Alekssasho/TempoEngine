@@ -4,9 +4,6 @@
 #define FLECS_NO_CPP
 #include <flecs.h>
 
-#include <EASTL/vector.h>
-#include <EASTL/unique_ptr.h>
-
 #include <World/System.h>
 
 namespace Tempest

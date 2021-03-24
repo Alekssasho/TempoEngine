@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Graphics/Dx12/Managers/BufferManager.h>
 
 namespace Tempest

@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Resources/ResourceLoader.h>
 #include <Logging.h>
 #include <fstream>

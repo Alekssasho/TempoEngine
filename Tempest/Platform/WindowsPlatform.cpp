@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Platform/WindowsPlatform.h>
 
 #include <EngineCore.h>

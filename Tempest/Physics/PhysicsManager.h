@@ -2,7 +2,6 @@
 
 #include <foundation/PxErrorCallback.h>
 #include <foundation/PxAllocatorCallback.h>
-#include <EASTL/unique_ptr.h>
 
 namespace physx
 {

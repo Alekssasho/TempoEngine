@@ -137,6 +137,7 @@
     <ClInclude Include="Physics\PhysicsManager.h">
       <Filter>Physics</Filter>
     </ClInclude>
+    <ClInclude Include="CommonIncludes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -216,6 +217,7 @@
     <ClCompile Include="Physics\PhysicsManager.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
+    <ClCompile Include="CommonIncludesPch.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">

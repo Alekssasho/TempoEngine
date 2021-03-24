@@ -1,6 +1,6 @@
 #pragma once
-#include <Defines.h>
-#include <Logging.h>
+#include <CommonIncludes.h>
+
 #include <Job/JobSystem.h>
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/Renderer.h>

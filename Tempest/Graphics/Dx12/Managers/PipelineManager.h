@@ -1,6 +1,5 @@
 #pragma once
 
-#include <EASTL/unordered_map.h>
 #include <Graphics/Dx12/Dx12Common.h>
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/RendererTypes.h>

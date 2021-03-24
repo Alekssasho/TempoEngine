@@ -1,6 +1,5 @@
 #pragma once
 
-#include <EASTL/unordered_map.h>
 #include <Graphics/RendererTypes.h>
 
 namespace Tempest

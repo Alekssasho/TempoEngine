@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Graphics/RendererTypes.h>
-#include <EASTL/vector.h>
 
 namespace Tempest
 {

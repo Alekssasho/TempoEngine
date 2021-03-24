@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <World/Camera.h>
 
 namespace Tempest

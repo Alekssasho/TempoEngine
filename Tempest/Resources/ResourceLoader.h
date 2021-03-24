@@ -1,8 +1,6 @@
 #pragma once
 
-#include <EASTL/string.h>
 #include <EASTL/hash_map.h>
-#include <EASTL/vector.h>
 #include <filesystem>
 
 #include <flatbuffers/flatbuffers.h>

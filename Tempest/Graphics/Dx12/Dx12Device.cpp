@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Graphics/Dx12/Dx12Device.h>
 
 #include <optick.h>

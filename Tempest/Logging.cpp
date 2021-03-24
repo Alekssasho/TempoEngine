@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Logging.h>
 #include <stdio.h>
 

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <World/World.h>
-#include <EASTL/string.h>
 
 namespace Tempest
 {

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <EASTL/vector.h>
-
 namespace Tempest
 {
 namespace Utils

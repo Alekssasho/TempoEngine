@@ -1,9 +1,6 @@
 #pragma once
 
 #include <Utils/Graph.h>
-#include <EASTL/functional.h>
-#include <EASTL/string.h>
-#include <EASTL/unique_ptr.h>
 
 namespace Tempest
 {

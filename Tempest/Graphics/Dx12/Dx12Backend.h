@@ -1,7 +1,5 @@
 #pragma once
 
-#include <EASTL/unique_ptr.h>
-#include <EASTL/array.h>
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/Dx12/Managers/PipelineManager.h>
 #include <Graphics/Dx12/Managers/BufferManager.h>

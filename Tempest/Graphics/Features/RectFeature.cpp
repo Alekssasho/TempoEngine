@@ -1,3 +1,5 @@
+#include <CommonIncludes.h>
+
 #include <Graphics/Features/RectFeature.h>
 #include <World/World.h>
 #include <World/Components/Components.h>

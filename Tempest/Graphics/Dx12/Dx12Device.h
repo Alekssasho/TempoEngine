@@ -2,8 +2,6 @@
 
 #include <Graphics/Dx12/Dx12Common.h>
 #include <Platform/WindowsPlatform.h>
-#include <Math/Math.h>
-#include <EASTL/vector.h>
 
 namespace Tempest
 {

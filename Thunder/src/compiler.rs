@@ -12,9 +12,9 @@ pub struct AsyncCompiler {
     pub options: CompilerOptions,
 }
 
-pub type ResourceBox = Box<dyn Resource>;
+pub type ResourceBox<T> = Box<dyn Resource<ReturnValue = T>>;
 
-pub async fn compile_async(resource: ResourceBox, options: CompilerOptions) -> Vec<u8> {
+pub async fn compile_async<T>(resource: ResourceBox<T>, options: CompilerOptions) -> T {
     let async_compiler = std::sync::Arc::new(AsyncCompiler { options });
 
     resource.compile(async_compiler).await

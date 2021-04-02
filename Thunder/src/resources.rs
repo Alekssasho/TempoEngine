@@ -11,10 +11,12 @@ pub mod level;
 
 #[async_trait]
 pub trait Resource {
-    async fn compile(&self, compiler: std::sync::Arc<AsyncCompiler>) -> Vec<u8>;
+    type ReturnValue;
+
+    async fn compile(&self, compiler: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue;
 }
 
-impl Debug for dyn Resource {
+impl<T> Debug for dyn Resource<ReturnValue = T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "dyn resource")
     }

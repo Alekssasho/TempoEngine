@@ -13,6 +13,8 @@ struct AudioDatabase {
 
 #[async_trait]
 impl Resource for AudioDatabaseResource {
+    type ReturnValue = Vec<u8>;
+
     #[instrument]
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Vec<u8> {
         let background_music_filename = "file_example_oog_48.ogg";

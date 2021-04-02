@@ -6,8 +6,9 @@ members = [
     "Thunder/Components",
     "Thunder/flecs-rs",
     "Thunder/flecs-rs-derive",
-    "Thunder/gltf-loader",
     "Thunder/flatbuffer-derive",
+    "Thunder/physics-handler",
+    "Thunder/math",
 ]
 
 [patch.crates-io]

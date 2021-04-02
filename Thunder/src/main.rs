@@ -14,6 +14,7 @@ use tracing_subscriber::{registry, Layer};
 
 mod compiler;
 mod resources;
+mod scene;
 
 use resources::{level::LevelResource, write_resource_to_file};
 

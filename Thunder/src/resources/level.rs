@@ -2,11 +2,13 @@ use super::*;
 use crate::resources::audio_database::AudioDatabaseResource;
 use crate::resources::entities_world::EntitiesWorldResource;
 use crate::resources::geometry_database::GeometryDatabaseResource;
+use crate::resources::mesh::MeshResource;
 
 use data_definition_generated::{
     flatbuffer_derive::FlatbufferSerializeRoot, AUDIO_DATABASE_EXTENSION,
     GEOMETRY_DATABASE_EXTENSION,
 };
+use mesh::MeshData;
 
 use std::sync::Arc;
 
@@ -50,9 +52,25 @@ impl Resource for LevelResource {
             ttrace!("Load Scene");
             Arc::new(Scene::new(&level_scene_file_name))
         };
+        // First step is extract all meshes
+        let mut mesh_futures = Vec::new();
+        for mesh in &scene.meshes {
+            let mesh_resource = MeshResource::new(Arc::downgrade(&scene), *mesh);
+            let mesh_compiler = compiler.clone();
+            mesh_futures.push(tokio::spawn(async move {
+                mesh_resource.compile(mesh_compiler).await
+            }));
+        }
+        let gathered_meshes = Arc::new(futures::future::join_all(mesh_futures)
+            .await
+            .into_iter()
+            .map(Result::unwrap)
+            .collect::<Vec<MeshData>>());
+        assert!(gathered_meshes.len() == scene.meshes.len());
 
+        // Second step prepare EntitiesWorld and GeometryDatabase which both require the extracted meshes
         let entities_resource_data = EntitiesWorldResource::new(Arc::downgrade(&scene));
-        let geometry_database_data = GeometryDatabaseResource::new(Arc::downgrade(&scene));
+        let geometry_database_data = GeometryDatabaseResource::new(Arc::downgrade(&scene), gathered_meshes.clone());
         let audio_database_data = AudioDatabaseResource {};
 
         let geometry_compiler = compiler.clone();

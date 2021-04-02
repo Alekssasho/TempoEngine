@@ -8,6 +8,7 @@ mod audio_database;
 mod entities_world;
 mod geometry_database;
 pub mod level;
+mod mesh;
 
 #[async_trait]
 pub trait Resource {

@@ -1,19 +1,20 @@
-use std::sync::Weak;
+use std::sync::{Arc, Weak};
 
 use crate::scene::Scene;
 use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, FlatbufferSerializeRoot};
 
 use crate::compiler::AsyncCompiler;
 
-use super::Resource;
+use super::{Resource, mesh::MeshData};
 #[derive(Debug)]
 pub struct GeometryDatabaseResource {
     scene: Weak<Scene>,
+    meshes: Arc<Vec<MeshData>>,
 }
 
 impl GeometryDatabaseResource {
-    pub fn new(scene: Weak<Scene>) -> Self {
-        Self { scene }
+    pub fn new(scene: Weak<Scene>, meshes: Arc<Vec<MeshData>>) -> Self {
+        Self { scene, meshes }
     }
 }
 #[derive(FlatbufferSerialize)]
@@ -41,42 +42,17 @@ impl Resource for GeometryDatabaseResource {
 
         let mut mappings = Vec::new();
         let mut current_offset = 0;
-        for mesh in &scene.meshes {
-            let indices_counts = scene.gltf.mesh_indices_count_per_primitive(*mesh);
-            let position_counts = scene.gltf.mesh_positions_count_per_primitive(*mesh);
+        for (mesh_index, mesh_data) in scene.meshes.iter().zip(self.meshes.iter()) {
             mappings.push(MeshMapping {
-                index: *mesh as u32,
-                vertex_offset: current_offset,
-                vertex_count: indices_counts.iter().sum::<usize>() as u32,
+                index: *mesh_index as u32,
+                vertex_offset: current_offset, // In bytes
+                vertex_count: mesh_data.indices.len() as u32
             });
 
-            // Fill up the vertex buffer
-            let mut indices = Vec::new();
-            for prim in 0..scene.gltf.mesh_primitive_count(*mesh) {
-                let mut prim_indices = if let Some(indices) = scene.gltf.mesh_indices(*mesh, prim) {
-                    indices
-                } else {
-                    (0..position_counts[prim] as u32).collect()
-                };
-
-                let indices_current_count = vertex_buffer.len() as u32;
-                let positions = scene.gltf.mesh_positions(*mesh, prim).unwrap();
-                vertex_buffer.reserve(vertex_buffer.len() + prim_indices.len() * 3);
-                for index in prim_indices.iter() {
-                    let position = positions[*index as usize];
-                    vertex_buffer.push(position[0]);
-                    vertex_buffer.push(position[1]);
-                    vertex_buffer.push(position[2]);
-                }
-                prim_indices = prim_indices
-                    .into_iter()
-                    .map(|index| index + indices_current_count)
-                    .collect();
-                indices.append(&mut prim_indices);
-            }
-
             // 3 is 3 float and 4 is num bytes for float
-            current_offset += (indices_counts[0] as u32) * 3 * 4;
+            current_offset += mesh_data.indices.len() as u32 * 3 * 4;
+
+            vertex_buffer.extend(&mesh_data.vertices);
         }
 
         let vertex_buffer_bytes = unsafe { (vertex_buffer[..].align_to::<u8>()).1 };

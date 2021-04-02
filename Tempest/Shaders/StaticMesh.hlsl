@@ -44,7 +44,7 @@ struct DirectionalLight
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
 	DirectionalLight light;
-	light.Direction = normalize(float3(-1.0f, -1.0f, -1.0f));
+	light.Direction = normalize(float3(-1.0f, 1.0f, -1.0f));
 
 	float3 worldPositionDDX = ddx(input.PositionWorld);
 	float3 worldPositionDDY = ddy(input.PositionWorld);

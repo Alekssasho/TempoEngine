@@ -25,7 +25,7 @@ class TempestNodeProperties(bpy.types.PropertyGroup):
     boids_enabled: bpy.props.BoolProperty(
         name="Boids",
         description='Should this object be parts of the boids system',
-        default=True
+        default=False
         )
 
 def register_panel():
@@ -77,9 +77,20 @@ class glTF2ExportUserExtension:
         if gltf2_object.mesh is not None:
             if gltf2_object.extensions is None:
                 gltf2_object.extensions = {}
+            extension_data = {
+                "boids_enabled": blender_object.tempest_props.boids_enabled
+            }
+            # Handle Physics
+            if blender_object.rigid_body is not None and blender_object.rigid_body.collision_shape == 'MESH':
+                rigid_body_data = {
+                    "dynamic": blender_object.rigid_body.type == 'ACTIVE',
+                    "collision_shape" : True
+                }
+                extension_data["physics_body"] = rigid_body_data
+
             gltf2_object.extensions[glTF_extension_name] = self.Extension(
                 name=glTF_extension_name,
-                extension={"boids_enabled": blender_object.tempest_props.boids_enabled},
+                extension=extension_data,
                 required=extension_is_required
             )
 

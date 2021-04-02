@@ -52,7 +52,7 @@ impl Resource for EntitiesWorldResource {
                     &gltf.node_name(node_index),
                     TRS::new(world_transform),
                     mesh_index as u32,
-                    gltf.tempest_extension(node_index).boids,
+                    gltf.tempest_extension(node_index).boids.unwrap_or(false),
                 );
             }
             None

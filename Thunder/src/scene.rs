@@ -215,7 +215,7 @@ impl Scene {
 
                 // TRS is in Tempest LH system, so we use Tempest oriented Up and Forward directions
                 let rotated_up = math::quat_cross_vec(&trs.rotate, &math::vec3(0.0, 1.0, 0.0));
-                let rotated_forward = math::quat_cross_vec(&trs.rotate, &math::vec3(0.0, 0.0, 1.0));
+                let rotated_forward = math::quat_cross_vec(&trs.rotate, &math::vec3(0.0, 0.0, -1.0));
 
                 return data_definition_generated::Camera::new(
                     camera.0,

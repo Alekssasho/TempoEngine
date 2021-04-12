@@ -15,11 +15,11 @@ pub struct TRS {
 impl TRS {
     pub fn new(mat: &nalgebra_glm::Mat4x4) -> TRS {
         // Tempest has LH and gltf uses RH, so we need to invert Z here.
-        let to_tempest = nalgebra_glm::scale(
-            &nalgebra_glm::identity(),
-            &nalgebra_glm::vec3(1.0, 1.0, -1.0),
-        );
-        let mat = to_tempest * mat;
+        // let to_tempest = nalgebra_glm::scale(
+        //     &nalgebra_glm::identity(),
+        //     &nalgebra_glm::vec3(1.0, 1.0, -1.0),
+        // );
+        // let mat = to_tempest * mat;
         let mut matrix_iter = mat.iter();
         let transform = gltf::scene::Transform::Matrix {
             matrix: [

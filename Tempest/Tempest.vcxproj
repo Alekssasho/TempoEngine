@@ -133,6 +133,7 @@
     <ClInclude Include="World\System.h" />
     <ClInclude Include="World\Systems\BoidsSystem.h" />
     <ClInclude Include="World\Systems\MoveSystem.h" />
+    <ClInclude Include="World\Systems\PhysicsSystem.h" />
     <ClInclude Include="World\TaskGraph\TaskGraph.h" />
     <ClInclude Include="World\TaskGraph\Tasks.h" />
     <ClInclude Include="World\World.h" />

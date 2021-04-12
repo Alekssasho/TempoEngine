@@ -81,12 +81,24 @@ class glTF2ExportUserExtension:
                 "boids_enabled": blender_object.tempest_props.boids_enabled
             }
             # Handle Physics
-            if blender_object.rigid_body is not None and blender_object.rigid_body.collision_shape == 'MESH':
-                rigid_body_data = {
-                    "dynamic": blender_object.rigid_body.type == 'ACTIVE',
-                    "collision_shape" : True
-                }
-                extension_data["physics_body"] = rigid_body_data
+            if blender_object.rigid_body is not None:
+                if blender_object.rigid_body.collision_shape == 'MESH':
+                    rigid_body_data = {
+                        "dynamic": False, # Meshes are always static
+                        "collision_shape" : {
+                            "type" : "mesh"
+                        }
+                    }
+                    extension_data["physics_body"] = rigid_body_data
+                elif blender_object.rigid_body.collision_shape == 'SPHERE':
+                    rigid_body_data = {
+                        "dynamic": blender_object.rigid_body.type == 'ACTIVE',
+                        "collision_shape" : {
+                            "type" : "sphere",
+                            "radius": max(blender_object.dimensions) / 2.0
+                        }
+                    }
+                    extension_data["physics_body"] = rigid_body_data
 
             gltf2_object.extensions[glTF_extension_name] = self.Extension(
                 name=glTF_extension_name,

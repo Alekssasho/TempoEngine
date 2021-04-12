@@ -5,7 +5,7 @@ use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, Flatbuff
 
 use crate::compiler::AsyncCompiler;
 
-use super::{Resource, mesh::MeshData};
+use super::{mesh::MeshData, Resource};
 #[derive(Debug)]
 pub struct GeometryDatabaseResource {
     scene: Weak<Scene>,
@@ -46,7 +46,7 @@ impl Resource for GeometryDatabaseResource {
             mappings.push(MeshMapping {
                 index: *mesh_index as u32,
                 vertex_offset: current_offset, // In bytes
-                vertex_count: mesh_data.indices.len() as u32
+                vertex_count: mesh_data.indices.len() as u32,
             });
 
             // 3 is 3 float and 4 is num bytes for float

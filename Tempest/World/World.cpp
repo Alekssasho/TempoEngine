@@ -7,6 +7,7 @@
 #include <World/Components/Components.h>
 #include <World/Systems/MoveSystem.h>
 #include <World/Systems/BoidsSystem.h>
+#include <World/Systems/PhysicsSystem.h>
 
 // As we are loading the entity world form a file, we don't need to
 // explicitly register components, as they would have already been registered.
@@ -47,12 +48,19 @@ World::World()
 	// Register all systems
 	//RegisterSystem<Components::Transform>(Systems::MoveSystem::Run);
 	//m_Systems.emplace_back(new Systems::MoveSystem);
-	m_Systems.emplace_back(new Systems::BoidsSystem);
+	//m_Systems.emplace_back(new Systems::BoidsSystem);
+
+	// This should be the last system in this bucket
+	m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
+
+	// This should be the first system in this bucket
+	m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);
 }
 
 World::~World()
 {
-	m_Systems.clear();
+	m_BeforePhysicsSystems.clear();
+	m_AfterPhysicsSystems.clear();
 	ecs_fini(m_EntityWorld);
 	m_EntityWorld = nullptr;
 }
@@ -60,14 +68,28 @@ World::~World()
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 {
 	//m_EntityWorld.progress(deltaTime);
-
-	TaskGraph::TaskGraph graph;
-	for (const auto& system : m_Systems)
 	{
-		system->Update(deltaTime, graph);
+		TaskGraph::TaskGraph graph;
+		for (const auto& system : m_BeforePhysicsSystems)
+		{
+			system->Update(deltaTime, graph);
+		}
+
+		graph.CompileAndExecute(jobSystem);
 	}
 
-	graph.CompileAndExecute(jobSystem);
+	// TODO: this probably could be fixed number and track it
+	gEngine->GetPhysics().Update(deltaTime);
+
+	{
+		TaskGraph::TaskGraph graph;
+		for (const auto& system : m_AfterPhysicsSystems)
+		{
+			system->Update(deltaTime, graph);
+		}
+
+		graph.CompileAndExecute(jobSystem);
+	}
 }
 
 void World::LoadFromLevel(const char* data, size_t size)
@@ -88,7 +110,12 @@ void World::LoadFromLevel(const char* data, size_t size)
 	//}
 #endif
 
-	for (const auto& system : m_Systems)
+	for (const auto& system : m_BeforePhysicsSystems)
+	{
+		system->PrepareQueries(*this);
+	}
+
+	for (const auto& system : m_AfterPhysicsSystems)
 	{
 		system->PrepareQueries(*this);
 	}

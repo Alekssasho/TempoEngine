@@ -216,6 +216,9 @@ pub mod tempest {
                 if let Some(x) = args.geometry_database_file {
                     builder.add_geometry_database_file(x);
                 }
+                if let Some(x) = args.physics_world {
+                    builder.add_physics_world(x);
+                }
                 if let Some(x) = args.entities {
                     builder.add_entities(x);
                 }
@@ -227,9 +230,10 @@ pub mod tempest {
 
             pub const VT_NAME: flatbuffers::VOffsetT = 4;
             pub const VT_ENTITIES: flatbuffers::VOffsetT = 6;
-            pub const VT_GEOMETRY_DATABASE_FILE: flatbuffers::VOffsetT = 8;
-            pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 10;
-            pub const VT_CAMERA: flatbuffers::VOffsetT = 12;
+            pub const VT_PHYSICS_WORLD: flatbuffers::VOffsetT = 8;
+            pub const VT_GEOMETRY_DATABASE_FILE: flatbuffers::VOffsetT = 10;
+            pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 12;
+            pub const VT_CAMERA: flatbuffers::VOffsetT = 14;
 
             #[inline]
             pub fn name(&self) -> Option<&'a str> {
@@ -241,6 +245,15 @@ pub mod tempest {
                 self._tab
                     .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(
                         Level::VT_ENTITIES,
+                        None,
+                    )
+                    .map(|v| v.safe_slice())
+            }
+            #[inline]
+            pub fn physics_world(&self) -> Option<&'a [u8]> {
+                self._tab
+                    .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(
+                        Level::VT_PHYSICS_WORLD,
                         None,
                     )
                     .map(|v| v.safe_slice())
@@ -266,6 +279,7 @@ pub mod tempest {
         pub struct LevelArgs<'a> {
             pub name: Option<flatbuffers::WIPOffset<&'a str>>,
             pub entities: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+            pub physics_world: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
             pub geometry_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
             pub audio_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
             pub camera: Option<&'a Camera>,
@@ -276,6 +290,7 @@ pub mod tempest {
                 LevelArgs {
                     name: None,
                     entities: None,
+                    physics_world: None,
                     geometry_database_file: None,
                     audio_database_file: None,
                     camera: None,
@@ -299,6 +314,16 @@ pub mod tempest {
             ) {
                 self.fbb_
                     .push_slot_always::<flatbuffers::WIPOffset<_>>(Level::VT_ENTITIES, entities);
+            }
+            #[inline]
+            pub fn add_physics_world(
+                &mut self,
+                physics_world: flatbuffers::WIPOffset<flatbuffers::Vector<'b, u8>>,
+            ) {
+                self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                    Level::VT_PHYSICS_WORLD,
+                    physics_world,
+                );
             }
             #[inline]
             pub fn add_geometry_database_file(

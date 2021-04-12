@@ -9,6 +9,7 @@ mod entities_world;
 mod geometry_database;
 pub mod level;
 mod mesh;
+mod physics_world;
 
 #[async_trait]
 pub trait Resource {

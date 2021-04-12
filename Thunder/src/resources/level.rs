@@ -9,6 +9,7 @@ use data_definition_generated::{
     GEOMETRY_DATABASE_EXTENSION,
 };
 use mesh::MeshData;
+use physics_world::PhysicsWorldResource;
 
 use std::sync::Arc;
 
@@ -32,6 +33,8 @@ struct Level<'a> {
     name: &'a str,
     #[offset]
     entities: &'a [u8],
+    #[offset]
+    physics_world: &'a [u8],
     #[offset]
     geometry_database_file: String,
     #[offset]
@@ -61,38 +64,51 @@ impl Resource for LevelResource {
                 mesh_resource.compile(mesh_compiler).await
             }));
         }
-        let gathered_meshes = Arc::new(futures::future::join_all(mesh_futures)
-            .await
-            .into_iter()
-            .map(Result::unwrap)
-            .collect::<Vec<MeshData>>());
+        let gathered_meshes = Arc::new(
+            futures::future::join_all(mesh_futures)
+                .await
+                .into_iter()
+                .map(Result::unwrap)
+                .collect::<Vec<MeshData>>(),
+        );
         assert!(gathered_meshes.len() == scene.meshes.len());
 
         // Second step prepare EntitiesWorld and GeometryDatabase which both require the extracted meshes
         let entities_resource_data = EntitiesWorldResource::new(Arc::downgrade(&scene));
-        let geometry_database_data = GeometryDatabaseResource::new(Arc::downgrade(&scene), gathered_meshes.clone());
+        let geometry_database_data =
+            GeometryDatabaseResource::new(Arc::downgrade(&scene), gathered_meshes.clone());
         let audio_database_data = AudioDatabaseResource {};
 
         let geometry_compiler = compiler.clone();
         let entities_compiler = compiler.clone();
         let audio_compiler = compiler.clone();
 
-        let geometry_future =
-            tokio::spawn(async move { geometry_database_data.compile(geometry_compiler).await });
         let entities_future =
             tokio::spawn(async move { entities_resource_data.compile(entities_compiler).await });
+        let geometry_future =
+            tokio::spawn(async move { geometry_database_data.compile(geometry_compiler).await });
         let audio_future =
             tokio::spawn(async move { audio_database_data.compile(audio_compiler).await });
 
-        // We need to do some work for the level, so do it here, after we have spawned the async tasks and before waiting for them
-        let level_camera = scene.camera; //extract_camera_from_scene(&scene);
+        // We need to wait for entities world, in order to have entity id we need for later patching
+        // then we cook the physics world which needs the ids. This is async to geometry/audio database
+        let (entities_resource_compiled_data, node_to_entity_map) = entities_future.await.unwrap();
+
+        let physics_resource_data = PhysicsWorldResource::new(
+            Arc::downgrade(&scene),
+            gathered_meshes.clone(),
+            node_to_entity_map,
+        );
+        let physics_compiler = compiler.clone();
+        let physics_future =
+            tokio::spawn(async move { physics_resource_data.compile(physics_compiler).await });
 
         // After we have done the needed work wait for the async task to finish
         let (
             geometry_database_compiled_data,
-            entities_resource_compiled_data,
             audio_database_compiled_data,
-        ) = tokio::try_join!(geometry_future, entities_future, audio_future).unwrap();
+            physics_resource_compiled_data,
+        ) = tokio::try_join!(geometry_future, audio_future, physics_future,).unwrap();
 
         // Write geometry database to a file
         let mut output_file_path = compiler.options.output_folder.clone();
@@ -120,9 +136,10 @@ impl Resource for LevelResource {
         let level = Level {
             name: &self.name,
             entities: entities_resource_compiled_data.as_slice(),
+            physics_world: physics_resource_compiled_data.as_slice(),
             geometry_database_file: geometry_database_name,
             audio_database_file: audio_database_name,
-            camera: Some(&level_camera),
+            camera: Some(&scene.camera),
         };
 
         let result = level.serialize_root();

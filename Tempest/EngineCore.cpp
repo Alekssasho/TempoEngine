@@ -109,6 +109,17 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 		gEngine->m_JobSystem.RunJobs("Change Window Name", &changeWindowName, 1, nullptr, Job::ThreadTag::Windows);
 	}
 
+	// Async Load the physics world
+	const flatbuffers::Vector<uint8_t>* physicsData = level->physics_world();
+	Job::Counter physicsWorldCounter;
+	{
+		Job::JobDecl loadPhysicsWorld{ [](uint32_t, void* data) {
+			auto dataVector = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(data);
+			gEngine->GetPhysics().LoadFromData(dataVector->Data(), dataVector->size());
+		}, (void*)physicsData };
+		gEngine->m_JobSystem.RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
+	}
+
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 	gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
 
@@ -119,6 +130,12 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
 	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
 	gEngine->m_Renderer.RegisterView(&gEngine->m_Camera);
+
+	// Wait for physics as well
+	gEngine->m_JobSystem.WaitForCounter(&physicsWorldCounter, 0);
+
+	// Patch the world with the loaded physics
+	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld());
 
 	// Wait for the loading of the geometry before initializing it
 	gEngine->m_JobSystem.WaitForCounter(&geometryDatabaseCounter, 0);

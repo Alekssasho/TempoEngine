@@ -1,4 +1,4 @@
-use std::sync::Weak;
+use std::{collections::HashMap, sync::Weak};
 
 use components::*;
 use flecs_rs::*;
@@ -23,6 +23,7 @@ impl EntitiesWorldResource {
         trs: TRS,
         mesh_index: u32,
         is_boids: bool,
+        has_dynamic_physics: bool,
     ) -> ecs_entity_t {
         let transform = Components::Transform(Tempest_Components_Transform {
             Position: trs.translate,
@@ -31,35 +32,50 @@ impl EntitiesWorldResource {
         });
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
+        let mut components = vec![transform, static_mesh];
+        if has_dynamic_physics {
+            components.push(Components::DynamicPhysicsActor(
+                Tempest_Components_DynamicPhysicsActor {
+                    Actor: std::ptr::null_mut(), // This will be patched on loading time
+                },
+            ))
+        }
+
         let tags = if is_boids { vec![Tags::Boids] } else { vec![] };
-        state.create_entity(name, &[transform, static_mesh], &tags)
+        state.create_entity(name, &components, &tags)
     }
 }
 
 #[async_trait]
 impl Resource for EntitiesWorldResource {
-    type ReturnValue = Vec<u8>;
+    // First is the compiled ecs state, the second is map from node_index to entity_id
+    type ReturnValue = (Vec<u8>, HashMap<usize, u64>);
 
     #[instrument]
-    async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Vec<u8> {
+    async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
         let flecs_state = FlecsState::new();
 
         let scene = self.scene.upgrade().unwrap();
+        let mut node_to_entity_map = HashMap::new();
         scene.walk_root_nodes(|gltf, node_index, world_transform| -> Option<()> {
             if let Some(mesh_index) = gltf.node_mesh_index(node_index) {
-                EntitiesWorldResource::create_mesh_entity(
+                let tempest_extension = gltf.tempest_extension(node_index);
+                let entity_id = EntitiesWorldResource::create_mesh_entity(
                     &flecs_state,
                     &gltf.node_name(node_index),
                     TRS::new(world_transform),
                     mesh_index as u32,
-                    gltf.tempest_extension(node_index).boids.unwrap_or(false),
+                    tempest_extension.boids.unwrap_or(false),
+                    tempest_extension.physics_body.map_or(false, |physics_body| physics_body.dynamic)
                 );
+                node_to_entity_map.insert(node_index, entity_id);
             }
             None
         });
 
         let mut binary_data = Vec::<u8>::new();
         flecs_state.write_to_buffer(&mut binary_data);
-        binary_data
+
+        (binary_data, node_to_entity_map)
     }
 }

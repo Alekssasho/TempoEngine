@@ -2,6 +2,11 @@
 
 #include <Graphics/RendererTypes.h>
 
+namespace physx
+{
+class PxRigidBody;
+}
+
 namespace Tempest
 {
 namespace Components
@@ -29,6 +34,13 @@ struct StaticMesh
 	MeshHandle Mesh;
 
 	static constexpr const char* Name = "StaticMesh";
+};
+
+struct DynamicPhysicsActor
+{
+	physx::PxRigidBody* Actor;
+
+	static constexpr const char* Name = "DynamicPhysicsActor";
 };
 }
 

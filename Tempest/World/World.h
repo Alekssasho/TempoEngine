@@ -22,6 +22,7 @@ public:
 // TODO: maybe being private is better
 //private:
 	ecs_world_t* m_EntityWorld = nullptr;
-	eastl::vector<eastl::unique_ptr<System>> m_Systems;
+	eastl::vector<eastl::unique_ptr<System>> m_BeforePhysicsSystems;
+	eastl::vector<eastl::unique_ptr<System>> m_AfterPhysicsSystems;
 };
 }

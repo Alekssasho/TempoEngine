@@ -10,6 +10,7 @@ edition = "2018"
 flecs-rs = { path="flecs-rs" }
 components = { path="Components" }
 data_definition_generated = {path = "DataDefinitionGenerated" }
+physics-handler = { path="physics-handler" }
 math = { path="math" }
 
 structopt = "0.3"

@@ -138,6 +138,9 @@
       <Filter>Physics</Filter>
     </ClInclude>
     <ClInclude Include="CommonIncludes.h" />
+    <ClInclude Include="World\Systems\PhysicsSystem.h">
+      <Filter>World\Systems</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />

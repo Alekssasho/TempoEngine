@@ -58,6 +58,7 @@ pub enum Components {
     Transform(Tempest_Components_Transform),
     Rect(Tempest_Components_Rect),
     StaticMesh(Tempest_Components_StaticMesh),
+    DynamicPhysicsActor(Tempest_Components_DynamicPhysicsActor),
 }
 
 #[derive(Tags)]

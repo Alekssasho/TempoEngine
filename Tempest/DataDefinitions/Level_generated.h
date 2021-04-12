@@ -103,15 +103,19 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_ENTITIES = 6,
-    VT_GEOMETRY_DATABASE_FILE = 8,
-    VT_AUDIO_DATABASE_FILE = 10,
-    VT_CAMERA = 12
+    VT_PHYSICS_WORLD = 8,
+    VT_GEOMETRY_DATABASE_FILE = 10,
+    VT_AUDIO_DATABASE_FILE = 12,
+    VT_CAMERA = 14
   };
   const flatbuffers::String *name() const {
     return GetPointer<const flatbuffers::String *>(VT_NAME);
   }
   const flatbuffers::Vector<uint8_t> *entities() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_ENTITIES);
+  }
+  const flatbuffers::Vector<uint8_t> *physics_world() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_PHYSICS_WORLD);
   }
   const flatbuffers::String *geometry_database_file() const {
     return GetPointer<const flatbuffers::String *>(VT_GEOMETRY_DATABASE_FILE);
@@ -128,6 +132,8 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(name()) &&
            VerifyOffset(verifier, VT_ENTITIES) &&
            verifier.VerifyVector(entities()) &&
+           VerifyOffset(verifier, VT_PHYSICS_WORLD) &&
+           verifier.VerifyVector(physics_world()) &&
            VerifyOffset(verifier, VT_GEOMETRY_DATABASE_FILE) &&
            verifier.VerifyString(geometry_database_file()) &&
            VerifyOffset(verifier, VT_AUDIO_DATABASE_FILE) &&
@@ -146,6 +152,9 @@ struct LevelBuilder {
   }
   void add_entities(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> entities) {
     fbb_.AddOffset(Level::VT_ENTITIES, entities);
+  }
+  void add_physics_world(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> physics_world) {
+    fbb_.AddOffset(Level::VT_PHYSICS_WORLD, physics_world);
   }
   void add_geometry_database_file(flatbuffers::Offset<flatbuffers::String> geometry_database_file) {
     fbb_.AddOffset(Level::VT_GEOMETRY_DATABASE_FILE, geometry_database_file);
@@ -171,6 +180,7 @@ inline flatbuffers::Offset<Level> CreateLevel(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::String> name = 0,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> entities = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> physics_world = 0,
     flatbuffers::Offset<flatbuffers::String> geometry_database_file = 0,
     flatbuffers::Offset<flatbuffers::String> audio_database_file = 0,
     const Tempest::Definition::Camera *camera = 0) {
@@ -178,6 +188,7 @@ inline flatbuffers::Offset<Level> CreateLevel(
   builder_.add_camera(camera);
   builder_.add_audio_database_file(audio_database_file);
   builder_.add_geometry_database_file(geometry_database_file);
+  builder_.add_physics_world(physics_world);
   builder_.add_entities(entities);
   builder_.add_name(name);
   return builder_.Finish();
@@ -187,17 +198,20 @@ inline flatbuffers::Offset<Level> CreateLevelDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const char *name = nullptr,
     const std::vector<uint8_t> *entities = nullptr,
+    const std::vector<uint8_t> *physics_world = nullptr,
     const char *geometry_database_file = nullptr,
     const char *audio_database_file = nullptr,
     const Tempest::Definition::Camera *camera = 0) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto entities__ = entities ? _fbb.CreateVector<uint8_t>(*entities) : 0;
+  auto physics_world__ = physics_world ? _fbb.CreateVector<uint8_t>(*physics_world) : 0;
   auto geometry_database_file__ = geometry_database_file ? _fbb.CreateString(geometry_database_file) : 0;
   auto audio_database_file__ = audio_database_file ? _fbb.CreateString(audio_database_file) : 0;
   return Tempest::Definition::CreateLevel(
       _fbb,
       name__,
       entities__,
+      physics_world__,
       geometry_database_file__,
       audio_database_file__,
       camera);

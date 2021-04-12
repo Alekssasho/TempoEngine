@@ -163,10 +163,10 @@ impl Scene {
         gltf: &GltfData,
         node_index: usize,
         parent_transform: &math::Mat4x4,
-        walk_function: &F,
+        walk_function: &mut F,
     ) -> Option<T>
     where
-        F: Fn(&GltfData, usize, &math::Mat4x4) -> Option<T>,
+        F: FnMut(&GltfData, usize, &math::Mat4x4) -> Option<T>,
     {
         let world_transform = parent_transform * gltf.node_transform(node_index);
 
@@ -194,7 +194,7 @@ impl Scene {
                 gltf,
                 *node_index,
                 &math::identity_matrix(),
-                &|gltf, node_index, world_transform| {
+                &mut |gltf, node_index, world_transform| {
                     if let Some(camera) = gltf.node(node_index).camera() {
                         if let gltf::camera::Projection::Perspective(data) = camera.projection() {
                             return Some((
@@ -249,13 +249,17 @@ impl Scene {
         )
     }
 
-    pub fn walk_root_nodes<T, F>(&self, walk_function: F) -> Option<T>
+    pub fn walk_root_nodes<T, F>(&self, mut walk_function: F) -> Option<T>
     where
-        F: Fn(&GltfData, usize, &math::Mat4x4) -> Option<T>,
+        F: FnMut(&GltfData, usize, &math::Mat4x4) -> Option<T>,
     {
         for node in &self.root_nodes {
-            let return_value =
-                Scene::walk_nodes(&self.gltf, *node, &math::identity_matrix(), &walk_function);
+            let return_value = Scene::walk_nodes(
+                &self.gltf,
+                *node,
+                &math::identity_matrix(),
+                &mut walk_function,
+            );
             if return_value.is_some() {
                 return return_value;
             }

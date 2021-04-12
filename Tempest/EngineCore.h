@@ -54,6 +54,11 @@ public:
 	{
 		return m_Audio;
 	}
+
+	PhysicsManager& GetPhysics()
+	{
+		return m_Physics;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;

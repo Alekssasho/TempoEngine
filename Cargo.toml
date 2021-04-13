@@ -9,6 +9,7 @@ members = [
     "Thunder/flatbuffer-derive",
     "Thunder/physics-handler",
     "Thunder/math",
+    "Thunder/geometry_database_explorer",
 ]
 
 [patch.crates-io]

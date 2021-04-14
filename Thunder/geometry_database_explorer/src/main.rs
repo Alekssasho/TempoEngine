@@ -74,6 +74,51 @@ fn main() {
     };
     let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
 
+    // Load shaders
+    let module = device.create_shader_module(&wgpu::include_spirv!(env!("mesh_shader.spv")));
+
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        label: None,
+        bind_group_layouts: &[],
+        push_constant_ranges: &[],
+    });
+
+    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        label: None,
+        layout: Some(&pipeline_layout),
+        vertex: wgpu::VertexState {
+            module: &module,
+            entry_point: "main_vs",
+            buffers: &[],
+        },
+        primitive: wgpu::PrimitiveState {
+            topology: wgpu::PrimitiveTopology::TriangleList,
+            strip_index_format: None,
+            front_face: wgpu::FrontFace::Ccw,
+            cull_mode: wgpu::CullMode::None,
+            polygon_mode: wgpu::PolygonMode::Fill,
+        },
+        depth_stencil: None,
+        multisample: wgpu::MultisampleState {
+            count: 1,
+            mask: !0,
+            alpha_to_coverage_enabled: false,
+        },
+        fragment: Some(wgpu::FragmentState {
+            module: &module,
+            entry_point: "main_fs",
+            targets: &[
+                wgpu::ColorTargetState {
+                    format: sc_desc.format,
+                    alpha_blend: wgpu::BlendState::REPLACE,
+                    color_blend: wgpu::BlendState::REPLACE,
+                    write_mask: wgpu::ColorWrite::ALL,
+                }
+            ],
+        }),
+
+    });
+
     // We use the egui_winit_platform crate as the platform.
     let mut platform = Platform::new(PlatformDescriptor {
         physical_width: size.width as u32,
@@ -137,6 +182,23 @@ fn main() {
                 let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
                     label: Some("encoder"),
                 });
+                {
+                    let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        label: None,
+                        color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
+                            attachment: &output_frame.output.view,
+                            resolve_target: None,
+                            ops: wgpu::Operations {
+                                load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                                store: true,
+                            },
+                        }],
+                        depth_stencil_attachment: None,
+                    });
+
+                    rpass.set_pipeline(&render_pipeline);
+                    rpass.draw(0..3, 0..1);
+                }
 
                 // Upload all resources for the GPU.
                 let screen_descriptor = ScreenDescriptor {
@@ -154,7 +216,7 @@ fn main() {
                     &output_frame.output.view,
                     &paint_jobs,
                     &screen_descriptor,
-                    Some(wgpu::Color::BLACK),
+                    None//Some(wgpu::Color::BLACK),
                 );
 
                 // Submit the commands.

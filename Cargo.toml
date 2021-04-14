@@ -10,7 +10,12 @@ members = [
     "Thunder/physics-handler",
     "Thunder/math",
     "Thunder/geometry_database_explorer",
+
+    "Thunder/shaders/mesh_shader",
 ]
 
 [patch.crates-io]
 gltf = {path = "ThirdParty/gltf" }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }
+spirv-std-macros = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }

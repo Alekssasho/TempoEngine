@@ -6,7 +6,10 @@ use physx::{
 };
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
-use physx_sys::{PxBoundedData_new, PxCollection, PxMeshFlag::eFLIPNORMALS, PxMeshGeometryFlags, PxMeshScale_new_2, PxSerializationRegistry};
+use physx_sys::{
+    PxBoundedData_new, PxCollection, PxMeshFlag::eFLIPNORMALS, PxMeshGeometryFlags,
+    PxMeshScale_new_2, PxSerializationRegistry,
+};
 
 type PxMaterial = physx::material::PxMaterial<()>;
 type PxShape = physx::shape::PxShape<(), PxMaterial>;
@@ -134,7 +137,7 @@ impl PhysicsHandler {
     pub fn create_triangle_mesh(
         &mut self,
         vertices: &[f32],
-        indices: &[u32]
+        indices: &[u32],
     ) -> Option<Owner<physx::triangle_mesh::TriangleMesh>> {
         // TODO: Currently all of the meshes are not indexed so ingore that for the moment
         let mut points_data = unsafe { PxBoundedData_new() };
@@ -165,14 +168,14 @@ impl PhysicsHandler {
         }
     }
 
-    pub fn create_mesh_geometry(&self, scale: PxVec3, mesh: &mut Owner<physx::triangle_mesh::TriangleMesh>) -> impl Geometry {
+    pub fn create_mesh_geometry(
+        &self,
+        scale: PxVec3,
+        mesh: &mut Owner<physx::triangle_mesh::TriangleMesh>,
+    ) -> impl Geometry {
         let sys_vec: physx_sys::PxVec3 = scale.into();
         let mesh_scale = unsafe { PxMeshScale_new_2(&sys_vec as *const physx_sys::PxVec3) };
-        PxTriangleMeshGeometry::new(
-            mesh.as_mut(),
-            &mesh_scale,
-            PxMeshGeometryFlags { mBits: 0 },
-        )
+        PxTriangleMeshGeometry::new(mesh.as_mut(), &mesh_scale, PxMeshGeometryFlags { mBits: 0 })
     }
 
     pub fn create_sphere_geometry(&self, radius: f32) -> impl Geometry {
@@ -186,7 +189,6 @@ impl PhysicsHandler {
         geometry: &impl Geometry,
         id: u64,
     ) {
-        
         if is_dynamic {
             let mut actor = self
                 .physx_foundation

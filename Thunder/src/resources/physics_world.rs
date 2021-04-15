@@ -61,9 +61,15 @@ impl Resource for PhysicsWorldResource {
                         let mesh_data = &self.meshes[position_index];
 
                         let mut mesh = physics
-                            .create_triangle_mesh(mesh_data.vertices.as_slice(), mesh_data.indices.as_slice())
+                            .create_triangle_mesh(
+                                mesh_data.vertices.as_slice(),
+                                mesh_data.indices.as_slice(),
+                            )
                             .unwrap();
-                        let geometry = physics.create_mesh_geometry(PxVec3::new(trs.scale.x, trs.scale.y, trs.scale.z), &mut mesh);
+                        let geometry = physics.create_mesh_geometry(
+                            PxVec3::new(trs.scale.x, trs.scale.y, trs.scale.z),
+                            &mut mesh,
+                        );
                         assert!(physics_body.dynamic == false);
                         physics.add_actor(
                             false, // This should be always false as meshes cannot be dynamic in PhysX
@@ -71,17 +77,21 @@ impl Resource for PhysicsWorldResource {
                             &geometry,
                             *self.node_to_entity_map.get(&node_index).unwrap(),
                         );
-                    },
+                    }
                     gltf::json::validation::Checked::Valid(tempest_extension::Type::Sphere) => {
-                        let geometry = physics.create_sphere_geometry(physics_body.collision_shape.radius.unwrap_or(1.0));
+                        let geometry = physics.create_sphere_geometry(
+                            physics_body.collision_shape.radius.unwrap_or(1.0),
+                        );
                         physics.add_actor(
                             physics_body.dynamic,
                             px_transform,
                             &geometry,
                             *self.node_to_entity_map.get(&node_index).unwrap(),
                         );
-                    },
-                    gltf::json::validation::Checked::Invalid => { panic!("There should be valid collision shape") }
+                    }
+                    gltf::json::validation::Checked::Invalid => {
+                        panic!("There should be valid collision shape")
+                    }
                 };
             }
             None

@@ -66,7 +66,9 @@ impl Resource for EntitiesWorldResource {
                     TRS::new(world_transform),
                     mesh_index as u32,
                     tempest_extension.boids.unwrap_or(false),
-                    tempest_extension.physics_body.map_or(false, |physics_body| physics_body.dynamic)
+                    tempest_extension
+                        .physics_body
+                        .map_or(false, |physics_body| physics_body.dynamic),
                 );
                 node_to_entity_map.insert(node_index, entity_id);
             }

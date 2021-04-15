@@ -16,6 +16,8 @@ winit = "0.24.0"
 structopt = "0.3"
 
 data_definition_generated = { path = "../DataDefinitionGenerated" }
+mesh_shader = { path="../shaders/mesh_shader" }
+glam = { version = "0.14", default-features = true }
 
 [build-dependencies]
 spirv-builder = { version = "0.4.0-alpha.5", default-features = false }

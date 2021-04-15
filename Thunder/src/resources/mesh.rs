@@ -37,12 +37,12 @@ impl Resource for MeshResource {
         let mut vertices = Vec::new();
         for prim in 0..scene.gltf.mesh_primitive_count(self.mesh_index) {
             let mut prim_indices =
-            if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim) {
-                indices
-            } else {
-                (0..position_counts[prim] as u32).collect()
-            };
-            
+                if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim) {
+                    indices
+                } else {
+                    (0..position_counts[prim] as u32).collect()
+                };
+
             // Vertices array is of floats, 3 of which are a vertex
             //let indices_current_count = (orig_vertices.len() / 3) as u32;
             let positions = scene.gltf.mesh_positions(self.mesh_index, prim).unwrap();
@@ -54,8 +54,8 @@ impl Resource for MeshResource {
                 vertices.push(position[2]);
             }
         }
-        let indices = (0..(vertices.len()/3) as u32).collect();
-        
+        let indices = (0..(vertices.len() / 3) as u32).collect();
+
         MeshData { vertices, indices }
     }
 }

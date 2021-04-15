@@ -4,16 +4,17 @@ use egui::FontDefinitions;
 use egui_wgpu_backend::{RenderPass, ScreenDescriptor};
 use egui_winit_platform::{Platform, PlatformDescriptor};
 use futures_lite::future::block_on;
+use mesh_shader::ShaderConstants;
+use wgpu::util::DeviceExt;
 use winit::event::Event::*;
 use winit::event_loop::ControlFlow;
 
-use structopt::StructOpt;
 use std::io::Read;
+use structopt::StructOpt;
 
 const INITIAL_WIDTH: u32 = 1280;
 const INITIAL_HEIGHT: u32 = 720;
 const OUTPUT_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
-
 
 #[derive(StructOpt)]
 struct CommandLineOptions {
@@ -22,14 +23,22 @@ struct CommandLineOptions {
     input_database: std::path::PathBuf,
 }
 
+unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
+    ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
+}
+
 fn main() {
     let opt = CommandLineOptions::from_args();
-    let mut database_file = std::fs::File::open(opt.input_database.clone()).expect("Valid database file");
+    let mut database_file =
+        std::fs::File::open(opt.input_database.clone()).expect("Valid database file");
     let mut database_file_contents = Vec::new();
-    database_file.read_to_end(&mut database_file_contents).unwrap();
+    database_file
+        .read_to_end(&mut database_file_contents)
+        .unwrap();
     // Leak is necessery in order to transfer lifetime to 'static. event_loop.run is taking 'static lifetime
     // Can use EventLoopExtRunReturn::run_return if this turned to be a problem.
-    let database = data_definition_generated::get_root_as_geometry_database(database_file_contents.leak());
+    let database =
+        data_definition_generated::get_root_as_geometry_database(database_file_contents.leak());
 
     // Start the event loop
     let event_loop = winit::event_loop::EventLoop::new();
@@ -56,8 +65,11 @@ fn main() {
 
     let (mut device, mut queue) = block_on(adapter.request_device(
         &wgpu::DeviceDescriptor {
-            features: wgpu::Features::default(),
-            limits: wgpu::Limits::default(),
+            features: wgpu::Features::PUSH_CONSTANTS,
+            limits: wgpu::Limits {
+                max_push_constant_size: 256,
+                ..Default::default()
+            },
             label: None,
         },
         None,
@@ -77,11 +89,30 @@ fn main() {
     // Load shaders
     let module = device.create_shader_module(&wgpu::include_spirv!(env!("mesh_shader.spv")));
 
+    let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Vertex buffer"),
+        contents: database.vertex_buffer().unwrap(),
+        usage: wgpu::BufferUsage::VERTEX,
+    });
+
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[],
-        push_constant_ranges: &[],
+        push_constant_ranges: &[wgpu::PushConstantRange {
+            stages: wgpu::ShaderStage::VERTEX,
+            range: 0..std::mem::size_of::<ShaderConstants>() as u32,
+        }],
     });
+
+    let vertex_buffer_layout = [wgpu::VertexBufferLayout {
+        array_stride: (std::mem::size_of::<f32>() * 3) as u64,
+        step_mode: wgpu::InputStepMode::Vertex,
+        attributes: &[wgpu::VertexAttribute {
+            format: wgpu::VertexFormat::Float3,
+            offset: 0,
+            shader_location: 0,
+        }],
+    }];
 
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
         label: None,
@@ -89,7 +120,7 @@ fn main() {
         vertex: wgpu::VertexState {
             module: &module,
             entry_point: "main_vs",
-            buffers: &[],
+            buffers: &vertex_buffer_layout,
         },
         primitive: wgpu::PrimitiveState {
             topology: wgpu::PrimitiveTopology::TriangleList,
@@ -107,16 +138,13 @@ fn main() {
         fragment: Some(wgpu::FragmentState {
             module: &module,
             entry_point: "main_fs",
-            targets: &[
-                wgpu::ColorTargetState {
-                    format: sc_desc.format,
-                    alpha_blend: wgpu::BlendState::REPLACE,
-                    color_blend: wgpu::BlendState::REPLACE,
-                    write_mask: wgpu::ColorWrite::ALL,
-                }
-            ],
+            targets: &[wgpu::ColorTargetState {
+                format: sc_desc.format,
+                alpha_blend: wgpu::BlendState::REPLACE,
+                color_blend: wgpu::BlendState::REPLACE,
+                write_mask: wgpu::ColorWrite::ALL,
+            }],
         }),
-
     });
 
     // We use the egui_winit_platform crate as the platform.
@@ -151,7 +179,8 @@ fn main() {
 
                 // Begin to draw the UI frame.
                 platform.begin_frame();
-
+                let mut current_mesh_vertex_count = 0;
+                let mut current_mesh_vertex_offset = 0;
                 egui::Window::new("Geometry Explorer").show(&platform.context(), |ui| {
                     ui.label(format!("Filename: {}", opt.input_database.display()));
                     if let Some(mappings) = database.mappings() {
@@ -160,16 +189,27 @@ fn main() {
 
                         ui.label(format!("Current mesh: {}", current_mesh_index));
                         let mesh = mappings.iter().nth(current_mesh_index).unwrap();
-                        ui.label(format!{"Vertex count: {}", mesh.vertex_count()});
-                        ui.label(format!{"Vertex offset: {}", mesh.vertex_offset()});
-                        ui.label(format!{"Mesh index: {}", mesh.index()});
+                        ui.label(format! {"Vertex count: {}", mesh.vertex_count()});
+                        ui.label(format! {"Vertex offset: {}", mesh.vertex_offset()});
+                        ui.label(format! {"Mesh index: {}", mesh.index()});
+
+                        current_mesh_vertex_count = mesh.vertex_count();
+                        current_mesh_vertex_offset = mesh.vertex_offset();
 
                         ui.horizontal(|ui| {
                             if ui.button("Previous").clicked() {
-                                current_mesh_index = if current_mesh_index == 0 { mappings.len() -1 } else { current_mesh_index - 1 };
+                                current_mesh_index = if current_mesh_index == 0 {
+                                    mappings.len() - 1
+                                } else {
+                                    current_mesh_index - 1
+                                };
                             }
                             if ui.button("Next").clicked() {
-                                current_mesh_index = if current_mesh_index == (mappings.len() -1) { 0 } else { current_mesh_index + 1 };
+                                current_mesh_index = if current_mesh_index == (mappings.len() - 1) {
+                                    0
+                                } else {
+                                    current_mesh_index + 1
+                                };
                             }
                         });
                     }
@@ -197,7 +237,32 @@ fn main() {
                     });
 
                     rpass.set_pipeline(&render_pipeline);
-                    rpass.draw(0..3, 0..1);
+                    rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+
+                    let push_constants = ShaderConstants {
+                        view_projection_matrix: glam::Mat4::perspective_rh(
+                            60f32.to_radians(),
+                            1280.0 / 720.0,
+                            0.1,
+                            1000.0,
+                        ) * glam::Mat4::look_at_rh(
+                            glam::vec3(100.0, 0.0, 0.0),
+                            glam::vec3(0.0, 0.0, 0.0),
+                            glam::vec3(0.0, 1.0, 0.0),
+                        ),
+                    };
+
+                    rpass.set_push_constants(wgpu::ShaderStage::VERTEX, 0, unsafe {
+                        any_as_u8_slice(&push_constants)
+                    });
+
+                    current_mesh_vertex_offset =
+                        current_mesh_vertex_offset / (std::mem::size_of::<f32>() * 3) as u32;
+                    rpass.draw(
+                        current_mesh_vertex_offset
+                            ..(current_mesh_vertex_offset + current_mesh_vertex_count),
+                        0..1,
+                    );
                 }
 
                 // Upload all resources for the GPU.
@@ -216,7 +281,7 @@ fn main() {
                     &output_frame.output.view,
                     &paint_jobs,
                     &screen_descriptor,
-                    None//Some(wgpu::Color::BLACK),
+                    None,
                 );
 
                 // Submit the commands.
@@ -225,7 +290,7 @@ fn main() {
             }
             RedrawEventsCleared => {
                 window.request_redraw();
-            },
+            }
             WindowEvent { event, .. } => match event {
                 winit::event::WindowEvent::Resized(size) => {
                     sc_desc.width = size.width;

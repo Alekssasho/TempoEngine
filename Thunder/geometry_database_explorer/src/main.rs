@@ -8,13 +8,17 @@ use mesh_shader::ShaderConstants;
 use wgpu::util::DeviceExt;
 use winit::event::Event::*;
 use winit::event_loop::ControlFlow;
+use winit::event::WindowEvent::*;
 
 use std::io::Read;
 use structopt::StructOpt;
+use std::collections::hash_map::HashMap;
 
 const INITIAL_WIDTH: u32 = 1280;
 const INITIAL_HEIGHT: u32 = 720;
 const OUTPUT_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Bgra8UnormSrgb;
+
+const MESH_RADIUS_MULTIPLIER: f32 = 1.2;
 
 #[derive(StructOpt)]
 struct CommandLineOptions {
@@ -25,6 +29,23 @@ struct CommandLineOptions {
 
 unsafe fn any_as_u8_slice<T: Sized>(p: &T) -> &[u8] {
     ::std::slice::from_raw_parts((p as *const T) as *const u8, ::std::mem::size_of::<T>())
+}
+
+struct OrbitCamera {
+    pub azimuth: f32,
+    pub polar: f32,
+    pub radius: f32,
+}
+
+impl OrbitCamera {
+    fn create_view_matrix(&self) -> glam::Mat4 {
+        let eye = glam::vec3(
+            self.radius * self.azimuth.cos() * self.polar.sin(),
+            self.radius * self.azimuth.sin() * self.polar.sin(),
+            self.radius * self.polar.cos(),
+        );
+        glam::Mat4::look_at_rh(eye, glam::vec3(0.0, 0.0, 0.0), glam::vec3(0.0, 1.0, 0.0))
+    }
 }
 
 fn main() {
@@ -39,6 +60,25 @@ fn main() {
     // Can use EventLoopExtRunReturn::run_return if this turned to be a problem.
     let database =
         data_definition_generated::get_root_as_geometry_database(database_file_contents.leak());
+
+    let mesh_dimensions = {
+        if let Some(mappings) = database.mappings() {
+            let vertex_buffer = database.vertex_buffer().unwrap();
+            let vertex_buffer_vec3 = unsafe{ ::std::slice::from_raw_parts(vertex_buffer.as_ptr() as *const glam::Vec3, vertex_buffer.len() / std::mem::size_of::<glam::Vec3>()) };
+            let mut map = HashMap::new();
+            for (index, mesh) in mappings.iter().enumerate() {
+                let first_vertex = mesh.vertex_offset() / (std::mem::size_of::<glam::Vec3>()) as u32;
+                let mesh_slize = &vertex_buffer_vec3[(first_vertex as usize)..((first_vertex + mesh.vertex_count()) as usize)];
+                let min_sizes = mesh_slize.iter().fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
+                let max_sizes = mesh_slize.iter().fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
+                let biggest_dimension = (max_sizes - min_sizes).max_element();
+                map.insert(index, biggest_dimension);
+            }
+            map
+        } else {
+            HashMap::new()
+        }
+    };
 
     // Start the event loop
     let event_loop = winit::event_loop::EventLoop::new();
@@ -129,7 +169,14 @@ fn main() {
             cull_mode: wgpu::CullMode::None,
             polygon_mode: wgpu::PolygonMode::Fill,
         },
-        depth_stencil: None,
+        depth_stencil: Some(wgpu::DepthStencilState {
+            format: wgpu::TextureFormat::Depth32Float,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Less,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+            clamp_depth: false,
+        }),
         multisample: wgpu::MultisampleState {
             count: 1,
             mask: !0,
@@ -147,6 +194,28 @@ fn main() {
         }),
     });
 
+    let mut depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+        label: Some("Depth Texture"),
+        size: wgpu::Extent3d {
+            width: sc_desc.width,
+            height: sc_desc.height,
+            depth: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::Depth32Float,
+        usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+    });
+
+    let mut depth_texture_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+
+    let mut camera = OrbitCamera {
+        azimuth: 0.0,
+        polar: 0.0,
+        radius: mesh_dimensions.get(&0).unwrap() * MESH_RADIUS_MULTIPLIER,
+    };
+
     // We use the egui_winit_platform crate as the platform.
     let mut platform = Platform::new(PlatformDescriptor {
         physical_width: size.width as u32,
@@ -161,11 +230,71 @@ fn main() {
 
     let mut current_mesh_index = 0;
     let start_time = Instant::now();
+    let mut should_move_camera = false;
+    let mut last_pointer_pos = glam::vec2(0.0, 0.0);
+
     event_loop.run(move |event, _, control_flow| {
+        let _ = (&depth_texture, &depth_texture_view);
         // Pass the winit events to the platform integration.
         platform.handle_event(&event);
 
         match event {
+            WindowEvent {
+                window_id: _window_id,
+                event,
+            } => match event {
+                MouseInput { state, button, .. } => {
+                    if let winit::event::MouseButton::Other(..) = button {
+                    } else {
+                        if let winit::event::MouseButton::Left = button {
+                            should_move_camera = state == winit::event::ElementState::Pressed;
+                        }
+                    }
+                }
+                MouseWheel { delta, .. } => {
+                    match delta {
+                        winit::event::MouseScrollDelta::LineDelta(_, y) => {
+                            camera.radius += y;
+                        }
+                        winit::event::MouseScrollDelta::PixelDelta(_) => {
+                            //
+                        }
+                    }
+                }
+                CursorMoved { position, .. } => {
+                    let current_pos = glam::vec2(position.x as f32, position.y as f32);
+                    if should_move_camera {
+                        let delta = current_pos - last_pointer_pos;
+                        camera.polar += (delta.x / 16.0).to_radians();
+                        camera.azimuth += (delta.y / 16.0).to_radians();
+                    }
+                    last_pointer_pos = current_pos;
+                }
+                Resized(size) => {
+                    sc_desc.width = size.width;
+                    sc_desc.height = size.height;
+                    swap_chain = device.create_swap_chain(&surface, &sc_desc);
+                    depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+                        label: Some("Depth Texture"),
+                        size: wgpu::Extent3d {
+                            width: sc_desc.width,
+                            height: sc_desc.height,
+                            depth: 1,
+                        },
+                        mip_level_count: 1,
+                        sample_count: 1,
+                        dimension: wgpu::TextureDimension::D2,
+                        format: wgpu::TextureFormat::Depth32Float,
+                        usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
+                    });
+
+                    depth_texture_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+                }
+                CloseRequested => {
+                    *control_flow = ControlFlow::Exit;
+                }
+                _ => {}
+            },
             RedrawRequested(..) => {
                 platform.update_time(start_time.elapsed().as_secs_f64());
 
@@ -187,6 +316,23 @@ fn main() {
                         ui.label(format!("Number of meshes: {}", mappings.len()));
                         ui.separator();
 
+                        // Camera settings
+                        ui.label("Camera Settings:");
+                        ui.horizontal(|ui| {
+                            ui.label("Azimuth: ");
+                            ui.drag_angle(&mut camera.azimuth);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Polar: ");
+                            ui.drag_angle(&mut camera.polar);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Radius: ");
+                            ui.add(egui::DragValue::f32(&mut camera.radius).speed(1.0));
+                        });
+
+                        ui.separator();
+
                         ui.label(format!("Current mesh: {}", current_mesh_index));
                         let mesh = mappings.iter().nth(current_mesh_index).unwrap();
                         ui.label(format! {"Vertex count: {}", mesh.vertex_count()});
@@ -203,6 +349,7 @@ fn main() {
                                 } else {
                                     current_mesh_index - 1
                                 };
+                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap() * MESH_RADIUS_MULTIPLIER;
                             }
                             if ui.button("Next").clicked() {
                                 current_mesh_index = if current_mesh_index == (mappings.len() - 1) {
@@ -210,6 +357,7 @@ fn main() {
                                 } else {
                                     current_mesh_index + 1
                                 };
+                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap() * MESH_RADIUS_MULTIPLIER;
                             }
                         });
                     }
@@ -233,7 +381,16 @@ fn main() {
                                 store: true,
                             },
                         }],
-                        depth_stencil_attachment: None,
+                        depth_stencil_attachment: Some(
+                            wgpu::RenderPassDepthStencilAttachmentDescriptor {
+                                attachment: &depth_texture_view,
+                                depth_ops: Some(wgpu::Operations {
+                                    load: wgpu::LoadOp::Clear(1.0),
+                                    store: true,
+                                }),
+                                stencil_ops: None,
+                            },
+                        ),
                     });
 
                     rpass.set_pipeline(&render_pipeline);
@@ -242,14 +399,10 @@ fn main() {
                     let push_constants = ShaderConstants {
                         view_projection_matrix: glam::Mat4::perspective_rh(
                             60f32.to_radians(),
-                            1280.0 / 720.0,
+                            sc_desc.width as f32 / sc_desc.height as f32,
                             0.1,
                             1000.0,
-                        ) * glam::Mat4::look_at_rh(
-                            glam::vec3(100.0, 0.0, 0.0),
-                            glam::vec3(0.0, 0.0, 0.0),
-                            glam::vec3(0.0, 1.0, 0.0),
-                        ),
+                        ) * camera.create_view_matrix(),
                     };
 
                     rpass.set_push_constants(wgpu::ShaderStage::VERTEX, 0, unsafe {
@@ -290,17 +443,6 @@ fn main() {
             }
             RedrawEventsCleared => {
                 window.request_redraw();
-            }
-            WindowEvent { event, .. } => match event {
-                winit::event::WindowEvent::Resized(size) => {
-                    sc_desc.width = size.width;
-                    sc_desc.height = size.height;
-                    swap_chain = device.create_swap_chain(&surface, &sc_desc);
-                }
-                winit::event::WindowEvent::CloseRequested => {
-                    *control_flow = ControlFlow::Exit;
-                }
-                _ => {}
             },
             _ => (),
         }

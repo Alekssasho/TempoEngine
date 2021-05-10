@@ -7,8 +7,8 @@ use physx::{
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
 use physx_sys::{
-    PxBoundedData_new, PxCollection, PxMeshFlag::eFLIPNORMALS, PxMeshGeometryFlags,
-    PxMeshScale_new_2, PxSerializationRegistry,
+    PxBoundedData_new, PxCollection, PxMeshGeometryFlags, PxMeshScale_new_2,
+    PxSerializationRegistry,
 };
 
 type PxMaterial = physx::material::PxMaterial<()>;

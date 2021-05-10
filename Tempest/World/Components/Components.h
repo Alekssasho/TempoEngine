@@ -42,6 +42,14 @@ struct DynamicPhysicsActor
 
 	static constexpr const char* Name = "DynamicPhysicsActor";
 };
+
+struct LightColorInfo
+{
+	glm::vec3 Color;
+	float Intensity;
+
+	static constexpr const char* Name = "LightColorInfo";
+};
 }
 
 namespace Tags
@@ -49,6 +57,11 @@ namespace Tags
 struct Boids
 {
 	static constexpr const char* Name = "Boids";
+};
+
+struct DirectionalLight
+{
+	static constexpr const char* Name = "DirectionalLight";
 };
 }
 }

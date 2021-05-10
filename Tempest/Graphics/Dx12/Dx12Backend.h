@@ -31,7 +31,8 @@ public:
 
 	void Initialize(WindowHandle handle);
 	// TODO: It should take Render Graph structure for barriers & a vector of command lists as we will not put everything in one list
-	void RenderFrame(const Camera* view, const RendererCommandList& commandList);
+	// TODO: Remove Camera and frame data as this are not concepts backend should be concerned with
+	void RenderFrame(const Camera* view, const FrameData& frameData, const RendererCommandList& commandList);
 
 	const Dx12Device* GetDevice() const { return m_Device.get(); }
 private:

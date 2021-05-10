@@ -111,6 +111,10 @@ impl GltfData {
     ) -> gltf::json::extensions::scene::tempest_extension::TempestNodeExtension {
         self.node(index).tempest_extension().unwrap().clone()
     }
+
+    pub fn light(&self, index: usize) -> Option<gltf::khr_lights_punctual::Light> {
+        self.node(index).light()
+    }
 }
 
 // Mesh functions
@@ -151,6 +155,17 @@ impl GltfData {
         reader.read_positions().and_then(|iter| {
             Some(
                 iter.map(|vertex| math::vec3(vertex[0], vertex[1], vertex[2]))
+                    .collect(),
+            )
+        })
+    }
+
+    pub fn mesh_normals(&self, mesh_index: usize, prim_index: usize) -> Option<Vec<math::Vec3>> {
+        let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
+        let reader = primitive.reader(|buffer| Some(&self.buffers[buffer.index()]));
+        reader.read_normals().and_then(|iter| {
+            Some(
+                iter.map(|normal| math::vec3(normal[0], normal[1], normal[2]))
                     .collect(),
             )
         })

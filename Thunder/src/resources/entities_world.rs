@@ -71,6 +71,28 @@ impl Resource for EntitiesWorldResource {
                         .map_or(false, |physics_body| physics_body.dynamic),
                 );
                 node_to_entity_map.insert(node_index, entity_id);
+            } else if let Some(light_data) = gltf.light(node_index) {
+                if let gltf::khr_lights_punctual::Kind::Directional = light_data.kind() {
+                    let trs = TRS::new(world_transform);
+                    let transform = Components::Transform(Tempest_Components_Transform {
+                        Position: trs.translate,
+                        Scale: trs.scale,
+                        Rotation: trs.rotate,
+                    });
+                    let light_color = light_data.color();
+                    let light_color_info =
+                        Components::LightColorInfo(Tempest_Components_LightColorInfo {
+                            Color: math::vec3(light_color[0], light_color[1], light_color[2]),
+                            Intensity: light_data.intensity(),
+                        });
+
+                    let entity_id = flecs_state.create_entity(
+                        gltf.node_name(node_index),
+                        &[transform, light_color_info],
+                        &[Tags::DirectionalLight],
+                    );
+                    node_to_entity_map.insert(node_index, entity_id);
+                }
             }
             None
         });

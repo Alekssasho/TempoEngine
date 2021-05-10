@@ -7,12 +7,12 @@ use futures_lite::future::block_on;
 use mesh_shader::ShaderConstants;
 use wgpu::util::DeviceExt;
 use winit::event::Event::*;
-use winit::event_loop::ControlFlow;
 use winit::event::WindowEvent::*;
+use winit::event_loop::ControlFlow;
 
+use std::collections::hash_map::HashMap;
 use std::io::Read;
 use structopt::StructOpt;
-use std::collections::hash_map::HashMap;
 
 const INITIAL_WIDTH: u32 = 1280;
 const INITIAL_HEIGHT: u32 = 720;
@@ -64,13 +64,24 @@ fn main() {
     let mesh_dimensions = {
         if let Some(mappings) = database.mappings() {
             let vertex_buffer = database.vertex_buffer().unwrap();
-            let vertex_buffer_vec3 = unsafe{ ::std::slice::from_raw_parts(vertex_buffer.as_ptr() as *const glam::Vec3, vertex_buffer.len() / std::mem::size_of::<glam::Vec3>()) };
+            let vertex_buffer_vec3 = unsafe {
+                ::std::slice::from_raw_parts(
+                    vertex_buffer.as_ptr() as *const glam::Vec3,
+                    vertex_buffer.len() / std::mem::size_of::<glam::Vec3>(),
+                )
+            };
             let mut map = HashMap::new();
             for (index, mesh) in mappings.iter().enumerate() {
-                let first_vertex = mesh.vertex_offset() / (std::mem::size_of::<glam::Vec3>()) as u32;
-                let mesh_slize = &vertex_buffer_vec3[(first_vertex as usize)..((first_vertex + mesh.vertex_count()) as usize)];
-                let min_sizes = mesh_slize.iter().fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
-                let max_sizes = mesh_slize.iter().fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
+                let first_vertex =
+                    mesh.vertex_offset() / (std::mem::size_of::<glam::Vec3>()) as u32;
+                let mesh_slize = &vertex_buffer_vec3
+                    [(first_vertex as usize)..((first_vertex + mesh.vertex_count()) as usize)];
+                let min_sizes = mesh_slize
+                    .iter()
+                    .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
+                let max_sizes = mesh_slize
+                    .iter()
+                    .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
                 let biggest_dimension = (max_sizes - min_sizes).max_element();
                 map.insert(index, biggest_dimension);
             }
@@ -288,7 +299,8 @@ fn main() {
                         usage: wgpu::TextureUsage::RENDER_ATTACHMENT,
                     });
 
-                    depth_texture_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
+                    depth_texture_view =
+                        depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
                 }
                 CloseRequested => {
                     *control_flow = ControlFlow::Exit;
@@ -349,7 +361,8 @@ fn main() {
                                 } else {
                                     current_mesh_index - 1
                                 };
-                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap() * MESH_RADIUS_MULTIPLIER;
+                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
+                                    * MESH_RADIUS_MULTIPLIER;
                             }
                             if ui.button("Next").clicked() {
                                 current_mesh_index = if current_mesh_index == (mappings.len() - 1) {
@@ -357,7 +370,8 @@ fn main() {
                                 } else {
                                     current_mesh_index + 1
                                 };
-                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap() * MESH_RADIUS_MULTIPLIER;
+                                camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
+                                    * MESH_RADIUS_MULTIPLIER;
                             }
                         });
                     }
@@ -443,7 +457,7 @@ fn main() {
             }
             RedrawEventsCleared => {
                 window.request_redraw();
-            },
+            }
             _ => (),
         }
     });

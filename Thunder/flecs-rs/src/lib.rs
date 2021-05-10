@@ -59,11 +59,13 @@ pub enum Components {
     Rect(Tempest_Components_Rect),
     StaticMesh(Tempest_Components_StaticMesh),
     DynamicPhysicsActor(Tempest_Components_DynamicPhysicsActor),
+    LightColorInfo(Tempest_Components_LightColorInfo),
 }
 
 #[derive(Tags)]
 pub enum Tags {
     Boids,
+    DirectionalLight,
 }
 
 impl FlecsState {

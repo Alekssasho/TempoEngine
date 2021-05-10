@@ -3,6 +3,7 @@
 #include <Graphics/Dx12/Dx12Backend.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>
+#include <Graphics/FrameData.h>
 #include <EngineCore.h>
 
 #ifdef _DEBUG
@@ -34,9 +35,12 @@ Backend::~Backend()
 #endif
 }
 
+// TODO: move this to the renderer and add UpdateBuffer commands in the backend. It is not Dx12 job to now what a scene is, it needs only to update buffers/textures and issues draw/dispatch commands
 struct SceneConstantData
 {
 	glm::mat4x4 ViewProjection;
+	glm::vec4 LightDirection;
+	glm::vec4 LightColor;
 };
 
 void Backend::Initialize(WindowHandle handle)
@@ -50,7 +54,7 @@ void Backend::Initialize(WindowHandle handle)
 	}
 }
 
-void Backend::RenderFrame(const Camera* view, const RendererCommandList& commandList)
+void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const RendererCommandList& commandList)
 {
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
 
@@ -93,7 +97,12 @@ void Backend::RenderFrame(const Camera* view, const RendererCommandList& command
 	};
 
 	// Prepare constant buffer data
-	SceneConstantData sceneData{ view->GetViewProjection() };
+	assert(frameData.DirectionalLights.size() == 1);
+	SceneConstantData sceneData{
+		view->GetViewProjection(),
+		glm::vec4(frameData.DirectionalLights[0].Direction, 0.0f),
+		glm::vec4(frameData.DirectionalLights[0].Color, 1.0f)
+	};
 	Managers.Buffer.MapWriteData(m_SceneConstantBufferData[frame.BackBufferIndex], &sceneData, sizeof(SceneConstantData));
 
 	// TODO: Make this not allocate every frame

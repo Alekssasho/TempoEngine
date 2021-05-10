@@ -9,6 +9,7 @@
 // TODO: Find a better way than just to include them
 #include <Graphics/Features/RectFeature.h>
 #include <Graphics/Features/StaticMeshFeature.h>
+#include <Graphics/Features/LightsFeature.h>
 
 #include <DataDefinitions/ShaderLibrary_generated.h>
 #include <DataDefinitions/GeometryDatabase_generated.h>
@@ -21,6 +22,7 @@ Renderer::Renderer()
 {
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
+	m_RenderFeatures.emplace_back(new GraphicsFeature::Lights);
 }
 
 Renderer::~Renderer()
@@ -79,7 +81,7 @@ void Renderer::RenderFrame(const FrameData& data)
 	}
 
 	// TODO: more views
-	m_Backend->RenderFrame(m_Views[0], commandList);
+	m_Backend->RenderFrame(m_Views[0], data, commandList);
 }
 
 void Renderer::RegisterView(Camera* camera)

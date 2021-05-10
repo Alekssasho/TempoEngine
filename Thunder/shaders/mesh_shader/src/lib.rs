@@ -7,7 +7,7 @@
 #![deny(warnings)]
 
 use core::f32::consts::PI;
-use glam::{Mat4, Vec3, vec3};
+use glam::{vec3, Mat4, Vec3};
 
 use spirv_std::arch::{ddx_vector, ddy_vector};
 // Note: This cfg is incorrect on its surface, it really should be "are we compiling with std", but
@@ -62,18 +62,15 @@ use glam::{vec4, Vec4};
 pub fn main_vs(
     position: Vec3,
     #[spirv(push_constant)] constants: &ShaderConstants,
-    #[spirv(invariant)] out_pos_world: &mut Vec3,
     #[spirv(position, invariant)] out_pos: &mut Vec4,
+    #[spirv(invariant)] out_pos_world: &mut Vec3,
 ) {
     *out_pos_world = position;
     *out_pos = constants.view_projection_matrix * vec4(position.x, position.y, position.z, 1.0);
 }
 
 #[spirv(fragment)]
-pub fn main_fs(
-    in_world_position: Vec3,
-    output: &mut Vec4
-) {
+pub fn main_fs(in_world_position: Vec3, output: &mut Vec4) {
     let light_direction = vec3(-1.0, 1.0, -1.0);
     let world_position_ddx = ddx_vector(in_world_position);
     let world_position_ddy = ddy_vector(in_world_position);
@@ -83,6 +80,5 @@ pub fn main_fs(
     let ambient_factor = 0.15;
     let color = vec4(1.0, 1.0, 1.0, 1.0);
 
-    *output = color * diffuse_factor
-        + (color * ambient_factor);
+    *output = color * diffuse_factor + (color * ambient_factor);
 }

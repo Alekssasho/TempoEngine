@@ -8,3 +8,9 @@
 #include <glm/gtx/hash.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtx/quaternion.hpp>
+
+#ifdef GLM_FORCE_LEFT_HANDED
+static const glm::vec3 sForwardDirection(0.0f, 0.0f, 1.0f);
+#else
+static const glm::vec3 sForwardDirection(0.0f, 0.0f, -1.0f);
+#endif

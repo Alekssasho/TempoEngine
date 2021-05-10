@@ -105,6 +105,7 @@
     <ClInclude Include="EngineCore.h" />
     <ClInclude Include="Graphics\BackendTypes.h" />
     <ClInclude Include="Graphics\Dx12\Managers\BufferManager.h" />
+    <ClInclude Include="Graphics\Features\LightsFeature.h" />
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h" />
     <ClInclude Include="Graphics\FrameData.h" />
     <ClInclude Include="Graphics\Managers\MeshManager.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="Graphics\Dx12\Dx12Device.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\BufferManager.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp" />
+    <ClCompile Include="Graphics\Features\LightsFeature.cpp" />
     <ClCompile Include="Graphics\Features\RectFeature.cpp" />
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp" />
     <ClCompile Include="Graphics\Managers\MeshManager.cpp" />

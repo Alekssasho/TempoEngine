@@ -1,6 +1,6 @@
 use std::sync::{Arc, Weak};
 
-use crate::scene::Scene;
+use crate::{resources::mesh::MESH_VERTEX_LAYOUT_NUM_FLOATS, scene::Scene};
 use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, FlatbufferSerializeRoot};
 
 use crate::compiler::AsyncCompiler;
@@ -49,8 +49,7 @@ impl Resource for GeometryDatabaseResource {
                 vertex_count: mesh_data.indices.len() as u32,
             });
 
-            // 3 is 3 float and 4 is num bytes for float
-            current_offset += mesh_data.indices.len() as u32 * 3 * 4;
+            current_offset += (mesh_data.indices.len() * MESH_VERTEX_LAYOUT_NUM_FLOATS * std::mem::size_of::<f32>()) as u32;
 
             vertex_buffer.extend(&mesh_data.vertices);
         }

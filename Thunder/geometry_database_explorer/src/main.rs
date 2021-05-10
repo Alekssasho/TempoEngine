@@ -156,12 +156,16 @@ fn main() {
     });
 
     let vertex_buffer_layout = [wgpu::VertexBufferLayout {
-        array_stride: (std::mem::size_of::<f32>() * 3) as u64,
+        array_stride: (std::mem::size_of::<f32>() * 6) as u64,
         step_mode: wgpu::InputStepMode::Vertex,
         attributes: &[wgpu::VertexAttribute {
             format: wgpu::VertexFormat::Float3,
             offset: 0,
             shader_location: 0,
+        }, wgpu::VertexAttribute {
+            format: wgpu::VertexFormat::Float3,
+            offset: (std::mem::size_of::<f32>() * 3) as u64,
+            shader_location: 1,
         }],
     }];
 
@@ -424,7 +428,7 @@ fn main() {
                     });
 
                     current_mesh_vertex_offset =
-                        current_mesh_vertex_offset / (std::mem::size_of::<f32>() * 3) as u32;
+                        current_mesh_vertex_offset / (std::mem::size_of::<f32>() * 6) as u32;
                     rpass.draw(
                         current_mesh_vertex_offset
                             ..(current_mesh_vertex_offset + current_mesh_vertex_count),

@@ -9,7 +9,7 @@
 use core::f32::consts::PI;
 use glam::{vec3, Mat4, Vec3};
 
-use spirv_std::arch::{ddx_vector, ddy_vector};
+//use spirv_std::arch::{ddx_vector, ddy_vector};
 // Note: This cfg is incorrect on its surface, it really should be "are we compiling with std", but
 // we tie #[no_std] above to the same condition, so it's fine.
 #[cfg(target_arch = "spirv")]
@@ -61,20 +61,24 @@ use glam::{vec4, Vec4};
 #[spirv(vertex)]
 pub fn main_vs(
     position: Vec3,
+    normal: Vec3,
     #[spirv(push_constant)] constants: &ShaderConstants,
     #[spirv(position, invariant)] out_pos: &mut Vec4,
     #[spirv(invariant)] out_pos_world: &mut Vec3,
+    #[spirv(invariant)] out_normal_world: &mut Vec3,
 ) {
     *out_pos_world = position;
     *out_pos = constants.view_projection_matrix * vec4(position.x, position.y, position.z, 1.0);
+    *out_normal_world = normal;
 }
 
 #[spirv(fragment)]
-pub fn main_fs(in_world_position: Vec3, output: &mut Vec4) {
+pub fn main_fs(_in_world_position: Vec3, in_normal_world: Vec3, output: &mut Vec4) {
     let light_direction = vec3(-1.0, 1.0, -1.0);
-    let world_position_ddx = ddx_vector(in_world_position);
-    let world_position_ddy = ddy_vector(in_world_position);
-    let normal = world_position_ddx.cross(world_position_ddy).normalize();
+    // let world_position_ddx = ddx_vector(in_world_position);
+    // let world_position_ddy = ddy_vector(in_world_position);
+    // let normal = world_position_ddx.cross(world_position_ddy).normalize();
+    let normal = in_normal_world;
 
     let diffuse_factor = saturate(normal.dot(-light_direction));
     let ambient_factor = 0.15;

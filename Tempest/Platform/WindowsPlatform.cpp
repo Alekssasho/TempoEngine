@@ -10,6 +10,10 @@
 
 #include <imgui.h>
 
+#pragma warning(push, 0)
+#include <gainput/gainput.h>
+#pragma warning(pop)
+
 static bool g_MouseJustPressed[3] = { false, false, false };
 static bool g_MouseCurrentState[3] = { false, false, false };
 
@@ -97,6 +101,11 @@ namespace Tempest
 
 bool g_Run = true;
 
+WindowsPlatform::WindowsPlatform(gainput::InputManager& inputManager)
+	: m_InputManager(inputManager)
+{
+}
+
 void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* title, EngineCore* core)
 {
 	ImGui::CreateContext();
@@ -182,6 +191,8 @@ void WindowsPlatform::PumpMessages()
 	{
 		::TranslateMessage(&msg);
 		::DispatchMessage(&msg);
+
+		m_InputManager.HandleMessage(msg);
 	}
 
 	// UI

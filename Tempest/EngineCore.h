@@ -10,6 +10,10 @@
 #include <Audio/AudioManager.h>
 #include <Physics/PhysicsManager.h>
 
+#pragma warning(push, 0)
+#include <gainput/gainput.h>
+#pragma warning(pop)
+
 namespace Tempest
 {
 struct EngineCoreOptions
@@ -65,6 +69,8 @@ private:
 
 	Logger m_Logger;
 	Job::JobSystem m_JobSystem;
+	gainput::InputManager m_Input;
+	gainput::InputMap m_InputMap;
 	WindowsPlatform m_Platform;
 	ResourceLoader m_ResourceLoader;
 	World m_World;
@@ -72,6 +78,7 @@ private:
 	Camera m_Camera;
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
+
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

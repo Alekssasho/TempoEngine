@@ -14,13 +14,41 @@ namespace Tempest
 {
 EngineCore* gEngine = nullptr;
 
+enum CameraMovement
+{
+	MoveForward,
+	MoveBackward,
+	MoveLeft,
+	MoveRight,
+	FasterSpeed,
+	MoveCameraOrientation,
+	MouseX,
+	MouseY,
+};
+
 EngineCore::EngineCore(const EngineCoreOptions& options)
 	: m_Options(options)
 	, m_Logger()
 	, m_JobSystem(options.NumWorkerThreads, 64, 2 * 1024 * 1024)
+	, m_InputMap(m_Input)
+	, m_Platform(m_Input)
 	, m_ResourceLoader(options.ResourceFolder)
 {
 	gEngine = this;
+
+	m_Input.SetDisplaySize(options.Width, options.Height);
+	const gainput::DeviceId keyboardId = m_Input.CreateDevice<gainput::InputDeviceKeyboard>();
+	const gainput::DeviceId mouseId = m_Input.CreateDevice<gainput::InputDeviceMouse>();
+
+	m_InputMap.MapBool(MoveForward, keyboardId, gainput::KeyW);
+	m_InputMap.MapBool(MoveBackward, keyboardId, gainput::KeyS);
+	m_InputMap.MapBool(MoveLeft, keyboardId, gainput::KeyA);
+	m_InputMap.MapBool(MoveRight, keyboardId, gainput::KeyD);
+	m_InputMap.MapBool(FasterSpeed, keyboardId, gainput::KeyShiftL);
+
+	m_InputMap.MapBool(MoveCameraOrientation, mouseId, gainput::MouseButtonLeft);
+	m_InputMap.MapFloat(MouseX, mouseId, gainput::MouseAxisX);
+	m_InputMap.MapFloat(MouseY, mouseId, gainput::MouseAxisY);
 }
 
 EngineCore::~EngineCore()
@@ -147,44 +175,41 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 
 void EngineCore::UpdateInput()
 {
-	// TODO: There should be some action system and direct input handling
 	// Update camera stuff
-	auto& io = ImGui::GetIO();
-
 	auto cameraForward = glm::normalize(m_Camera.Forward);
-	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
+	auto cameraRight = glm::normalize(glm::cross(cameraForward, m_Camera.Up));
 	auto speed = 2.0f;
 
 	// Speed bump
-	if(io.KeyShift)
+	if(m_InputMap.GetBool(FasterSpeed))
 	{
 		speed *= 4.0f;
 	}
 
 	// Change position of camera
-	if(io.KeysDown['W'])
+	if(m_InputMap.GetBool(MoveForward))
 	{
 		m_Camera.Position += cameraForward * speed;
 	}
-	if(io.KeysDown['S'])
+	if(m_InputMap.GetBool(MoveBackward))
 	{
 		m_Camera.Position += -cameraForward * speed;
 	}
-	if (io.KeysDown['A'])
+	if (m_InputMap.GetBool(MoveLeft))
 	{
 		m_Camera.Position += -cameraRight * speed;
 	}
-	if (io.KeysDown['D'])
+	if (m_InputMap.GetBool(MoveRight))
 	{
 		m_Camera.Position += cameraRight * speed;
 	}
 
 	// Change target
-	if(io.MouseDown[0])
+	if(m_InputMap.GetBool(MoveCameraOrientation))
 	{
-		m_Camera.Forward = glm::rotate(m_Camera.Forward, io.MouseDelta.x * 0.002f, m_Camera.Up);
-		m_Camera.Forward = glm::rotate(m_Camera.Forward, io.MouseDelta.y * 0.002f, cameraRight);
-		m_Camera.Up = glm::cross(m_Camera.Forward, cameraRight);
+		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseX) * 5.0f, m_Camera.Up);
+		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
+		m_Camera.Up = glm::normalize(glm::cross(cameraRight, m_Camera.Forward));
 	}
 }
 
@@ -196,6 +221,9 @@ void EngineCore::InitializeWindow()
 
 void EngineCore::DoFrame()
 {
+	// TODO: pass delta time
+	m_Input.Update();
+
 	// Message pumping should be done on the Windows Thread
 	m_JobSystem.WaitSingleJob("Pump Messages", Job::ThreadTag::Windows, m_Platform, [](WindowsPlatform& platform) {
 		platform.PumpMessages();

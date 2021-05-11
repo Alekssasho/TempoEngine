@@ -5,11 +5,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\PhysX\include;$(SolutionDir)ThirdParty\stb;$(SolutionDir)ThirdParty\pz_libs\;$(SolutionDir)ThirdParty\flatbuffers/include;$(SolutionDir)ThirdParty\flecs;$(SolutionDir)ThirdParty\imgui\include;$(SolutionDir)ThirdParty\glm\include;$(SolutionDir)ThirdParty\optick\include;$(SolutionDir)ThirdParty\EASTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ThirdParty\PhysX\include;$(SolutionDir)ThirdParty\stb;$(SolutionDir)ThirdParty\pz_libs\;$(SolutionDir)ThirdParty\flatbuffers/include;$(SolutionDir)ThirdParty\flecs;$(SolutionDir)ThirdParty\imgui\include;$(SolutionDir)ThirdParty\glm\include;$(SolutionDir)ThirdParty\optick\include;$(SolutionDir)ThirdParty\gainput\include;$(SolutionDir)ThirdParty\EASTL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\PhysX\lib\$(Configuration);$(SolutionDir)ThirdParty\EASTL\lib\$(Configuration);$(SolutionDir)ThirdParty\optick\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>d3d12.lib;dxgi.lib;EASTL.lib;OptickCore.lib;PhysXFoundation_64.lib;PhysXCommon_64.lib;PhysX_64.lib;PhysXExtensions_static_64.lib;PhysXPvdSDK_static_64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)ThirdParty\PhysX\lib\$(Configuration);$(SolutionDir)ThirdParty\EASTL\lib\$(Configuration);$(SolutionDir)ThirdParty\optick\lib\$(Configuration);$(SolutionDir)ThirdParty\gainput\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;xinput.lib;EASTL.lib;OptickCore.lib;PhysXFoundation_64.lib;PhysXCommon_64.lib;PhysX_64.lib;PhysXExtensions_static_64.lib;PhysXPvdSDK_static_64.lib;gainputstatic.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup />

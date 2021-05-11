@@ -1,6 +1,8 @@
 #pragma once
 
-#include <Defines.h>
+namespace gainput {
+	class InputManager;
+}
 
 namespace Tempest
 {
@@ -8,6 +10,8 @@ using WindowHandle = size_t;
 class WindowsPlatform
 {
 public:
+	WindowsPlatform(gainput::InputManager& inputManager);
+
 	void SpawnWindow(unsigned width, unsigned height, const char* title, class EngineCore* core);
 	void PumpMessages();
 	void KillWindow();
@@ -15,5 +19,6 @@ public:
 	WindowHandle GetHandle() { return m_Handle; }
 private:
 	WindowHandle m_Handle;
+	gainput::InputManager& m_InputManager;
 };
 };

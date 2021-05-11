@@ -30,6 +30,7 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 	: m_Options(options)
 	, m_Logger()
 	, m_JobSystem(options.NumWorkerThreads, 64, 2 * 1024 * 1024)
+	// TODO: Initialize m_input without system time and with our custom allocator
 	, m_InputMap(m_Input)
 	, m_Platform(m_Input)
 	, m_ResourceLoader(options.ResourceFolder)

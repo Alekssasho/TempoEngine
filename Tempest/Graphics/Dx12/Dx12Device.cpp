@@ -8,6 +8,10 @@
 // TODO: Reimplement as our own
 #include <imgui_impl_dx12.h>
 
+// DirectX 12 Agility SDK exports
+extern "C" { _declspec(dllexport) extern const UINT D3D12SDKVersion = 4; }
+extern "C" { _declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+
 namespace Tempest
 {
 namespace Dx12
@@ -16,6 +20,7 @@ Dx12Device::Dx12Device()
 {
 	UINT dxgiFactoryFlags = 0;
 
+	// TODO: Add GPU Side validation as well
 #if defined(_DEBUG)
 	{
 		ComPtr<ID3D12Debug> debugController;
@@ -61,6 +66,17 @@ Dx12Device::Dx12Device()
 
 	CHECK_SUCCESS(m_Device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_GraphicsQueue)));
 	m_GraphicsQueue->SetName(L"Main Graphics Queue");
+
+
+	// Check Feature Supports
+	D3D12_FEATURE_DATA_D3D12_OPTIONS d3d12Options = {0};
+	CHECK_SUCCESS(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS, &d3d12Options, sizeof(d3d12Options)));
+
+	D3D12_FEATURE_DATA_SHADER_MODEL shaderModel{ D3D_SHADER_MODEL_6_6 };
+	CHECK_SUCCESS(m_Device->CheckFeatureSupport(D3D12_FEATURE_SHADER_MODEL, &shaderModel, sizeof(shaderModel)));
+
+	D3D12_FEATURE_DATA_D3D12_OPTIONS7 d3d12OptionsX;
+	CHECK_SUCCESS(m_Device->CheckFeatureSupport(D3D12_FEATURE_D3D12_OPTIONS7, &d3d12OptionsX, sizeof(d3d12OptionsX)));
 }
 
 Dx12Device::~Dx12Device()

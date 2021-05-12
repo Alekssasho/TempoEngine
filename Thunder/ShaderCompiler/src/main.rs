@@ -59,8 +59,8 @@ fn compile_hlsl_source(
     include_handler: &IncludeHandler,
 ) -> Option<Vec<u8>> {
     let (target_profile, entry_point) = match shader_type {
-        ShaderType::Vertex => ("vs_6_0", "VertexShaderMain"),
-        ShaderType::Pixel => ("ps_6_0", "PixelShaderMain"),
+        ShaderType::Vertex => ("vs_6_6", "VertexShaderMain"),
+        ShaderType::Pixel => ("ps_6_6", "PixelShaderMain"),
     };
 
     let result = compile_with_include_handler(

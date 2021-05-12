@@ -29,7 +29,9 @@ ByteAddressBuffer vertexBuffers[] : register(t0, space1);
 
 VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {
-	VertexLayout vertexData = vertexBuffers[g_Geometry.vertexBufferIndex].Load<VertexLayout>(g_Geometry.vertexBufferOffset + vertexId * sizeof(VertexLayout));
+	//ByteAddressBuffer vertexBuffer = ResourceDescriptorHeap[g_Geometry.vertexBufferIndex];
+	ByteAddressBuffer vertexBuffer = vertexBuffers[g_Geometry.vertexBufferIndex];
+	VertexLayout vertexData = vertexBuffer.Load<VertexLayout>(g_Geometry.vertexBufferOffset + vertexId * sizeof(VertexLayout));
 
 	float4x4 mvp = mul(g_Scene.ViewProjection, g_Geometry.WorldMatrix);
 	VertexOutput result;

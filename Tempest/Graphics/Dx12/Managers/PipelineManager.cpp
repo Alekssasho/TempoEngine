@@ -43,7 +43,8 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	};
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	// TODO: We don't need input assembler as we are doing bindless
+	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 	rootSignatureDesc.NumParameters = UINT(std::size(params));
 	rootSignatureDesc.pParameters = params;
 	rootSignatureDesc.NumStaticSamplers = 0;

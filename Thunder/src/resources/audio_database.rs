@@ -7,7 +7,7 @@ pub struct AudioDatabaseResource {}
 
 #[derive(FlatbufferSerializeRoot)]
 struct AudioDatabase {
-    #[offset]
+    #[store_vector_direct]
     background_music: Vec<u8>,
 }
 

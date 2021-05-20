@@ -124,16 +124,16 @@ impl DxcIncludeHandler for IncludeHandler {
 }
 #[derive(FlatbufferSerialize)]
 struct Shader {
-    #[offset]
+    #[store_offset]
     name: String,
     type_: ShaderType,
-    #[offset]
+    #[store_vector_direct]
     code: Vec<u8>,
 }
 
 #[derive(FlatbufferSerializeRoot)]
 struct ShaderLibrary {
-    #[offset]
+    #[store_vector_offsets]
     shaders: Vec<Shader>,
 }
 

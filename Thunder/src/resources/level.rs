@@ -29,15 +29,15 @@ impl LevelResource {
 
 #[derive(FlatbufferSerializeRoot)]
 struct Level<'a> {
-    #[offset]
+    #[store_offset]
     name: &'a str,
-    #[offset]
+    #[store_vector_direct]
     entities: &'a [u8],
-    #[offset]
+    #[store_vector_direct]
     physics_world: &'a [u8],
-    #[offset]
+    #[store_offset]
     geometry_database_file: String,
-    #[offset]
+    #[store_offset]
     audio_database_file: String,
     camera: Option<&'a data_definition_generated::Camera>,
 }

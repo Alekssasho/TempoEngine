@@ -3,9 +3,16 @@ extern crate proc_macro;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
+enum StorageMode {
+    Direct,
+    Offset,
+    VectorOffsets,
+    VectorDirect,
+}
+
 struct Member<'a> {
     name: &'a syn::Ident,
-    should_use_offset: bool,
+    storage_mode: StorageMode,
 }
 
 fn gather_members(input: &syn::DeriveInput) -> Vec<Member> {
@@ -16,12 +23,29 @@ fn gather_members(input: &syn::DeriveInput) -> Vec<Member> {
     };
     let mut result = Vec::new();
     for field in &data_struct.fields {
+        // TODO: This could probably be some attribute of kind "storage=direct" and to have parsing on it
+        if field.attrs.len() > 1 {
+            panic!("Cannot have more than 1 attribute per field");
+        }
+        let storage_mode = {
+            if field.attrs.len() == 0 {
+                StorageMode::Direct
+            } else {
+                let attribute_path = field.attrs.first().unwrap().parse_meta().unwrap();
+                if attribute_path.path().is_ident("store_offset") {
+                    StorageMode::Offset
+                } else if attribute_path.path().is_ident("store_vector_offsets") {
+                    StorageMode::VectorOffsets
+                } else if attribute_path.path().is_ident("store_vector_direct") {
+                    StorageMode::VectorDirect
+                } else {
+                    panic!("Unknown attribute");
+                }
+            }
+        };
         result.push(Member {
             name: field.ident.as_ref().unwrap(),
-            should_use_offset: field.attrs.iter().any(|attr| {
-                attr.parse_meta()
-                    .map_or(false, |meta| meta.path().is_ident("offset"))
-            }),
+            storage_mode,
         });
     }
 
@@ -29,27 +53,46 @@ fn gather_members(input: &syn::DeriveInput) -> Vec<Member> {
 }
 
 fn generate_create(member: &Member) -> TokenStream {
-    if member.should_use_offset {
-        let member_name = member.name;
-        let offset_name = format_ident!("{}_offset", member_name);
-        quote! {
-            let #offset_name = data_definition_generated::CreateInBuilder::create_in_builder(&self.#member_name, builder);
+    let member_name = member.name;
+    let offset_name = format_ident!("{}_offset", member_name);
+
+    match member.storage_mode {
+        StorageMode::Direct => TokenStream::new(),
+        StorageMode::Offset => {
+            quote! {
+                let #offset_name = data_definition_generated::CreateInBuilder::create_in_builder(&self.#member_name, builder);
+            }
         }
-    } else {
-        TokenStream::new()
+        StorageMode::VectorOffsets => {
+            quote! {
+                let #offset_name = {
+                    let offsets: Vec<_>  = self.#member_name
+                        .iter()
+                        .map(|value| data_definition_generated::CreateInBuilder::create_in_builder(value, builder))
+                        .collect();
+                    builder.create_vector(offsets.as_slice())
+                };
+            }
+        }
+        StorageMode::VectorDirect => {
+            quote! {
+                let #offset_name = builder.create_vector_direct(&self.#member_name[..]);
+            }
+        }
     }
 }
 
 fn generate_args_assign(member: &Member) -> TokenStream {
     let member_name = member.name;
-    if member.should_use_offset {
-        let offset_name = format_ident!("{}_offset", member_name);
-        quote! {
-            #member_name: Some(#offset_name)
-        }
-    } else {
-        quote! {
+    match member.storage_mode {
+        StorageMode::Direct => quote! {
             #member_name: self.#member_name
+        },
+        StorageMode::Offset | StorageMode::VectorDirect | StorageMode::VectorOffsets => {
+            let offset_name = format_ident!("{}_offset", member_name);
+            quote! {
+                #member_name: Some(#offset_name)
+            }
         }
     }
 }
@@ -180,12 +223,18 @@ fn derive_serialize_impl(
     result.into()
 }
 
-#[proc_macro_derive(FlatbufferSerialize, attributes(offset))]
+#[proc_macro_derive(
+    FlatbufferSerialize,
+    attributes(store_offset, store_vector_offsets, store_vector_direct)
+)]
 pub fn derive_serialize(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_serialize_impl(input, false)
 }
 
-#[proc_macro_derive(FlatbufferSerializeRoot, attributes(offset))]
+#[proc_macro_derive(
+    FlatbufferSerializeRoot,
+    attributes(store_offset, store_vector_offsets, store_vector_direct)
+)]
 pub fn derive_serialize_root(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     derive_serialize_impl(input, true)
 }

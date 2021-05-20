@@ -23,3 +23,4 @@ tracing = "0.1"
 tracing-futures = "0.2"
 tracing-subscriber = "0.2"
 gltf = { version = "0.15", features = ["TEMPEST_extension", "KHR_lights_punctual"] }
+meshopt = "0.1.9"

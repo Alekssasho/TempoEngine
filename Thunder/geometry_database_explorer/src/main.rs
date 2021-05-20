@@ -61,6 +61,7 @@ fn main() {
     let database =
         data_definition_generated::get_root_as_geometry_database(database_file_contents.leak());
 
+    let meshlet_buffer = database.meshlet_buffer().unwrap();
     let mesh_dimensions = {
         if let Some(mappings) = database.mappings() {
             let vertex_buffer = database.vertex_buffer().unwrap();
@@ -72,17 +73,24 @@ fn main() {
             };
             let mut map = HashMap::new();
             for (index, mesh) in mappings.iter().enumerate() {
-                let first_vertex =
-                    mesh.vertex_offset() / (std::mem::size_of::<glam::Vec3>()) as u32;
-                let mesh_slize = &vertex_buffer_vec3
-                    [(first_vertex as usize)..((first_vertex + mesh.vertex_count()) as usize)];
-                let min_sizes = mesh_slize
+                let biggest_dimensions = meshlet_buffer[mesh.meshlets_offset() as usize
+                    ..(mesh.meshlets_offset() + mesh.meshlets_count()) as usize]
                     .iter()
-                    .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
-                let max_sizes = mesh_slize
-                    .iter()
-                    .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
-                let biggest_dimension = (max_sizes - min_sizes).max_element();
+                    .map(|meshlet| {
+                        let first_vertex = meshlet.vertex_offset();
+                        let mesh_slice = &vertex_buffer_vec3[(first_vertex as usize)
+                            ..((first_vertex + meshlet.vertex_count()) as usize)];
+                        let min_sizes = mesh_slice
+                            .iter()
+                            .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
+                        let max_sizes = mesh_slice
+                            .iter()
+                            .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
+                        (min_sizes, max_sizes)
+                    })
+                    .reduce(|a, b| (a.0.min(b.0), a.1.max(b.1)))
+                    .unwrap();
+                let biggest_dimension = (biggest_dimensions.1 - biggest_dimensions.0).max_element();
                 map.insert(index, biggest_dimension);
             }
             map
@@ -145,6 +153,18 @@ fn main() {
         contents: database.vertex_buffer().unwrap(),
         usage: wgpu::BufferUsage::VERTEX,
     });
+    let index_buffer_data: Vec<u16> = database
+        .meshlet_indices_buffer()
+        .unwrap()
+        .iter()
+        .map(|index| *index as u16)
+        .collect();
+
+    let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        label: Some("Index buffer"),
+        contents: unsafe { index_buffer_data.as_slice().align_to::<u8>().1 },
+        usage: wgpu::BufferUsage::INDEX,
+    });
 
     let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
         label: None,
@@ -158,15 +178,18 @@ fn main() {
     let vertex_buffer_layout = [wgpu::VertexBufferLayout {
         array_stride: (std::mem::size_of::<f32>() * 6) as u64,
         step_mode: wgpu::InputStepMode::Vertex,
-        attributes: &[wgpu::VertexAttribute {
-            format: wgpu::VertexFormat::Float3,
-            offset: 0,
-            shader_location: 0,
-        }, wgpu::VertexAttribute {
-            format: wgpu::VertexFormat::Float3,
-            offset: (std::mem::size_of::<f32>() * 3) as u64,
-            shader_location: 1,
-        }],
+        attributes: &[
+            wgpu::VertexAttribute {
+                format: wgpu::VertexFormat::Float3,
+                offset: 0,
+                shader_location: 0,
+            },
+            wgpu::VertexAttribute {
+                format: wgpu::VertexFormat::Float3,
+                offset: (std::mem::size_of::<f32>() * 3) as u64,
+                shader_location: 1,
+            },
+        ],
     }];
 
     let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -248,6 +271,9 @@ fn main() {
     let mut should_move_camera = false;
     let mut last_pointer_pos = glam::vec2(0.0, 0.0);
 
+    let mut whole_mesh = true;
+    let mut current_mesh_meshlet_index: u32 = 0;
+
     event_loop.run(move |event, _, control_flow| {
         let _ = (&depth_texture, &depth_texture_view);
         // Pass the winit events to the platform integration.
@@ -324,8 +350,8 @@ fn main() {
 
                 // Begin to draw the UI frame.
                 platform.begin_frame();
-                let mut current_mesh_vertex_count = 0;
-                let mut current_mesh_vertex_offset = 0;
+                let mut current_mesh_meshlet_count = 0;
+                let mut current_mesh_meshlet_offset = 0;
                 egui::Window::new("Geometry Explorer").show(&platform.context(), |ui| {
                     ui.label(format!("Filename: {}", opt.input_database.display()));
                     if let Some(mappings) = database.mappings() {
@@ -351,12 +377,13 @@ fn main() {
 
                         ui.label(format!("Current mesh: {}", current_mesh_index));
                         let mesh = mappings.iter().nth(current_mesh_index).unwrap();
-                        ui.label(format! {"Vertex count: {}", mesh.vertex_count()});
-                        ui.label(format! {"Vertex offset: {}", mesh.vertex_offset()});
+                        ui.label(format! {"Mehslet count: {}", mesh.meshlets_count()});
+                        ui.label(format! {"Mehslet offset: {}", mesh.meshlets_offset()});
                         ui.label(format! {"Mesh index: {}", mesh.index()});
+                        ui.checkbox(&mut whole_mesh, "Whole mesh");
 
-                        current_mesh_vertex_count = mesh.vertex_count();
-                        current_mesh_vertex_offset = mesh.vertex_offset();
+                        current_mesh_meshlet_count = mesh.meshlets_count();
+                        current_mesh_meshlet_offset = mesh.meshlets_offset();
 
                         ui.horizontal(|ui| {
                             if ui.button("Previous").clicked() {
@@ -367,6 +394,7 @@ fn main() {
                                 };
                                 camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
                                     * MESH_RADIUS_MULTIPLIER;
+                                current_mesh_meshlet_index = 0;
                             }
                             if ui.button("Next").clicked() {
                                 current_mesh_index = if current_mesh_index == (mappings.len() - 1) {
@@ -376,8 +404,35 @@ fn main() {
                                 };
                                 camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
                                     * MESH_RADIUS_MULTIPLIER;
+                                current_mesh_meshlet_index = 0;
                             }
                         });
+
+                        if !whole_mesh {
+                            ui.separator();
+                            let meshlet = &meshlet_buffer[current_mesh_meshlet_index as usize];
+                            ui.label(format! {"Current meshlet: {}", current_mesh_meshlet_index});
+                            ui.label(format! {"Index count: {}", meshlet.index_count()});
+                            ui.label(format! {"index offset: {}", meshlet.index_offset()});
+                            ui.label(format! {"Vertex count: {}", meshlet.vertex_count()});
+                            ui.label(format! {"Vertex offset: {}", meshlet.vertex_offset()});
+                            ui.horizontal(|ui| {
+                                if ui.button("Previous").clicked() {
+                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == 0 {
+                                        mappings.get(current_mesh_index).meshlets_count() - 1
+                                    } else {
+                                        current_mesh_meshlet_index - 1
+                                    };
+                                }
+                                if ui.button("Next").clicked() {
+                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == (mappings.get(current_mesh_index).meshlets_count() - 1) {
+                                        0
+                                    } else {
+                                        current_mesh_meshlet_index + 1
+                                    };
+                                }
+                            });
+                        }
                     }
                 });
 
@@ -413,6 +468,7 @@ fn main() {
 
                     rpass.set_pipeline(&render_pipeline);
                     rpass.set_vertex_buffer(0, vertex_buffer.slice(..));
+                    rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
                     let push_constants = ShaderConstants {
                         view_projection_matrix: glam::Mat4::perspective_rh(
@@ -427,13 +483,23 @@ fn main() {
                         any_as_u8_slice(&push_constants)
                     });
 
-                    current_mesh_vertex_offset =
-                        current_mesh_vertex_offset / (std::mem::size_of::<f32>() * 6) as u32;
-                    rpass.draw(
-                        current_mesh_vertex_offset
-                            ..(current_mesh_vertex_offset + current_mesh_vertex_count),
-                        0..1,
-                    );
+                    if whole_mesh {
+                        for meshlet in &meshlet_buffer[current_mesh_meshlet_offset as usize
+                            ..(current_mesh_meshlet_offset + current_mesh_meshlet_count) as usize]
+                        {
+                            rpass.draw_indexed(
+                                meshlet.index_offset()..meshlet.index_offset() + meshlet.index_count(),
+                                meshlet.vertex_offset() as i32,
+                                0..1,
+                            )
+                        }
+                    } else {
+                        let mappings = database.mappings().unwrap();
+                        let current_meshlet = meshlet_buffer[(current_mesh_meshlet_index + mappings.get(current_mesh_index).meshlets_offset()) as usize];
+                        rpass.draw_indexed(current_meshlet.index_offset()..current_meshlet.index_offset() + current_meshlet.index_count(),
+                        current_meshlet.vertex_offset() as i32,
+                        0..1,)
+                    }
                 }
 
                 // Upload all resources for the GPU.

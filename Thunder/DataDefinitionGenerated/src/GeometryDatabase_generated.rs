@@ -23,6 +23,80 @@ pub mod tempest {
         extern crate flatbuffers;
         use self::flatbuffers::EndianScalar;
 
+        // struct Meshlet, aligned to 4
+        #[repr(C, align(4))]
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        pub struct Meshlet {
+            vertex_offset_: u32,
+            vertex_count_: u32,
+            index_offset_: u32,
+            index_count_: u32,
+        } // pub struct Meshlet
+        impl flatbuffers::SafeSliceAccess for Meshlet {}
+        impl<'a> flatbuffers::Follow<'a> for Meshlet {
+            type Inner = &'a Meshlet;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                <&'a Meshlet>::follow(buf, loc)
+            }
+        }
+        impl<'a> flatbuffers::Follow<'a> for &'a Meshlet {
+            type Inner = &'a Meshlet;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                flatbuffers::follow_cast_ref::<Meshlet>(buf, loc)
+            }
+        }
+        impl<'b> flatbuffers::Push for Meshlet {
+            type Output = Meshlet;
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(self as *const Meshlet as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+        impl<'b> flatbuffers::Push for &'b Meshlet {
+            type Output = Meshlet;
+
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                let src = unsafe {
+                    ::std::slice::from_raw_parts(*self as *const Meshlet as *const u8, Self::size())
+                };
+                dst.copy_from_slice(src);
+            }
+        }
+
+        impl Meshlet {
+            pub fn new<'a>(
+                _vertex_offset: u32,
+                _vertex_count: u32,
+                _index_offset: u32,
+                _index_count: u32,
+            ) -> Self {
+                Meshlet {
+                    vertex_offset_: _vertex_offset.to_little_endian(),
+                    vertex_count_: _vertex_count.to_little_endian(),
+                    index_offset_: _index_offset.to_little_endian(),
+                    index_count_: _index_count.to_little_endian(),
+                }
+            }
+            pub fn vertex_offset<'a>(&'a self) -> u32 {
+                self.vertex_offset_.from_little_endian()
+            }
+            pub fn vertex_count<'a>(&'a self) -> u32 {
+                self.vertex_count_.from_little_endian()
+            }
+            pub fn index_offset<'a>(&'a self) -> u32 {
+                self.index_offset_.from_little_endian()
+            }
+            pub fn index_count<'a>(&'a self) -> u32 {
+                self.index_count_.from_little_endian()
+            }
+        }
+
         pub enum MeshMappingOffset {}
         #[derive(Copy, Clone, Debug, PartialEq)]
 
@@ -51,15 +125,15 @@ pub mod tempest {
                 args: &'args MeshMappingArgs,
             ) -> flatbuffers::WIPOffset<MeshMapping<'bldr>> {
                 let mut builder = MeshMappingBuilder::new(_fbb);
-                builder.add_vertex_count(args.vertex_count);
-                builder.add_vertex_offset(args.vertex_offset);
+                builder.add_meshlets_count(args.meshlets_count);
+                builder.add_meshlets_offset(args.meshlets_offset);
                 builder.add_index(args.index);
                 builder.finish()
             }
 
             pub const VT_INDEX: flatbuffers::VOffsetT = 4;
-            pub const VT_VERTEX_OFFSET: flatbuffers::VOffsetT = 6;
-            pub const VT_VERTEX_COUNT: flatbuffers::VOffsetT = 8;
+            pub const VT_MESHLETS_OFFSET: flatbuffers::VOffsetT = 6;
+            pub const VT_MESHLETS_COUNT: flatbuffers::VOffsetT = 8;
 
             #[inline]
             pub fn index(&self) -> u32 {
@@ -78,31 +152,31 @@ pub mod tempest {
                 key.cmp(&val)
             }
             #[inline]
-            pub fn vertex_offset(&self) -> u32 {
+            pub fn meshlets_offset(&self) -> u32 {
                 self._tab
-                    .get::<u32>(MeshMapping::VT_VERTEX_OFFSET, Some(0))
+                    .get::<u32>(MeshMapping::VT_MESHLETS_OFFSET, Some(0))
                     .unwrap()
             }
             #[inline]
-            pub fn vertex_count(&self) -> u32 {
+            pub fn meshlets_count(&self) -> u32 {
                 self._tab
-                    .get::<u32>(MeshMapping::VT_VERTEX_COUNT, Some(0))
+                    .get::<u32>(MeshMapping::VT_MESHLETS_COUNT, Some(0))
                     .unwrap()
             }
         }
 
         pub struct MeshMappingArgs {
             pub index: u32,
-            pub vertex_offset: u32,
-            pub vertex_count: u32,
+            pub meshlets_offset: u32,
+            pub meshlets_count: u32,
         }
         impl<'a> Default for MeshMappingArgs {
             #[inline]
             fn default() -> Self {
                 MeshMappingArgs {
                     index: 0,
-                    vertex_offset: 0,
-                    vertex_count: 0,
+                    meshlets_offset: 0,
+                    meshlets_count: 0,
                 }
             }
         }
@@ -116,14 +190,14 @@ pub mod tempest {
                 self.fbb_.push_slot::<u32>(MeshMapping::VT_INDEX, index, 0);
             }
             #[inline]
-            pub fn add_vertex_offset(&mut self, vertex_offset: u32) {
+            pub fn add_meshlets_offset(&mut self, meshlets_offset: u32) {
                 self.fbb_
-                    .push_slot::<u32>(MeshMapping::VT_VERTEX_OFFSET, vertex_offset, 0);
+                    .push_slot::<u32>(MeshMapping::VT_MESHLETS_OFFSET, meshlets_offset, 0);
             }
             #[inline]
-            pub fn add_vertex_count(&mut self, vertex_count: u32) {
+            pub fn add_meshlets_count(&mut self, meshlets_count: u32) {
                 self.fbb_
-                    .push_slot::<u32>(MeshMapping::VT_VERTEX_COUNT, vertex_count, 0);
+                    .push_slot::<u32>(MeshMapping::VT_MESHLETS_COUNT, meshlets_count, 0);
             }
             #[inline]
             pub fn new(
@@ -173,6 +247,12 @@ pub mod tempest {
                 if let Some(x) = args.mappings {
                     builder.add_mappings(x);
                 }
+                if let Some(x) = args.meshlet_buffer {
+                    builder.add_meshlet_buffer(x);
+                }
+                if let Some(x) = args.meshlet_indices_buffer {
+                    builder.add_meshlet_indices_buffer(x);
+                }
                 if let Some(x) = args.vertex_buffer {
                     builder.add_vertex_buffer(x);
                 }
@@ -180,13 +260,33 @@ pub mod tempest {
             }
 
             pub const VT_VERTEX_BUFFER: flatbuffers::VOffsetT = 4;
-            pub const VT_MAPPINGS: flatbuffers::VOffsetT = 6;
+            pub const VT_MESHLET_INDICES_BUFFER: flatbuffers::VOffsetT = 6;
+            pub const VT_MESHLET_BUFFER: flatbuffers::VOffsetT = 8;
+            pub const VT_MAPPINGS: flatbuffers::VOffsetT = 10;
 
             #[inline]
             pub fn vertex_buffer(&self) -> Option<&'a [u8]> {
                 self._tab
                     .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(
                         GeometryDatabase::VT_VERTEX_BUFFER,
+                        None,
+                    )
+                    .map(|v| v.safe_slice())
+            }
+            #[inline]
+            pub fn meshlet_indices_buffer(&self) -> Option<&'a [u8]> {
+                self._tab
+                    .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, u8>>>(
+                        GeometryDatabase::VT_MESHLET_INDICES_BUFFER,
+                        None,
+                    )
+                    .map(|v| v.safe_slice())
+            }
+            #[inline]
+            pub fn meshlet_buffer(&self) -> Option<&'a [Meshlet]> {
+                self._tab
+                    .get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<Meshlet>>>(
+                        GeometryDatabase::VT_MESHLET_BUFFER,
                         None,
                     )
                     .map(|v| v.safe_slice())
@@ -204,6 +304,8 @@ pub mod tempest {
 
         pub struct GeometryDatabaseArgs<'a> {
             pub vertex_buffer: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+            pub meshlet_indices_buffer: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
+            pub meshlet_buffer: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, Meshlet>>>,
             pub mappings: Option<
                 flatbuffers::WIPOffset<
                     flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<MeshMapping<'a>>>,
@@ -215,6 +317,8 @@ pub mod tempest {
             fn default() -> Self {
                 GeometryDatabaseArgs {
                     vertex_buffer: None,
+                    meshlet_indices_buffer: None,
+                    meshlet_buffer: None,
                     mappings: None,
                 }
             }
@@ -232,6 +336,26 @@ pub mod tempest {
                 self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
                     GeometryDatabase::VT_VERTEX_BUFFER,
                     vertex_buffer,
+                );
+            }
+            #[inline]
+            pub fn add_meshlet_indices_buffer(
+                &mut self,
+                meshlet_indices_buffer: flatbuffers::WIPOffset<flatbuffers::Vector<'b, u8>>,
+            ) {
+                self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                    GeometryDatabase::VT_MESHLET_INDICES_BUFFER,
+                    meshlet_indices_buffer,
+                );
+            }
+            #[inline]
+            pub fn add_meshlet_buffer(
+                &mut self,
+                meshlet_buffer: flatbuffers::WIPOffset<flatbuffers::Vector<'b, Meshlet>>,
+            ) {
+                self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                    GeometryDatabase::VT_MESHLET_BUFFER,
+                    meshlet_buffer,
                 );
             }
             #[inline]

@@ -137,13 +137,15 @@ impl PhysicsHandler {
     pub fn create_triangle_mesh(
         &mut self,
         vertices: &[f32],
+        vertices_count: usize,
+        vertices_stride: usize,
         indices: &[u32],
     ) -> Option<Owner<physx::triangle_mesh::TriangleMesh>> {
         // TODO: Currently all of the meshes are not indexed so ingore that for the moment
         let mut points_data = unsafe { PxBoundedData_new() };
-        points_data.count = (vertices.len() / 3) as u32;
+        points_data.count = vertices_count as u32;
         points_data.data = vertices.as_ptr() as *const std::ffi::c_void;
-        points_data.stride = (std::mem::size_of::<f32>() * 3) as u32;
+        points_data.stride = vertices_stride as u32;
 
         let mut desc = physx::cooking::PxTriangleMeshDesc::new();
         desc.obj.points = points_data;

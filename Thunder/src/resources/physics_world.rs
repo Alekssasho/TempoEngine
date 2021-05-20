@@ -62,8 +62,10 @@ impl Resource for PhysicsWorldResource {
 
                         let mut mesh = physics
                             .create_triangle_mesh(
-                                mesh_data.vertices.as_slice(),
-                                mesh_data.indices.as_slice(),
+                                mesh_data.get_vertices_float_slice(),
+                                mesh_data.vertices.len(),
+                                std::mem::size_of::<crate::resources::mesh::VertexLayout>(),
+                                mesh_data.whole_mesh_indices.as_slice(),
                             )
                             .unwrap();
                         let geometry = physics.create_mesh_geometry(

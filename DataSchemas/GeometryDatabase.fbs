@@ -3,13 +3,23 @@ namespace Tempest.Definition;
 table MeshMapping
 {
     index : uint(key);
-    vertex_offset : uint;
-    vertex_count : uint;
+    meshlets_offset : uint;
+    meshlets_count : uint;
+}
+
+struct Meshlet
+{
+    vertex_offset: uint32;
+    vertex_count: uint32;
+    index_offset: uint32;
+    index_count: uint32;
 }
 
 table GeometryDatabase
 {
     vertex_buffer : [ubyte];
+    meshlet_indices_buffer: [uint8];
+    meshlet_buffer: [Meshlet];
     mappings : [MeshMapping];
 }
 

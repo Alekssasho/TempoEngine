@@ -2,9 +2,6 @@ use std::sync::Weak;
 
 use crate::{compiler::AsyncCompiler, scene::Scene};
 
-// 3 floats for position and 3 floats for normals
-pub const MESH_VERTEX_LAYOUT_NUM_FLOATS: usize = 6;
-
 use super::Resource;
 #[derive(Debug)]
 pub struct MeshResource {
@@ -17,10 +14,24 @@ impl MeshResource {
         Self { scene, mesh_index }
     }
 }
+#[derive(Debug, Copy, Clone)]
+pub struct VertexLayout {
+    position: math::Vec3,
+    normal: math::Vec3,
+}
+
 #[derive(Debug)]
 pub struct MeshData {
-    pub vertices: Vec<f32>,
-    pub indices: Vec<u32>,
+    pub meshlets: Vec<meshopt::Meshlet>,
+    pub vertices: Vec<VertexLayout>,
+    pub meshlet_indices: Vec<u8>,
+    pub whole_mesh_indices: Vec<u32>,
+}
+
+impl MeshData {
+    pub fn get_vertices_float_slice(&self) -> &[f32] {
+        unsafe { self.vertices.as_slice().align_to::<f32>().1 }
+    }
 }
 
 #[async_trait]
@@ -38,6 +49,7 @@ impl Resource for MeshResource {
 
         // Fill up the vertex buffer
         let mut vertices = Vec::new();
+        let mut indices = Vec::new();
         for prim in 0..scene.gltf.mesh_primitive_count(self.mesh_index) {
             let prim_indices = if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim)
             {
@@ -46,24 +58,59 @@ impl Resource for MeshResource {
                 (0..position_counts[prim] as u32).collect()
             };
 
-            // Vertices array is of floats, 3 of which are a vertex
-            //let indices_current_count = (orig_vertices.len() / 3) as u32;
             let positions = scene.gltf.mesh_positions(self.mesh_index, prim).unwrap();
             let normals = scene.gltf.mesh_normals(self.mesh_index, prim).unwrap();
-            vertices.reserve(vertices.len() + prim_indices.len() * MESH_VERTEX_LAYOUT_NUM_FLOATS);
-            for index in prim_indices.iter() {
-                let position = positions[*index as usize];
-                let normal = normals[*index as usize];
-                vertices.push(position[0]);
-                vertices.push(position[1]);
-                vertices.push(position[2]);
-                vertices.push(normal[0]);
-                vertices.push(normal[1]);
-                vertices.push(normal[2]);
-            }
-        }
-        let indices = (0..(vertices.len() / MESH_VERTEX_LAYOUT_NUM_FLOATS) as u32).collect();
 
-        MeshData { vertices, indices }
+            let current_vertex_offset = vertices.len() as u32;
+            vertices.reserve(vertices.len() + prim_indices.len());
+            for (position, normal) in positions.into_iter().zip(normals.into_iter()) {
+                vertices.push(VertexLayout { position, normal });
+            }
+
+            indices.reserve(indices.len() + prim_indices.len());
+            indices.extend(prim_indices.iter().map(|index| index + current_vertex_offset));
+        }
+
+        let vertex_adapter = meshopt::VertexDataAdapter::new(
+            unsafe { vertices.as_slice().align_to::<u8>().1 },
+            std::mem::size_of::<VertexLayout>(),
+            0,
+        )
+        .unwrap();
+        // TODO: find better values for max vertices/triangles
+        let (meshlets, meshlet_vertices, meshlet_indices) =
+            meshopt::build_meshlets(indices.as_slice(), &vertex_adapter, 128, 256, 0.0);
+
+        // Currently every meshlet have position and count inside the meshlet_vertices/meshlet_indices arrays. meshlet_vertices has indices inside the vertices array
+        // For now lets remove the indirection
+        vertices = {
+            let mut ordered_vertices = Vec::<VertexLayout>::new();
+            ordered_vertices.reserve(meshlet_vertices.len());
+            for vertex_index in meshlet_vertices {
+                ordered_vertices.push(vertices[vertex_index as usize]);
+            }
+            ordered_vertices
+        };
+
+        // Prepare whole mesh indices
+        let whole_mesh_indices = {
+            let mut indices = Vec::new();
+            indices.reserve(meshlet_indices.len());
+            for meshlet in &meshlets {
+                for index in &meshlet_indices[(meshlet.triangle_offset as usize)
+                    ..(meshlet.triangle_offset + (meshlet.triangle_count * 3)) as usize]
+                {
+                    indices.push(*index as u32 + meshlet.vertex_offset);
+                }
+            }
+            indices
+        };
+
+        MeshData {
+            meshlets,
+            vertices,
+            meshlet_indices,
+            whole_mesh_indices,
+        }
     }
 }

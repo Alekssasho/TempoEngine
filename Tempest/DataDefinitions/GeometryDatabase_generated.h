@@ -12,15 +12,52 @@ namespace Definition {
 struct MeshMapping;
 struct MeshMappingBuilder;
 
+struct Meshlet;
+
 struct GeometryDatabase;
 struct GeometryDatabaseBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Meshlet FLATBUFFERS_FINAL_CLASS {
+ private:
+  uint32_t vertex_offset_;
+  uint32_t vertex_count_;
+  uint32_t index_offset_;
+  uint32_t index_count_;
+
+ public:
+  Meshlet()
+      : vertex_offset_(0),
+        vertex_count_(0),
+        index_offset_(0),
+        index_count_(0) {
+  }
+  Meshlet(uint32_t _vertex_offset, uint32_t _vertex_count, uint32_t _index_offset, uint32_t _index_count)
+      : vertex_offset_(flatbuffers::EndianScalar(_vertex_offset)),
+        vertex_count_(flatbuffers::EndianScalar(_vertex_count)),
+        index_offset_(flatbuffers::EndianScalar(_index_offset)),
+        index_count_(flatbuffers::EndianScalar(_index_count)) {
+  }
+  uint32_t vertex_offset() const {
+    return flatbuffers::EndianScalar(vertex_offset_);
+  }
+  uint32_t vertex_count() const {
+    return flatbuffers::EndianScalar(vertex_count_);
+  }
+  uint32_t index_offset() const {
+    return flatbuffers::EndianScalar(index_offset_);
+  }
+  uint32_t index_count() const {
+    return flatbuffers::EndianScalar(index_count_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Meshlet, 16);
 
 struct MeshMapping FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef MeshMappingBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_INDEX = 4,
-    VT_VERTEX_OFFSET = 6,
-    VT_VERTEX_COUNT = 8
+    VT_MESHLETS_OFFSET = 6,
+    VT_MESHLETS_COUNT = 8
   };
   uint32_t index() const {
     return GetField<uint32_t>(VT_INDEX, 0);
@@ -31,17 +68,17 @@ struct MeshMapping FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   int KeyCompareWithValue(uint32_t val) const {
     return static_cast<int>(index() > val) - static_cast<int>(index() < val);
   }
-  uint32_t vertex_offset() const {
-    return GetField<uint32_t>(VT_VERTEX_OFFSET, 0);
+  uint32_t meshlets_offset() const {
+    return GetField<uint32_t>(VT_MESHLETS_OFFSET, 0);
   }
-  uint32_t vertex_count() const {
-    return GetField<uint32_t>(VT_VERTEX_COUNT, 0);
+  uint32_t meshlets_count() const {
+    return GetField<uint32_t>(VT_MESHLETS_COUNT, 0);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_INDEX) &&
-           VerifyField<uint32_t>(verifier, VT_VERTEX_OFFSET) &&
-           VerifyField<uint32_t>(verifier, VT_VERTEX_COUNT) &&
+           VerifyField<uint32_t>(verifier, VT_MESHLETS_OFFSET) &&
+           VerifyField<uint32_t>(verifier, VT_MESHLETS_COUNT) &&
            verifier.EndTable();
   }
 };
@@ -53,11 +90,11 @@ struct MeshMappingBuilder {
   void add_index(uint32_t index) {
     fbb_.AddElement<uint32_t>(MeshMapping::VT_INDEX, index, 0);
   }
-  void add_vertex_offset(uint32_t vertex_offset) {
-    fbb_.AddElement<uint32_t>(MeshMapping::VT_VERTEX_OFFSET, vertex_offset, 0);
+  void add_meshlets_offset(uint32_t meshlets_offset) {
+    fbb_.AddElement<uint32_t>(MeshMapping::VT_MESHLETS_OFFSET, meshlets_offset, 0);
   }
-  void add_vertex_count(uint32_t vertex_count) {
-    fbb_.AddElement<uint32_t>(MeshMapping::VT_VERTEX_COUNT, vertex_count, 0);
+  void add_meshlets_count(uint32_t meshlets_count) {
+    fbb_.AddElement<uint32_t>(MeshMapping::VT_MESHLETS_COUNT, meshlets_count, 0);
   }
   explicit MeshMappingBuilder(flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
@@ -73,11 +110,11 @@ struct MeshMappingBuilder {
 inline flatbuffers::Offset<MeshMapping> CreateMeshMapping(
     flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t index = 0,
-    uint32_t vertex_offset = 0,
-    uint32_t vertex_count = 0) {
+    uint32_t meshlets_offset = 0,
+    uint32_t meshlets_count = 0) {
   MeshMappingBuilder builder_(_fbb);
-  builder_.add_vertex_count(vertex_count);
-  builder_.add_vertex_offset(vertex_offset);
+  builder_.add_meshlets_count(meshlets_count);
+  builder_.add_meshlets_offset(meshlets_offset);
   builder_.add_index(index);
   return builder_.Finish();
 }
@@ -86,10 +123,18 @@ struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef GeometryDatabaseBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_VERTEX_BUFFER = 4,
-    VT_MAPPINGS = 6
+    VT_MESHLET_INDICES_BUFFER = 6,
+    VT_MESHLET_BUFFER = 8,
+    VT_MAPPINGS = 10
   };
   const flatbuffers::Vector<uint8_t> *vertex_buffer() const {
     return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_VERTEX_BUFFER);
+  }
+  const flatbuffers::Vector<uint8_t> *meshlet_indices_buffer() const {
+    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_MESHLET_INDICES_BUFFER);
+  }
+  const flatbuffers::Vector<const Tempest::Definition::Meshlet *> *meshlet_buffer() const {
+    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::Meshlet *> *>(VT_MESHLET_BUFFER);
   }
   const flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::MeshMapping>> *mappings() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::MeshMapping>> *>(VT_MAPPINGS);
@@ -98,6 +143,10 @@ struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_VERTEX_BUFFER) &&
            verifier.VerifyVector(vertex_buffer()) &&
+           VerifyOffset(verifier, VT_MESHLET_INDICES_BUFFER) &&
+           verifier.VerifyVector(meshlet_indices_buffer()) &&
+           VerifyOffset(verifier, VT_MESHLET_BUFFER) &&
+           verifier.VerifyVector(meshlet_buffer()) &&
            VerifyOffset(verifier, VT_MAPPINGS) &&
            verifier.VerifyVector(mappings()) &&
            verifier.VerifyVectorOfTables(mappings()) &&
@@ -111,6 +160,12 @@ struct GeometryDatabaseBuilder {
   flatbuffers::uoffset_t start_;
   void add_vertex_buffer(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> vertex_buffer) {
     fbb_.AddOffset(GeometryDatabase::VT_VERTEX_BUFFER, vertex_buffer);
+  }
+  void add_meshlet_indices_buffer(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> meshlet_indices_buffer) {
+    fbb_.AddOffset(GeometryDatabase::VT_MESHLET_INDICES_BUFFER, meshlet_indices_buffer);
+  }
+  void add_meshlet_buffer(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer) {
+    fbb_.AddOffset(GeometryDatabase::VT_MESHLET_BUFFER, meshlet_buffer);
   }
   void add_mappings(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::MeshMapping>>> mappings) {
     fbb_.AddOffset(GeometryDatabase::VT_MAPPINGS, mappings);
@@ -129,9 +184,13 @@ struct GeometryDatabaseBuilder {
 inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabase(
     flatbuffers::FlatBufferBuilder &_fbb,
     flatbuffers::Offset<flatbuffers::Vector<uint8_t>> vertex_buffer = 0,
+    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> meshlet_indices_buffer = 0,
+    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::MeshMapping>>> mappings = 0) {
   GeometryDatabaseBuilder builder_(_fbb);
   builder_.add_mappings(mappings);
+  builder_.add_meshlet_buffer(meshlet_buffer);
+  builder_.add_meshlet_indices_buffer(meshlet_indices_buffer);
   builder_.add_vertex_buffer(vertex_buffer);
   return builder_.Finish();
 }
@@ -139,12 +198,18 @@ inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabase(
 inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabaseDirect(
     flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint8_t> *vertex_buffer = nullptr,
+    const std::vector<uint8_t> *meshlet_indices_buffer = nullptr,
+    const std::vector<Tempest::Definition::Meshlet> *meshlet_buffer = nullptr,
     std::vector<flatbuffers::Offset<Tempest::Definition::MeshMapping>> *mappings = nullptr) {
   auto vertex_buffer__ = vertex_buffer ? _fbb.CreateVector<uint8_t>(*vertex_buffer) : 0;
+  auto meshlet_indices_buffer__ = meshlet_indices_buffer ? _fbb.CreateVector<uint8_t>(*meshlet_indices_buffer) : 0;
+  auto meshlet_buffer__ = meshlet_buffer ? _fbb.CreateVectorOfStructs<Tempest::Definition::Meshlet>(*meshlet_buffer) : 0;
   auto mappings__ = mappings ? _fbb.CreateVectorOfSortedTables<Tempest::Definition::MeshMapping>(mappings) : 0;
   return Tempest::Definition::CreateGeometryDatabase(
       _fbb,
       vertex_buffer__,
+      meshlet_indices_buffer__,
+      meshlet_buffer__,
       mappings__);
 }
 

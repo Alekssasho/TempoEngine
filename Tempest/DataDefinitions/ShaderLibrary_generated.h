@@ -18,29 +18,47 @@ struct ShaderLibraryBuilder;
 enum ShaderType {
   ShaderType_Vertex = 0,
   ShaderType_Pixel = 1,
+  ShaderType_Mesh = 2,
+  ShaderType_Amplify = 3,
+  ShaderType_Hull = 4,
+  ShaderType_Domain = 5,
+  ShaderType_Compute = 6,
+  ShaderType_Geometry = 7,
   ShaderType_MIN = ShaderType_Vertex,
-  ShaderType_MAX = ShaderType_Pixel
+  ShaderType_MAX = ShaderType_Geometry
 };
 
-inline const ShaderType (&EnumValuesShaderType())[2] {
+inline const ShaderType (&EnumValuesShaderType())[8] {
   static const ShaderType values[] = {
     ShaderType_Vertex,
-    ShaderType_Pixel
+    ShaderType_Pixel,
+    ShaderType_Mesh,
+    ShaderType_Amplify,
+    ShaderType_Hull,
+    ShaderType_Domain,
+    ShaderType_Compute,
+    ShaderType_Geometry
   };
   return values;
 }
 
 inline const char * const *EnumNamesShaderType() {
-  static const char * const names[3] = {
+  static const char * const names[9] = {
     "Vertex",
     "Pixel",
+    "Mesh",
+    "Amplify",
+    "Hull",
+    "Domain",
+    "Compute",
+    "Geometry",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameShaderType(ShaderType e) {
-  if (flatbuffers::IsOutRange(e, ShaderType_Vertex, ShaderType_Pixel)) return "";
+  if (flatbuffers::IsOutRange(e, ShaderType_Vertex, ShaderType_Geometry)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesShaderType()[index];
 }

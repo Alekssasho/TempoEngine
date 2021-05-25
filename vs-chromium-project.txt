@@ -17,6 +17,7 @@ target/
 *.suo
 *.VC.db
 *.VC.opendb
+packages/
 
 [SearchableFiles.include]
 *

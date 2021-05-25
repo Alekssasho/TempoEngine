@@ -3,7 +3,13 @@ namespace Tempest.Definition;
 enum ShaderType : byte
 {
     Vertex,
-    Pixel
+    Pixel,
+    Mesh,
+    Amplify,
+    Hull,
+    Domain,
+    Compute,
+    Geometry
 }
 
 table Shader

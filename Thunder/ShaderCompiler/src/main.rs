@@ -61,6 +61,12 @@ fn compile_hlsl_source(
     let (target_profile, entry_point) = match shader_type {
         ShaderType::Vertex => ("vs_6_6", "VertexShaderMain"),
         ShaderType::Pixel => ("ps_6_6", "PixelShaderMain"),
+        ShaderType::Mesh => ("ms_6_6", "MeshShaderMain"),
+        ShaderType::Amplify => ("as_6_6", "AmplifyShaderMain"),
+        ShaderType::Hull => ("hs_6_6", "HullShaderMain"),
+        ShaderType::Domain => ("ds_6_6", "DomainShaderMain"),
+        ShaderType::Compute => ("cs_6_6", "ComputeShaderMain"),
+        ShaderType::Geometry => ("gs_6_6", "GeometryShaderMain"),
     };
 
     let result = compile_with_include_handler(
@@ -151,6 +157,36 @@ fn main() {
             Regex::new(r"(?m)\bPixelShaderMain\b").unwrap(),
             ShaderType::Pixel,
             "PS",
+        ),
+        (
+            Regex::new(r"(?m)\bMeshShaderMain\b").unwrap(),
+            ShaderType::Mesh,
+            "MS",
+        ),
+        (
+            Regex::new(r"(?m)\bAmplifyShaderMain\b").unwrap(),
+            ShaderType::Amplify,
+            "AS",
+        ),
+        (
+            Regex::new(r"(?m)\bHullShaderMain\b").unwrap(),
+            ShaderType::Hull,
+            "HS",
+        ),
+        (
+            Regex::new(r"(?m)\bDomainShaderMain\b").unwrap(),
+            ShaderType::Domain,
+            "DS",
+        ),
+        (
+            Regex::new(r"(?m)\bComputeShaderMain\b").unwrap(),
+            ShaderType::Compute,
+            "CS",
+        ),
+        (
+            Regex::new(r"(?m)\bGeometryShaderMain\b").unwrap(),
+            ShaderType::Geometry,
+            "GS",
         ),
     ];
 

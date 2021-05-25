@@ -11,10 +11,12 @@ namespace Dx12
 
 struct GraphicsPipelineStateDescription
 {
-	const void* VSCode;
-	const void* PSCode;
-	size_t VSCodeSize;
-	size_t PSCodeSize;
+	const void* VSCode = nullptr;
+	const void* PSCode = nullptr;
+	const void* MSCode = nullptr;
+	size_t VSCodeSize = 0;
+	size_t PSCodeSize = 0;
+	size_t MSCodeSize = 0;
 };
 
 class PipelineManager
@@ -27,7 +29,7 @@ public:
 	ID3D12PipelineState* GetPipeline(PipelineStateHandle handle);
 	ID3D12RootSignature* GetSignature();
 private:
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC PrepareDefaultPipelineStateDesc();
+	void PrepareDefaultPipelineStateDesc(struct PipelineStreamBuilder& builder);
 
 	eastl::unordered_map<PipelineStateHandle, ComPtr<ID3D12PipelineState>> m_Pipelines;
 	PipelineStateHandle m_NextPipelineHandle = 0;

@@ -48,8 +48,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 	struct GeometryConstants
 	{
 		glm::mat4x4 worldMatrix;
-		uint32_t vertexBufferIndex;
-		uint32_t vertexBufferOffset;
+		uint32_t meshletOffset;
 	};
 
 	for (const auto& mesh : data.StaticMeshes)
@@ -58,14 +57,12 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 
 		GeometryConstants constants;
 		constants.worldMatrix = mesh.Transform;
-		constants.vertexBufferIndex = 0;// meshData.VertexBuffer; // TODO: This should be an index of sort
-		constants.vertexBufferOffset = meshData.OffsetInVertexBuffer;
+		constants.meshletOffset = meshData.MeshletOffset;
 
-		RendererCommandDrawInstanced command;
+		RendererCommandDrawMeshlet command;
 		command.Pipeline = m_Handle;
 		command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
-		command.VertexCountPerInstance = meshData.VertexCount;
-		command.InstanceCount = 1;
+		command.MeshletCount = meshData.MeshletCount;
 		commandList.AddCommand(command);
 	}
 }

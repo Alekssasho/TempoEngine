@@ -10,8 +10,8 @@ public:
 	struct MeshData
 	{
 		BufferHandle VertexBuffer;
-		uint32_t OffsetInVertexBuffer;
-		uint32_t VertexCount;
+		uint32_t MeshletOffset;
+		uint32_t MeshletCount;
 	};
 
 	MeshData GetMeshData(MeshHandle handle) const;

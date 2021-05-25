@@ -10,7 +10,7 @@ namespace Dx12
 struct Dx12FrameData
 {
 	uint32_t BackBufferIndex;
-	ID3D12GraphicsCommandList* CommandList;
+	ID3D12GraphicsCommandList6* CommandList;
 	ID3D12Resource* BackBufferResource;
 	D3D12_CPU_DESCRIPTOR_HANDLE BackBufferRTV;
 	D3D12_CPU_DESCRIPTOR_HANDLE BackBufferDSV;
@@ -30,23 +30,31 @@ public:
 		return m_SwapChainSize;
 	}
 
-	ID3D12Device* GetDevice()
+	ID3D12Device2* GetDevice()
 	{
 		return m_Device.Get();
 	}
 
 	void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
 	// TODO: This should be refactored
-	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes) const;
+	enum class ShaderResourceSlot
+	{
+		UI,
+		Meshlets,
+		MeshletIndices,
+		MeshletVertices,
+		Count
+	};
+	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes, ShaderResourceSlot slot) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHeapStart()
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
-		handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		//handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		return handle;
 	}
 private:
 	ComPtr<IDXGIFactory4> m_Factory;
-	ComPtr<ID3D12Device> m_Device;
+	ComPtr<ID3D12Device2> m_Device;
 	ComPtr<ID3D12CommandQueue> m_GraphicsQueue;
 	ComPtr<IDXGISwapChain3> m_SwapChain;
 	ComPtr<ID3D12DescriptorHeap> m_RTVHeap;
@@ -68,7 +76,7 @@ private:
 	struct CommandList
 	{
 		ComPtr<ID3D12CommandAllocator> CommandAllocator;
-		ComPtr<ID3D12GraphicsCommandList> DxCommandList;
+		ComPtr<ID3D12GraphicsCommandList6> DxCommandList;
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
 

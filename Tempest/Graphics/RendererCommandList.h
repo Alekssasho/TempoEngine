@@ -7,6 +7,7 @@ namespace Tempest
 enum class RendererCommandType : uint8_t
 {
 	DrawInstanced,
+	DrawMeshlet,
 	Count
 };
 
@@ -31,6 +32,13 @@ struct RendererCommandDrawInstanced : RendererCommand<RendererCommandType::DrawI
 	ShaderParameterView ParameterView;
 	uint32_t VertexCountPerInstance;
 	uint32_t InstanceCount;
+};
+
+struct RendererCommandDrawMeshlet : RendererCommand<RendererCommandType::DrawMeshlet>
+{
+	PipelineStateHandle Pipeline;
+	ShaderParameterView ParameterView;
+	uint32_t MeshletCount;
 };
 
 struct RendererCommandList

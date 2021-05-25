@@ -137,6 +137,16 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 			commandListIterator += sizeof(RendererCommandDrawInstanced);
 			break;
 		}
+		case RendererCommandType::DrawMeshlet:
+		{
+			const RendererCommandDrawMeshlet* command = reinterpret_cast<const RendererCommandDrawMeshlet*>(commandListIterator);
+			setPipeline(command->Pipeline);
+			frame.CommandList->SetGraphicsRootConstantBufferView(0, Managers.Buffer.GetGPUAddress(m_SceneConstantBufferData[frame.BackBufferIndex]));
+			frame.CommandList->SetGraphicsRootConstantBufferView(1, Managers.Buffer.GetGPUAddress(m_GeometryConstantBufferData[frame.BackBufferIndex]) + command->ParameterView.GeometryConstantDataOffset);
+			frame.CommandList->DispatchMesh(command->MeshletCount, 1, 1);
+			commandListIterator += sizeof(RendererCommandDrawMeshlet);
+			break;
+		}
 		default:
 			assert(false);
 			break;

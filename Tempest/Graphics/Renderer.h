@@ -46,6 +46,8 @@ private:
 	const Definition::ShaderLibrary* m_ShaderLibrary;
 
 	BufferHandle m_VertexData;
+	BufferHandle m_MeshletData;
+	BufferHandle m_MeshletIndicesData;
 };
 }
 

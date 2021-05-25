@@ -210,7 +210,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 		CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&allocator)));
 		allocator->SetName(L"Backbuffer Command Allocator");
 
-		ComPtr<ID3D12GraphicsCommandList> list;
+		ComPtr<ID3D12GraphicsCommandList6> list;
 		CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, allocator.Get(), nullptr, IID_PPV_ARGS(&list)));
 		list->SetName(L"Backbuffer Command List");
 
@@ -246,7 +246,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 		// TODO: Make this real code and remove imgui_impl_dx12
 
 		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = 2; // TODO: This should be dynamic, or there should be another srv heap for UI and other data
+		srvHeapDesc.NumDescriptors = uint32_t(ShaderResourceSlot::Count);
 		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
@@ -372,7 +372,7 @@ void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_R
 	}
 }
 
-void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes) const
+void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes, ShaderResourceSlot slot) const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
@@ -385,7 +385,7 @@ void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes
 
 	// Go to second descriptor
 	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_SRVHeap->GetCPUDescriptorHandleForHeapStart());
-	handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	handle.ptr += static_cast<uint32_t>(slot) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_Device->CreateShaderResourceView(
 		resource,

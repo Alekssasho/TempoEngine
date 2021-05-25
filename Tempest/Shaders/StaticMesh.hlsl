@@ -22,12 +22,9 @@ struct GeometryConstants
 
 ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space1);
 
-ByteAddressBuffer vertexBuffers[] : register(t0, space1);
-
 VertexOutput VertexShaderMain(uint vertexId : SV_VertexID)
 {
-	//ByteAddressBuffer vertexBuffer = ResourceDescriptorHeap[g_Geometry.vertexBufferIndex];
-	ByteAddressBuffer vertexBuffer = vertexBuffers[3];
+	ByteAddressBuffer vertexBuffer = ResourceDescriptorHeap[3];
 	VertexLayout vertexData = vertexBuffer.Load<VertexLayout>(g_Geometry.meshletOffset + vertexId * sizeof(VertexLayout));
 
 	float4x4 mvp = mul(g_Scene.ViewProjection, g_Geometry.WorldMatrix);
@@ -56,9 +53,9 @@ void MeshShaderMain(
 	out indices uint3 tris[256],
 	out vertices VertexOutput verts[128])
 {
-	ByteAddressBuffer meshlets = vertexBuffers[1];
-	ByteAddressBuffer meshletsIndices = vertexBuffers[2];
-	ByteAddressBuffer meshletsVertices = vertexBuffers[3];
+	ByteAddressBuffer meshlets = ResourceDescriptorHeap[1];
+	ByteAddressBuffer meshletsIndices = ResourceDescriptorHeap[2];
+	ByteAddressBuffer meshletsVertices = ResourceDescriptorHeap[3];
 
 	Meshlet meshlet = meshlets.Load<Meshlet>((gid + g_Geometry.meshletOffset) * sizeof(Meshlet));
 	SetMeshOutputCounts(meshlet.vertex_count, meshlet.index_count / 3);

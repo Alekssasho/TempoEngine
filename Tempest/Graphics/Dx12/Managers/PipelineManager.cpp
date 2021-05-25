@@ -47,23 +47,9 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	geometryConstants.Descriptor.ShaderRegister = 0;
 	geometryConstants.Descriptor.RegisterSpace = 1;
 
-	D3D12_DESCRIPTOR_RANGE geometryDescritorRange;
-	geometryDescritorRange.RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	geometryDescritorRange.NumDescriptors = UINT_MAX; // Unbounded
-	geometryDescritorRange.BaseShaderRegister = 0;
-	geometryDescritorRange.RegisterSpace = 1;
-	geometryDescritorRange.OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
-	
-	D3D12_ROOT_PARAMETER geometryDescriptorTable;
-	geometryDescriptorTable.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	geometryDescriptorTable.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	geometryDescriptorTable.DescriptorTable.NumDescriptorRanges = 1;
-	geometryDescriptorTable.DescriptorTable.pDescriptorRanges = &geometryDescritorRange;
-
 	D3D12_ROOT_PARAMETER params[] = {
 		sceneConstants,
-		geometryConstants,
-		geometryDescriptorTable
+		geometryConstants
 	};
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;

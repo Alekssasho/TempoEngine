@@ -82,7 +82,6 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 	// TODO: This should probably be part of the pipeline itself
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
 	// TODO: better support for indices of root parameters
-	frame.CommandList->SetGraphicsRootDescriptorTable(2, m_Device->GetSRVHeapStart());
 	frame.CommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	PipelineStateHandle currentPipeline = sInvalidHandle;

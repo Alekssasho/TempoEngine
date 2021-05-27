@@ -65,7 +65,7 @@ impl Resource for GeometryDatabaseResource {
                     current_vertex_buffer_offset + meshlet.vertex_offset,
                     meshlet.vertex_count,
                     current_indices_buffer_offset + meshlet.triangle_offset,
-                    meshlet.triangle_count * 3,
+                    meshlet.triangle_count,
                 ));
             }
 

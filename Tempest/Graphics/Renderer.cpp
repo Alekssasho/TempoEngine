@@ -143,15 +143,17 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		bufferDescription.Data = geometryDatabase->vertex_buffer()->data();
 		m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size), Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
+		// TODO: Add type for vertex layout
+		const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2;
+		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
 
 		Dx12::BufferDescription bufferDescription2;
 		bufferDescription2.Type = Dx12::BufferType::Vertex;
-		bufferDescription2.Size = geometryDatabase->meshlet_buffer()->size();
+		bufferDescription2.Size = geometryDatabase->meshlet_buffer()->size() * sizeof(Definition::Meshlet);
 		bufferDescription2.Data = geometryDatabase->meshlet_buffer()->data();
 		m_MeshletData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription2);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletData), uint32_t(bufferDescription2.Size), Dx12::Dx12Device::ShaderResourceSlot::Meshlets);
+		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletData), geometryDatabase->meshlet_buffer()->size(), sizeof(Definition::Meshlet), Dx12::Dx12Device::ShaderResourceSlot::Meshlets);
 
 		Dx12::BufferDescription bufferDescription3;
 		bufferDescription3.Type = Dx12::BufferType::Vertex;
@@ -159,7 +161,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		bufferDescription3.Data = geometryDatabase->meshlet_indices_buffer()->data();
 		m_MeshletIndicesData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription3);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletIndicesData), uint32_t(bufferDescription3.Size), Dx12::Dx12Device::ShaderResourceSlot::MeshletIndices);
+		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletIndicesData), uint32_t(bufferDescription3.Size), sizeof(uint8_t), Dx12::Dx12Device::ShaderResourceSlot::MeshletIndices);
 	}
 
 

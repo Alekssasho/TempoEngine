@@ -45,7 +45,7 @@ public:
 		MeshletVertices,
 		Count
 	};
-	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes, ShaderResourceSlot slot) const;
+	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHeapStart()
 	{
 		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();

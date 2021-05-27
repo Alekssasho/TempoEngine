@@ -21,21 +21,21 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Meshlet FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t vertex_offset_;
   uint32_t vertex_count_;
-  uint32_t index_offset_;
-  uint32_t index_count_;
+  uint32_t triangle_offset_;
+  uint32_t triangle_count_;
 
  public:
   Meshlet()
       : vertex_offset_(0),
         vertex_count_(0),
-        index_offset_(0),
-        index_count_(0) {
+        triangle_offset_(0),
+        triangle_count_(0) {
   }
-  Meshlet(uint32_t _vertex_offset, uint32_t _vertex_count, uint32_t _index_offset, uint32_t _index_count)
+  Meshlet(uint32_t _vertex_offset, uint32_t _vertex_count, uint32_t _triangle_offset, uint32_t _triangle_count)
       : vertex_offset_(flatbuffers::EndianScalar(_vertex_offset)),
         vertex_count_(flatbuffers::EndianScalar(_vertex_count)),
-        index_offset_(flatbuffers::EndianScalar(_index_offset)),
-        index_count_(flatbuffers::EndianScalar(_index_count)) {
+        triangle_offset_(flatbuffers::EndianScalar(_triangle_offset)),
+        triangle_count_(flatbuffers::EndianScalar(_triangle_count)) {
   }
   uint32_t vertex_offset() const {
     return flatbuffers::EndianScalar(vertex_offset_);
@@ -43,11 +43,11 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Meshlet FLATBUFFERS_FINAL_CLASS {
   uint32_t vertex_count() const {
     return flatbuffers::EndianScalar(vertex_count_);
   }
-  uint32_t index_offset() const {
-    return flatbuffers::EndianScalar(index_offset_);
+  uint32_t triangle_offset() const {
+    return flatbuffers::EndianScalar(triangle_offset_);
   }
-  uint32_t index_count() const {
-    return flatbuffers::EndianScalar(index_count_);
+  uint32_t triangle_count() const {
+    return flatbuffers::EndianScalar(triangle_count_);
   }
 };
 FLATBUFFERS_STRUCT_END(Meshlet, 16);

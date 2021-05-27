@@ -11,8 +11,8 @@ struct Meshlet
 {
     vertex_offset: uint32;
     vertex_count: uint32;
-    index_offset: uint32;
-    index_count: uint32;
+    triangle_offset: uint32;
+    triangle_count: uint32;
 }
 
 table GeometryDatabase

@@ -412,8 +412,8 @@ fn main() {
                             ui.separator();
                             let meshlet = &meshlet_buffer[current_mesh_meshlet_index as usize];
                             ui.label(format! {"Current meshlet: {}", current_mesh_meshlet_index});
-                            ui.label(format! {"Index count: {}", meshlet.index_count()});
-                            ui.label(format! {"index offset: {}", meshlet.index_offset()});
+                            ui.label(format! {"Triangle count: {}", meshlet.triangle_count()});
+                            ui.label(format! {"Triangle offset: {}", meshlet.triangle_offset()});
                             ui.label(format! {"Vertex count: {}", meshlet.vertex_count()});
                             ui.label(format! {"Vertex offset: {}", meshlet.vertex_offset()});
                             ui.horizontal(|ui| {
@@ -488,7 +488,7 @@ fn main() {
                             ..(current_mesh_meshlet_offset + current_mesh_meshlet_count) as usize]
                         {
                             rpass.draw_indexed(
-                                meshlet.index_offset()..meshlet.index_offset() + meshlet.index_count(),
+                                meshlet.triangle_offset()..meshlet.triangle_offset() + meshlet.triangle_count() * 3,
                                 meshlet.vertex_offset() as i32,
                                 0..1,
                             )
@@ -496,7 +496,7 @@ fn main() {
                     } else {
                         let mappings = database.mappings().unwrap();
                         let current_meshlet = meshlet_buffer[(current_mesh_meshlet_index + mappings.get(current_mesh_index).meshlets_offset()) as usize];
-                        rpass.draw_indexed(current_meshlet.index_offset()..current_meshlet.index_offset() + current_meshlet.index_count(),
+                        rpass.draw_indexed(current_meshlet.triangle_offset()..current_meshlet.triangle_offset() + current_meshlet.triangle_count() * 3,
                         current_meshlet.vertex_offset() as i32,
                         0..1,)
                     }

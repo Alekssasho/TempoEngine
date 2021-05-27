@@ -372,18 +372,24 @@ void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_R
 	}
 }
 
-void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numBytes, ShaderResourceSlot slot) const
+void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-	desc.Format = DXGI_FORMAT_R32_TYPELESS; //DXGI_FORMAT_R32_TYPELESS DXGI_FORMAT_UNKNOWN
+	// Format_unknown is for StructuredBuffers
+	// r32_typeless is for ByteAddressBuffer + SRV_FLAG_RAW
+	desc.Format = slot == ShaderResourceSlot::MeshletIndices ? DXGI_FORMAT_R8_UINT : DXGI_FORMAT_UNKNOWN; //DXGI_FORMAT_R32_TYPELESS DXGI_FORMAT_UNKNOWN
 	desc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.Buffer.FirstElement = 0;
-	desc.Buffer.NumElements = numBytes / 4;
-	desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+	desc.Buffer.NumElements = numElements;
+	desc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	if(desc.Format == DXGI_FORMAT_UNKNOWN)
+	{
+		desc.Buffer.StructureByteStride = stride;
+	}
 
-	// Go to second descriptor
+	// Go to appropriate descriptor
 	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_SRVHeap->GetCPUDescriptorHandleForHeapStart());
 	handle.ptr += static_cast<uint32_t>(slot) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 

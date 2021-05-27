@@ -14,7 +14,7 @@ impl MeshResource {
         Self { scene, mesh_index }
     }
 }
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Default)]
 pub struct VertexLayout {
     position: math::Vec3,
     normal: math::Vec3,
@@ -71,15 +71,23 @@ impl Resource for MeshResource {
             indices.extend(prim_indices.iter().map(|index| index + current_vertex_offset));
         }
 
+        let (_, remap_table) = meshopt::generate_vertex_remap(vertices.as_slice(), Some(indices.as_slice()));
+        indices = meshopt::remap_index_buffer(Some(indices.as_slice()), vertices.len(), remap_table.as_slice());
+        vertices = meshopt::remap_vertex_buffer(vertices.as_slice(), vertices.len(), remap_table.as_slice());
+
+        meshopt::optimize_vertex_cache_in_place(indices.as_slice(), vertices.len());
+        meshopt::optimize_vertex_fetch_in_place(indices.as_mut_slice(), vertices.as_mut_slice());
+
         let vertex_adapter = meshopt::VertexDataAdapter::new(
             unsafe { vertices.as_slice().align_to::<u8>().1 },
             std::mem::size_of::<VertexLayout>(),
             0,
         )
         .unwrap();
+
         // TODO: find better values for max vertices/triangles
         let (meshlets, meshlet_vertices, meshlet_indices) =
-            meshopt::build_meshlets(indices.as_slice(), &vertex_adapter, 128, 256, 0.0);
+            meshopt::build_meshlets(indices.as_slice(), &vertex_adapter, 128, 128, 0.0);
 
         // Currently every meshlet have position and count inside the meshlet_vertices/meshlet_indices arrays. meshlet_vertices has indices inside the vertices array
         // For now lets remove the indirection

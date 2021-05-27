@@ -25,6 +25,7 @@ fn compile_with_include_handler(
         .create_blob_with_encoding_from_str(shader_text)
         .map_err(HassleError::Win32Error)?;
 
+    // TODO: Add support for debug build which outputs PDB for debugging
     let result = compiler.compile(
         &blob,
         source_name,

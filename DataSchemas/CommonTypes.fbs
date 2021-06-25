@@ -1,0 +1,14 @@
+namespace Common.Tempest;
+
+struct Vec3 {
+    x: float;
+    y: float;
+    z: float;
+}
+
+struct Color {
+    r: float;
+    g: float;
+    b: float;
+    a: float;
+}

@@ -6,44 +6,15 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+#include "CommonTypes_generated.h"
+
 namespace Tempest {
 namespace Definition {
-
-struct Vec3;
 
 struct Camera;
 
 struct Level;
 struct LevelBuilder;
-
-FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
- private:
-  float x_;
-  float y_;
-  float z_;
-
- public:
-  Vec3()
-      : x_(0),
-        y_(0),
-        z_(0) {
-  }
-  Vec3(float _x, float _y, float _z)
-      : x_(flatbuffers::EndianScalar(_x)),
-        y_(flatbuffers::EndianScalar(_y)),
-        z_(flatbuffers::EndianScalar(_z)) {
-  }
-  float x() const {
-    return flatbuffers::EndianScalar(x_);
-  }
-  float y() const {
-    return flatbuffers::EndianScalar(y_);
-  }
-  float z() const {
-    return flatbuffers::EndianScalar(z_);
-  }
-};
-FLATBUFFERS_STRUCT_END(Vec3, 12);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
  private:
@@ -51,9 +22,9 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
   float znear_;
   float zfar_;
   float aspect_ratio_;
-  Tempest::Definition::Vec3 position_;
-  Tempest::Definition::Vec3 forward_;
-  Tempest::Definition::Vec3 up_;
+  Common::Tempest::Vec3 position_;
+  Common::Tempest::Vec3 forward_;
+  Common::Tempest::Vec3 up_;
 
  public:
   Camera()
@@ -65,7 +36,7 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
         forward_(),
         up_() {
   }
-  Camera(float _yfov, float _znear, float _zfar, float _aspect_ratio, const Tempest::Definition::Vec3 &_position, const Tempest::Definition::Vec3 &_forward, const Tempest::Definition::Vec3 &_up)
+  Camera(float _yfov, float _znear, float _zfar, float _aspect_ratio, const Common::Tempest::Vec3 &_position, const Common::Tempest::Vec3 &_forward, const Common::Tempest::Vec3 &_up)
       : yfov_(flatbuffers::EndianScalar(_yfov)),
         znear_(flatbuffers::EndianScalar(_znear)),
         zfar_(flatbuffers::EndianScalar(_zfar)),
@@ -86,13 +57,13 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
   float aspect_ratio() const {
     return flatbuffers::EndianScalar(aspect_ratio_);
   }
-  const Tempest::Definition::Vec3 &position() const {
+  const Common::Tempest::Vec3 &position() const {
     return position_;
   }
-  const Tempest::Definition::Vec3 &forward() const {
+  const Common::Tempest::Vec3 &forward() const {
     return forward_;
   }
-  const Tempest::Definition::Vec3 &up() const {
+  const Common::Tempest::Vec3 &up() const {
     return up_;
   }
 };

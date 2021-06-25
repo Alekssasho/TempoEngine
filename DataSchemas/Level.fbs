@@ -1,19 +1,15 @@
-namespace Tempest.Definition;
+include "CommonTypes.fbs";
 
-struct Vec3 {
-    x: float;
-    y: float;
-    z: float;
-}
+namespace Tempest.Definition;
 
 struct Camera {
     yfov: float;
     znear: float;
     zfar: float;
     aspect_ratio: float;
-    position: Vec3;
-    forward: Vec3;
-    up: Vec3;
+    position: Common.Tempest.Vec3;
+    forward: Common.Tempest.Vec3;
+    up: Common.Tempest.Vec3;
 }
 
 table Level

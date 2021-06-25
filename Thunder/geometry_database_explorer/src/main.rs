@@ -418,14 +418,17 @@ fn main() {
                             ui.label(format! {"Vertex offset: {}", meshlet.vertex_offset()});
                             ui.horizontal(|ui| {
                                 if ui.button("Previous").clicked() {
-                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == 0 {
+                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == 0
+                                    {
                                         mappings.get(current_mesh_index).meshlets_count() - 1
                                     } else {
                                         current_mesh_meshlet_index - 1
                                     };
                                 }
                                 if ui.button("Next").clicked() {
-                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == (mappings.get(current_mesh_index).meshlets_count() - 1) {
+                                    current_mesh_meshlet_index = if current_mesh_meshlet_index
+                                        == (mappings.get(current_mesh_index).meshlets_count() - 1)
+                                    {
                                         0
                                     } else {
                                         current_mesh_meshlet_index + 1
@@ -488,17 +491,24 @@ fn main() {
                             ..(current_mesh_meshlet_offset + current_mesh_meshlet_count) as usize]
                         {
                             rpass.draw_indexed(
-                                meshlet.triangle_offset()..meshlet.triangle_offset() + meshlet.triangle_count() * 3,
+                                meshlet.triangle_offset()
+                                    ..meshlet.triangle_offset() + meshlet.triangle_count() * 3,
                                 meshlet.vertex_offset() as i32,
                                 0..1,
                             )
                         }
                     } else {
                         let mappings = database.mappings().unwrap();
-                        let current_meshlet = meshlet_buffer[(current_mesh_meshlet_index + mappings.get(current_mesh_index).meshlets_offset()) as usize];
-                        rpass.draw_indexed(current_meshlet.triangle_offset()..current_meshlet.triangle_offset() + current_meshlet.triangle_count() * 3,
-                        current_meshlet.vertex_offset() as i32,
-                        0..1,)
+                        let current_meshlet = meshlet_buffer[(current_mesh_meshlet_index
+                            + mappings.get(current_mesh_index).meshlets_offset())
+                            as usize];
+                        rpass.draw_indexed(
+                            current_meshlet.triangle_offset()
+                                ..current_meshlet.triangle_offset()
+                                    + current_meshlet.triangle_count() * 3,
+                            current_meshlet.vertex_offset() as i32,
+                            0..1,
+                        )
                     }
                 }
 

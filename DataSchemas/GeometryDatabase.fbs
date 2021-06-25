@@ -1,10 +1,24 @@
+include "CommonTypes.fbs";
+
 namespace Tempest.Definition;
 
-table MeshMapping
+struct PrimitiveMeshData
 {
-    index : uint(key);
-    meshlets_offset : uint;
-    meshlets_count : uint;
+    meshlets_offset: uint;
+    meshlets_count: uint;
+    material_index: uint;
+}
+
+struct MeshData
+{
+    primitive_mesh_offset: uint;
+    primitive_mesh_count: uint;
+}
+
+struct MeshMapping
+{
+    index: uint(key);
+    mesh_data: MeshData;
 }
 
 struct Meshlet
@@ -15,12 +29,22 @@ struct Meshlet
     triangle_count: uint32;
 }
 
+// TODO: Materials could probably be in another database altogether
+struct Material
+{
+    base_color: Common.Tempest.Color;
+}
+
 table GeometryDatabase
 {
-    vertex_buffer : [ubyte];
+    vertex_buffer: [ubyte];
     meshlet_indices_buffer: [uint8];
+
     meshlet_buffer: [Meshlet];
-    mappings : [MeshMapping];
+    primitive_meshes: [PrimitiveMeshData];
+    materials: [Material];
+
+    mappings: [MeshMapping];
 }
 
 file_identifier "TGDB";

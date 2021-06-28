@@ -18,6 +18,7 @@ struct GeometryConstants
 {
 	float4x4 WorldMatrix;
 	uint meshletOffset;
+	uint materialIndex;
 };
 
 ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space1);
@@ -28,6 +29,11 @@ struct Meshlet
 	uint vertex_count;
 	uint triangle_offset;
 	uint triangle_count;
+};
+
+struct Material
+{
+	float4 BaseColor;
 };
 
 [NumThreads(128, 1, 1)]
@@ -68,13 +74,15 @@ void MeshShaderMain(
 
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
+	StructuredBuffer<Material> materials = ResourceDescriptorHeap[4];
+
 	float3 normal = input.NormalWorld;
 
 	float diffuseFactor = saturate(dot(normal, -g_Scene.LightDirection.xyz));
 
 	float ambientFactor = 0.15f;
 
-	float4 color = 1.0f;
+	float4 color = materials[g_Geometry.materialIndex].BaseColor;
 
 	return (color * diffuseFactor * g_Scene.LightColor)
 			+ (color * ambientFactor);

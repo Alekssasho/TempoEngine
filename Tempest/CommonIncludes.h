@@ -9,6 +9,7 @@
 #include <EASTL/unordered_map.h>
 #include <EASTL/unique_ptr.h>
 #include <EASTL/array.h>
+#include <EASTL/span.h>
 
 #include <Logging.h>
 #include <cassert>

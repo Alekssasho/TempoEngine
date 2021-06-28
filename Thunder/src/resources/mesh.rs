@@ -57,7 +57,8 @@ impl Resource for MeshResource {
         // TODO: Every primitive mesh, could be a seperate task instead of doing it inline
         for prim in 0..primitive_count {
             let mut vertices = Vec::new();
-            let mut indices = if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim) {
+            let mut indices = if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim)
+            {
                 indices
             } else {
                 (0..position_counts[prim] as u32).collect()

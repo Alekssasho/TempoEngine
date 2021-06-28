@@ -62,6 +62,7 @@ fn main() {
         data_definition_generated::get_root_as_geometry_database(database_file_contents.leak());
 
     let meshlet_buffer = database.meshlet_buffer().unwrap();
+    let primitive_meshes = database.primitive_meshes().unwrap();
     let mesh_dimensions = {
         if let Some(mappings) = database.mappings() {
             let vertex_buffer = database.vertex_buffer().unwrap();
@@ -73,23 +74,34 @@ fn main() {
             };
             let mut map = HashMap::new();
             for (index, mesh) in mappings.iter().enumerate() {
-                let biggest_dimensions = meshlet_buffer[mesh.meshlets_offset() as usize
-                    ..(mesh.meshlets_offset() + mesh.meshlets_count()) as usize]
+                let biggest_dimensions = primitive_meshes[mesh.mesh_data().primitive_mesh_offset()
+                    as usize
+                    ..(mesh.mesh_data().primitive_mesh_offset()
+                        + mesh.mesh_data().primitive_mesh_count()) as usize]
                     .iter()
-                    .map(|meshlet| {
-                        let first_vertex = meshlet.vertex_offset();
-                        let mesh_slice = &vertex_buffer_vec3[(first_vertex as usize)
-                            ..((first_vertex + meshlet.vertex_count()) as usize)];
-                        let min_sizes = mesh_slice
+                    .map(|primitive_mesh| {
+                        meshlet_buffer[primitive_mesh.meshlets_offset() as usize
+                            ..(primitive_mesh.meshlets_offset() + primitive_mesh.meshlets_count())
+                                as usize]
                             .iter()
-                            .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
-                        let max_sizes = mesh_slice
-                            .iter()
-                            .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
-                        (min_sizes, max_sizes)
+                            .map(|meshlet| {
+                                let first_vertex = meshlet.vertex_offset();
+                                let mesh_slice = &vertex_buffer_vec3[(first_vertex as usize)
+                                    ..((first_vertex + meshlet.vertex_count()) as usize)];
+                                let min_sizes = mesh_slice
+                                    .iter()
+                                    .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
+                                let max_sizes = mesh_slice
+                                    .iter()
+                                    .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
+                                (min_sizes, max_sizes)
+                            })
+                            .reduce(|a, b| (a.0.min(b.0), a.1.max(b.1)))
+                            .unwrap()
                     })
                     .reduce(|a, b| (a.0.min(b.0), a.1.max(b.1)))
                     .unwrap();
+
                 let biggest_dimension = (biggest_dimensions.1 - biggest_dimensions.0).max_element();
                 map.insert(index, biggest_dimension);
             }
@@ -272,7 +284,9 @@ fn main() {
     let mut last_pointer_pos = glam::vec2(0.0, 0.0);
 
     let mut whole_mesh = true;
+    let mut all_primitive_meshes = true;
     let mut current_mesh_meshlet_index: u32 = 0;
+    let mut current_primitive_mesh_index: u32 = 0;
 
     event_loop.run(move |event, _, control_flow| {
         let _ = (&depth_texture, &depth_texture_view);
@@ -352,6 +366,8 @@ fn main() {
                 platform.begin_frame();
                 let mut current_mesh_meshlet_count = 0;
                 let mut current_mesh_meshlet_offset = 0;
+                let mut current_primitive_mesh_count = 0;
+                let mut current_primitive_mesh_offset = 0;
                 egui::Window::new("Geometry Explorer").show(&platform.context(), |ui| {
                     ui.label(format!("Filename: {}", opt.input_database.display()));
                     if let Some(mappings) = database.mappings() {
@@ -377,13 +393,13 @@ fn main() {
 
                         ui.label(format!("Current mesh: {}", current_mesh_index));
                         let mesh = mappings.iter().nth(current_mesh_index).unwrap();
-                        ui.label(format! {"Mehslet count: {}", mesh.meshlets_count()});
-                        ui.label(format! {"Mehslet offset: {}", mesh.meshlets_offset()});
+                        ui.label(format! {"Primitive meshes count: {}", mesh.mesh_data().primitive_mesh_count()});
+                        ui.label(format! {"Primitive meshes offset: {}", mesh.mesh_data().primitive_mesh_offset()});
                         ui.label(format! {"Mesh index: {}", mesh.index()});
-                        ui.checkbox(&mut whole_mesh, "Whole mesh");
+                        ui.checkbox(&mut all_primitive_meshes, "All primitive meshes");
 
-                        current_mesh_meshlet_count = mesh.meshlets_count();
-                        current_mesh_meshlet_offset = mesh.meshlets_offset();
+                        current_primitive_mesh_count = mesh.mesh_data().primitive_mesh_count();
+                        current_primitive_mesh_offset = mesh.mesh_data().primitive_mesh_offset();
 
                         ui.horizontal(|ui| {
                             if ui.button("Previous").clicked() {
@@ -395,6 +411,7 @@ fn main() {
                                 camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
                                     * MESH_RADIUS_MULTIPLIER;
                                 current_mesh_meshlet_index = 0;
+                                current_primitive_mesh_index = 0;
                             }
                             if ui.button("Next").clicked() {
                                 current_mesh_index = if current_mesh_index == (mappings.len() - 1) {
@@ -405,36 +422,68 @@ fn main() {
                                 camera.radius = mesh_dimensions.get(&current_mesh_index).unwrap()
                                     * MESH_RADIUS_MULTIPLIER;
                                 current_mesh_meshlet_index = 0;
+                                current_primitive_mesh_index = 0;
                             }
                         });
 
-                        if !whole_mesh {
+                        if !all_primitive_meshes {
+                            let primitive_mesh = &primitive_meshes[(current_primitive_mesh_index + mesh.mesh_data().primitive_mesh_offset()) as usize];
+                            current_mesh_meshlet_count = primitive_mesh.meshlets_count();
+                            current_mesh_meshlet_offset = primitive_mesh.meshlets_offset();
+
                             ui.separator();
-                            let meshlet = &meshlet_buffer[current_mesh_meshlet_index as usize];
-                            ui.label(format! {"Current meshlet: {}", current_mesh_meshlet_index});
-                            ui.label(format! {"Triangle count: {}", meshlet.triangle_count()});
-                            ui.label(format! {"Triangle offset: {}", meshlet.triangle_offset()});
-                            ui.label(format! {"Vertex count: {}", meshlet.vertex_count()});
-                            ui.label(format! {"Vertex offset: {}", meshlet.vertex_offset()});
+                            ui.label(format! {"Current primitive mesh: {}", &current_primitive_mesh_index});
+                            ui.label(format! {"Mehslet count: {}", primitive_mesh.meshlets_count()});
+                            ui.label(format! {"Mehslet offset: {}", primitive_mesh.meshlets_offset()});
+
+                            ui.checkbox(&mut whole_mesh, "Whole mesh");
                             ui.horizontal(|ui| {
                                 if ui.button("Previous").clicked() {
-                                    current_mesh_meshlet_index = if current_mesh_meshlet_index == 0
-                                    {
-                                        mappings.get(current_mesh_index).meshlets_count() - 1
+                                    current_primitive_mesh_index = if current_primitive_mesh_index == 0 {
+                                        current_primitive_mesh_count - 1
                                     } else {
-                                        current_mesh_meshlet_index - 1
+                                        current_primitive_mesh_index - 1
                                     };
+                                    current_mesh_meshlet_index = 0;
                                 }
                                 if ui.button("Next").clicked() {
-                                    current_mesh_meshlet_index = if current_mesh_meshlet_index
-                                        == (mappings.get(current_mesh_index).meshlets_count() - 1)
-                                    {
+                                    current_primitive_mesh_index = if current_primitive_mesh_index == (current_primitive_mesh_count - 1) {
                                         0
                                     } else {
-                                        current_mesh_meshlet_index + 1
+                                        current_primitive_mesh_index + 1
                                     };
+                                    current_mesh_meshlet_index = 0;
                                 }
                             });
+
+                            if !whole_mesh {
+                                ui.separator();
+                                let meshlet = &meshlet_buffer[(current_mesh_meshlet_index + primitive_mesh.meshlets_offset()) as usize];
+                                ui.label(format! {"Current meshlet: {}", current_mesh_meshlet_index});
+                                ui.label(format! {"Triangle count: {}", meshlet.triangle_count()});
+                                ui.label(format! {"Triangle offset: {}", meshlet.triangle_offset()});
+                                ui.label(format! {"Vertex count: {}", meshlet.vertex_count()});
+                                ui.label(format! {"Vertex offset: {}", meshlet.vertex_offset()});
+                                ui.horizontal(|ui| {
+                                    if ui.button("Previous").clicked() {
+                                        current_mesh_meshlet_index = if current_mesh_meshlet_index == 0
+                                        {
+                                            primitive_mesh.meshlets_count() - 1
+                                        } else {
+                                            current_mesh_meshlet_index - 1
+                                        };
+                                    }
+                                    if ui.button("Next").clicked() {
+                                        current_mesh_meshlet_index = if current_mesh_meshlet_index
+                                            == (primitive_mesh.meshlets_count() - 1)
+                                        {
+                                            0
+                                        } else {
+                                            current_mesh_meshlet_index + 1
+                                        };
+                                    }
+                                });
+                            }
                         }
                     }
                 });
@@ -486,7 +535,20 @@ fn main() {
                         any_as_u8_slice(&push_constants)
                     });
 
-                    if whole_mesh {
+                    if all_primitive_meshes {
+                        for primitive_mesh in &primitive_meshes[current_primitive_mesh_offset as usize .. (current_primitive_mesh_offset + current_primitive_mesh_count) as usize] {
+                            for meshlet in &meshlet_buffer[primitive_mesh.meshlets_offset() as usize
+                                ..(primitive_mesh.meshlets_offset() + primitive_mesh.meshlets_count()) as usize]
+                            {
+                                rpass.draw_indexed(
+                                    meshlet.triangle_offset()
+                                        ..meshlet.triangle_offset() + meshlet.triangle_count() * 3,
+                                    meshlet.vertex_offset() as i32,
+                                    0..1,
+                                )
+                            }
+                        }
+                    } else if whole_mesh {
                         for meshlet in &meshlet_buffer[current_mesh_meshlet_offset as usize
                             ..(current_mesh_meshlet_offset + current_mesh_meshlet_count) as usize]
                         {
@@ -500,7 +562,7 @@ fn main() {
                     } else {
                         let mappings = database.mappings().unwrap();
                         let current_meshlet = meshlet_buffer[(current_mesh_meshlet_index
-                            + mappings.get(current_mesh_index).meshlets_offset())
+                            + primitive_meshes[(mappings.get(current_mesh_index).unwrap().mesh_data().primitive_mesh_offset() + current_primitive_mesh_index) as usize].meshlets_offset())
                             as usize];
                         rpass.draw_indexed(
                             current_meshlet.triangle_offset()

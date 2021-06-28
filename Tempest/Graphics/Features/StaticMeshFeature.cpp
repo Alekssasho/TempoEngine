@@ -49,21 +49,26 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 	{
 		glm::mat4x4 worldMatrix;
 		uint32_t meshletOffset;
+		uint32_t materialIndex;
 	};
 
 	for (const auto& mesh : data.StaticMeshes)
 	{
-		MeshManager::MeshData meshData = renderer.Meshes.GetMeshData(mesh.Mesh);
+		auto primitiveMeshes = renderer.Meshes.GetMeshData(mesh.Mesh);
+		for(const auto& meshData : primitiveMeshes)
+		{
+			GeometryConstants constants;
+			constants.worldMatrix = mesh.Transform;
+			constants.meshletOffset = meshData.meshlets_offset();
+			constants.materialIndex = meshData.material_index();
 
-		GeometryConstants constants;
-		constants.worldMatrix = mesh.Transform;
-		constants.meshletOffset = meshData.MeshletOffset;
+			RendererCommandDrawMeshlet command;
+			command.Pipeline = m_Handle;
+			command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
+			command.MeshletCount = meshData.meshlets_count();
+			commandList.AddCommand(command);
+		}
 
-		RendererCommandDrawMeshlet command;
-		command.Pipeline = m_Handle;
-		command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
-		command.MeshletCount = meshData.MeshletCount;
-		commandList.AddCommand(command);
 	}
 }
 }

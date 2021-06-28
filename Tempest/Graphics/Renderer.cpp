@@ -162,16 +162,17 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		m_MeshletIndicesData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription3);
 
 		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletIndicesData), uint32_t(bufferDescription3.Size), sizeof(uint8_t), Dx12::Dx12Device::ShaderResourceSlot::MeshletIndices);
+
+		Dx12::BufferDescription bufferDescription4;
+		bufferDescription4.Type = Dx12::BufferType::Vertex;
+		bufferDescription4.Size = geometryDatabase->materials()->size() * sizeof(Definition::Material);
+		bufferDescription4.Data = geometryDatabase->materials()->data();
+		m_MaterialData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription4);
+
+		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MaterialData), geometryDatabase->materials()->size(), sizeof(Definition::Material), Dx12::Dx12Device::ShaderResourceSlot::Materials);
 	}
 
-
-	for(const auto& meshMapping : *geometryDatabase->mappings())
-	{
-		// All static meshes should have the vertex buffer from the geometry database
-		Meshes.CreateStaticMesh(
-			MeshHandle(meshMapping->index()),
-			{ m_VertexData, meshMapping->meshlets_offset(), meshMapping->meshlets_count() });
-	}
+	Meshes.LoadFromDatabase(geometryDatabase);
 }
 }
 

@@ -48,6 +48,7 @@ private:
 	BufferHandle m_VertexData;
 	BufferHandle m_MeshletData;
 	BufferHandle m_MeshletIndicesData;
+	BufferHandle m_MaterialData;
 };
 }
 

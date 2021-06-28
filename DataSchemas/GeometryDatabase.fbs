@@ -47,6 +47,8 @@ table GeometryDatabase
     mappings: [MeshMapping];
 }
 
+// TODO: Split this into 2 files one wil only geometry definitions,
+// as those should be used directly and universally inside the engine, and the other which defines the tables to be read from the engine on load time
 file_identifier "TGDB";
 file_extension "tgb";
 root_type GeometryDatabase;

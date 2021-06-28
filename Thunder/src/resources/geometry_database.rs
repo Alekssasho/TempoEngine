@@ -49,20 +49,19 @@ impl Resource for GeometryDatabaseResource {
 
         // TODO: Proper materials
         materials.push(data_definition_generated::Material::new(
-            &data_definition_generated::Color::new(1.0, 0.0, 0.0, 1.0),
+            &data_definition_generated::Color::new(0.0, 1.0, 1.0, 1.0),
         ));
 
         let scene = self.scene.upgrade().unwrap();
         let mut current_vertex_buffer_offset = 0;
         let mut current_indices_buffer_offset = 0;
         let mut current_meshlet_buffer_offset = 0;
-        let mut current_primitive_mesh_buffer_offset = 0;
         for (mesh_index, mesh_data) in scene.meshes.iter().zip(self.meshes.iter()) {
             mappings.push(data_definition_generated::MeshMapping::new(
                 *mesh_index as u32,
                 &data_definition_generated::MeshData::new(
-                    current_primitive_mesh_buffer_offset,
                     primitive_meshes.len() as u32,
+                    mesh_data.primitive_meshes.len() as u32,
                 ),
             ));
 
@@ -96,7 +95,6 @@ impl Resource for GeometryDatabaseResource {
                 current_vertex_buffer_offset += primitive_mesh.vertices.len() as u32;
                 current_indices_buffer_offset += primitive_mesh.meshlet_indices.len() as u32;
             }
-            current_primitive_mesh_buffer_offset += mesh_data.primitive_meshes.len() as u32;
         }
 
         let vertex_buffer_bytes = unsafe { (vertex_buffer[..].align_to::<u8>()).1 };

@@ -43,6 +43,7 @@ public:
 		Meshlets,
 		MeshletIndices,
 		MeshletVertices,
+		Materials,
 		Count
 	};
 	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;

@@ -6,6 +6,7 @@ pub mod CommonTypes_generated;
 pub mod GeometryDatabase_generated;
 pub mod Level_generated;
 pub mod ShaderLibrary_generated;
+pub mod TextureDatabase_generated;
 
 // Common types have different namespace, due to bug in flatbuffer
 // where Rust code which share namespace is omitted
@@ -17,6 +18,7 @@ pub use CommonTypes_generated::common::tempest::*;
 pub use GeometryDatabase_generated::tempest::definition::*;
 pub use Level_generated::tempest::definition::*;
 pub use ShaderLibrary_generated::tempest::definition::*;
+pub use TextureDatabase_generated::tempest::definition::*;
 
 pub trait CreateInBuilder<'fbb> {
     type Item;

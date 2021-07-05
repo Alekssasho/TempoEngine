@@ -152,6 +152,9 @@ pub mod tempest {
                 if let Some(x) = args.audio_database_file {
                     builder.add_audio_database_file(x);
                 }
+                if let Some(x) = args.texture_database_file {
+                    builder.add_texture_database_file(x);
+                }
                 if let Some(x) = args.geometry_database_file {
                     builder.add_geometry_database_file(x);
                 }
@@ -171,8 +174,9 @@ pub mod tempest {
             pub const VT_ENTITIES: flatbuffers::VOffsetT = 6;
             pub const VT_PHYSICS_WORLD: flatbuffers::VOffsetT = 8;
             pub const VT_GEOMETRY_DATABASE_FILE: flatbuffers::VOffsetT = 10;
-            pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 12;
-            pub const VT_CAMERA: flatbuffers::VOffsetT = 14;
+            pub const VT_TEXTURE_DATABASE_FILE: flatbuffers::VOffsetT = 12;
+            pub const VT_AUDIO_DATABASE_FILE: flatbuffers::VOffsetT = 14;
+            pub const VT_CAMERA: flatbuffers::VOffsetT = 16;
 
             #[inline]
             pub fn name(&self) -> Option<&'a str> {
@@ -205,6 +209,13 @@ pub mod tempest {
                 )
             }
             #[inline]
+            pub fn texture_database_file(&self) -> Option<&'a str> {
+                self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(
+                    Level::VT_TEXTURE_DATABASE_FILE,
+                    None,
+                )
+            }
+            #[inline]
             pub fn audio_database_file(&self) -> Option<&'a str> {
                 self._tab
                     .get::<flatbuffers::ForwardsUOffset<&str>>(Level::VT_AUDIO_DATABASE_FILE, None)
@@ -220,6 +231,7 @@ pub mod tempest {
             pub entities: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
             pub physics_world: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a, u8>>>,
             pub geometry_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
+            pub texture_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
             pub audio_database_file: Option<flatbuffers::WIPOffset<&'a str>>,
             pub camera: Option<&'a Camera>,
         }
@@ -231,6 +243,7 @@ pub mod tempest {
                     entities: None,
                     physics_world: None,
                     geometry_database_file: None,
+                    texture_database_file: None,
                     audio_database_file: None,
                     camera: None,
                 }
@@ -272,6 +285,16 @@ pub mod tempest {
                 self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
                     Level::VT_GEOMETRY_DATABASE_FILE,
                     geometry_database_file,
+                );
+            }
+            #[inline]
+            pub fn add_texture_database_file(
+                &mut self,
+                texture_database_file: flatbuffers::WIPOffset<&'b str>,
+            ) {
+                self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(
+                    Level::VT_TEXTURE_DATABASE_FILE,
+                    texture_database_file,
                 );
             }
             #[inline]

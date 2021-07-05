@@ -4,3 +4,6 @@
 [submodule "ThirdParty/meshopt-rs"]
 	path = ThirdParty/meshopt-rs
 	url = https://github.com/Alekssasho/meshopt-rs
+[submodule "ThirdParty/Compressonator"]
+	path = ThirdParty/Compressonator
+	url = https://github.com/GPUOpen-Tools/Compressonator

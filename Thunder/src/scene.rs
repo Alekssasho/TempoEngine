@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{collections::HashSet, path::PathBuf};
 
 #[derive(Debug)]
 pub struct GltfData {
@@ -14,6 +14,8 @@ pub struct Scene {
     pub camera: data_definition_generated::Camera,
     pub root_nodes: Vec<usize>,
     pub meshes: Vec<usize>,
+    pub materials: Vec<usize>,
+    pub textures: Vec<usize>,
 }
 
 // Constructor
@@ -28,13 +30,16 @@ impl Scene {
             // TODO: Support only a single scene inside the document
             let root_nodes = gltf.gather_root_node_indices(0);
             let camera = Scene::extract_camera_from_scene(&gltf, &root_nodes);
-            let meshes = gltf.gather_mesh_indices(&root_nodes);
+            let (meshes, materials) = gltf.gather_mesh_and_materials_indices(&root_nodes);
+            let textures = gltf.gather_textures(&materials);
 
             Scene {
                 gltf,
                 camera,
                 root_nodes,
                 meshes,
+                materials,
+                textures,
             }
         } else {
             panic!("Cannot find scene file to load");
@@ -53,8 +58,12 @@ impl GltfData {
             .collect()
     }
 
-    pub fn gather_mesh_indices(&self, root_nodes: &[usize]) -> Vec<usize> {
-        let mut meshes = Vec::new();
+    pub fn gather_mesh_and_materials_indices(
+        &self,
+        root_nodes: &[usize],
+    ) -> (Vec<usize>, Vec<usize>) {
+        let mut meshes = HashSet::new();
+        let mut materials = HashSet::new();
         let mut node_stack = Vec::new();
 
         node_stack.extend_from_slice(root_nodes);
@@ -66,13 +75,33 @@ impl GltfData {
                 }
 
                 if let Some(mesh) = node.mesh() {
-                    meshes.push(mesh.index());
+                    meshes.insert(mesh.index());
+                    for primitive in mesh.primitives() {
+                        if let Some(material_index) = primitive.material().index() {
+                            materials.insert(material_index);
+                        }
+                    }
                 }
             }
             node_stack.remove(0);
         }
 
-        meshes
+        (meshes.drain().collect(), materials.drain().collect())
+    }
+
+    pub fn gather_textures(&self, materials: &[usize]) -> Vec<usize> {
+        let mut textures = HashSet::new();
+
+        for material_index in materials {
+            let material = &self.document.materials().nth(*material_index).unwrap();
+            if let Some(albedo_texture_info) =
+                material.pbr_metallic_roughness().base_color_texture()
+            {
+                textures.insert(albedo_texture_info.texture().index());
+            }
+        }
+
+        textures.drain().collect()
     }
 
     fn node_transform(&self, index: usize) -> math::Mat4x4 {

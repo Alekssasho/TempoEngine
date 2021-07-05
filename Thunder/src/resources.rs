@@ -10,6 +10,8 @@ mod geometry_database;
 pub mod level;
 mod mesh;
 mod physics_world;
+mod texture;
+mod texture_database;
 
 #[async_trait]
 pub trait Resource {

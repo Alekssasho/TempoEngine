@@ -1,0 +1,30 @@
+namespace Tempest.Definition;
+
+enum TextureFormat: byte {
+    RGBA8
+}
+
+struct TextureData {
+    width: uint;
+    height: uint;
+    format: TextureFormat;
+}
+
+struct TextureMapping
+{
+    index: uint(key);
+    texture_buffer_offset: uint;
+    texture_buffer_byte_count: uint;
+
+    texture_data: TextureData;
+}
+
+table TextureDatabase
+{
+    texture_data_buffer: [ubyte];
+    mappings: [TextureMapping];
+}
+
+file_identifier "TTDB";
+file_extension "ttb";
+root_type TextureDatabase;

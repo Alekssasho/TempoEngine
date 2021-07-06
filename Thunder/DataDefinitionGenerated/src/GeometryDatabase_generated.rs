@@ -315,7 +315,8 @@ pub mod tempest {
         #[repr(C, align(4))]
         #[derive(Clone, Copy, Debug, PartialEq)]
         pub struct Material {
-            base_color_: super::super::common::tempest::Color,
+            albedo_color_: super::super::common::tempest::Color,
+            albedo_color_texture_: u32,
         } // pub struct Material
         impl flatbuffers::SafeSliceAccess for Material {}
         impl<'a> flatbuffers::Follow<'a> for Material {
@@ -358,13 +359,20 @@ pub mod tempest {
         }
 
         impl Material {
-            pub fn new<'a>(_base_color: &'a super::super::common::tempest::Color) -> Self {
+            pub fn new<'a>(
+                _albedo_color: &'a super::super::common::tempest::Color,
+                _albedo_color_texture: u32,
+            ) -> Self {
                 Material {
-                    base_color_: *_base_color,
+                    albedo_color_: *_albedo_color,
+                    albedo_color_texture_: _albedo_color_texture.to_little_endian(),
                 }
             }
-            pub fn base_color<'a>(&'a self) -> &'a super::super::common::tempest::Color {
-                &self.base_color_
+            pub fn albedo_color<'a>(&'a self) -> &'a super::super::common::tempest::Color {
+                &self.albedo_color_
+            }
+            pub fn albedo_color_texture<'a>(&'a self) -> u32 {
+                self.albedo_color_texture_.from_little_endian()
             }
         }
 

@@ -37,8 +37,8 @@ impl Resource for TextureDatabaseResource {
         let scene = self.scene.upgrade().unwrap();
         // We can start preparing textures, as those are not dependant on other things (for now)
         let mut texture_futures = Vec::new();
-        for texture in &scene.textures {
-            let texture_resource = TextureResource::new(Arc::downgrade(&scene), *texture);
+        for texture in 0..scene.gltf.images.len() {
+            let texture_resource = TextureResource::new(Arc::downgrade(&scene), texture);
             let texture_compiler = compiler.clone(); // TODO: Make this global, and just write it once
             texture_futures.push(tokio::spawn(async move {
                 texture_resource.compile(texture_compiler).await
@@ -51,14 +51,14 @@ impl Resource for TextureDatabaseResource {
             .into_iter()
             .map(Result::unwrap)
             .collect::<Vec<CompiledTextureData>>();
-        assert!(gathered_textures.len() == scene.textures.len());
+        assert!(gathered_textures.len() == scene.gltf.images.len());
 
         let mut texture_data_buffer = Vec::<u8>::new();
         let mut mappings = Vec::new();
 
-        for (index, texture) in scene.textures.iter().zip(gathered_textures.into_iter()) {
+        for (index, texture) in gathered_textures.into_iter().enumerate() {
             mappings.push(TextureMapping::new(
-                *index as u32,
+                index as u32,
                 texture_data_buffer.len() as u32,
                 texture.data.len() as u32,
                 &texture.texture_info,

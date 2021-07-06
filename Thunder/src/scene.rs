@@ -4,7 +4,7 @@ use std::{collections::HashSet, path::PathBuf};
 pub struct GltfData {
     document: gltf::Document,
     buffers: Vec<gltf::buffer::Data>,
-    images: Vec<gltf::image::Data>,
+    pub images: Vec<gltf::image::Data>,
 }
 
 #[derive(Debug)]
@@ -15,7 +15,6 @@ pub struct Scene {
     pub root_nodes: Vec<usize>,
     pub meshes: Vec<usize>,
     pub materials: Vec<usize>,
-    pub textures: Vec<usize>,
 }
 
 // Constructor
@@ -31,7 +30,6 @@ impl Scene {
             let root_nodes = gltf.gather_root_node_indices(0);
             let camera = Scene::extract_camera_from_scene(&gltf, &root_nodes);
             let (meshes, materials) = gltf.gather_mesh_and_materials_indices(&root_nodes);
-            let textures = gltf.gather_textures(&materials);
 
             Scene {
                 gltf,
@@ -39,7 +37,6 @@ impl Scene {
                 root_nodes,
                 meshes,
                 materials,
-                textures,
             }
         } else {
             panic!("Cannot find scene file to load");
@@ -89,21 +86,6 @@ impl GltfData {
         (meshes.drain().collect(), materials.drain().collect())
     }
 
-    pub fn gather_textures(&self, materials: &[usize]) -> Vec<usize> {
-        let mut textures = HashSet::new();
-
-        for material_index in materials {
-            let material = &self.document.materials().nth(*material_index).unwrap();
-            if let Some(albedo_texture_info) =
-                material.pbr_metallic_roughness().base_color_texture()
-            {
-                textures.insert(albedo_texture_info.texture().index());
-            }
-        }
-
-        textures.drain().collect()
-    }
-
     fn node_transform(&self, index: usize) -> math::Mat4x4 {
         let mat = self
             .document
@@ -143,6 +125,10 @@ impl GltfData {
 
     pub fn light(&self, index: usize) -> Option<gltf::khr_lights_punctual::Light> {
         self.node(index).light()
+    }
+
+    pub fn material(&self, index: usize) -> gltf::Material {
+        self.document.materials().nth(index).unwrap()
     }
 }
 
@@ -198,6 +184,11 @@ impl GltfData {
                     .collect(),
             )
         })
+    }
+
+    pub fn mesh_material_index(&self, mesh_index: usize, prim_index: usize) -> Option<usize> {
+        let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
+        primitive.material().index()
     }
 }
 

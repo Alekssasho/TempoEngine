@@ -26,6 +26,7 @@ pub struct PrimitiveMeshData {
     pub vertices: Vec<VertexLayout>,
     pub meshlet_indices: Vec<u8>,
     pub whole_mesh_indices: Vec<u32>,
+    pub material_index: usize,
 }
 
 impl PrimitiveMeshData {
@@ -131,6 +132,10 @@ impl Resource for MeshResource {
                 vertices,
                 meshlet_indices,
                 whole_mesh_indices,
+                material_index: scene
+                    .gltf
+                    .mesh_material_index(self.mesh_index, prim)
+                    .unwrap(),
             });
         }
 

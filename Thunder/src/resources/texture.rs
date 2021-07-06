@@ -1,5 +1,6 @@
 use std::sync::Weak;
 
+use basis_universal::{Compressor, CompressorParams, TranscodeParameters, Transcoder};
 use data_definition_generated::{TextureData, TextureFormat};
 
 use crate::{compiler::AsyncCompiler, scene::Scene};
@@ -34,97 +35,65 @@ impl Resource for TextureResource {
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
         let scene = self.scene.upgrade().unwrap();
 
-        // // Extract Mesh data from GLTF
-        // let position_counts = scene
-        //     .gltf
-        //     .mesh_positions_count_per_primitive(self.mesh_index);
+        let image_data = &scene.gltf.images[self.texture_index];
+        let channel_count = match image_data.format {
+            gltf::image::Format::R8 | gltf::image::Format::R16 => 1,
+            gltf::image::Format::R8G8 | gltf::image::Format::R16G16 => 2,
+            gltf::image::Format::R8G8B8
+            | gltf::image::Format::B8G8R8
+            | gltf::image::Format::R16G16B16 => 3,
+            gltf::image::Format::R8G8B8A8
+            | gltf::image::Format::B8G8R8A8
+            | gltf::image::Format::R16G16B16A16 => 4,
+        };
 
-        // let primitive_count = scene.gltf.mesh_primitive_count(self.mesh_index);
-        // let mut primitive_meshes = Vec::with_capacity(primitive_count);
-        // // TODO: Every primitive mesh, could be a seperate task instead of doing it inline
-        // for prim in 0..primitive_count {
-        //     let mut vertices = Vec::new();
-        //     let mut indices = if let Some(indices) = scene.gltf.mesh_indices(self.mesh_index, prim)
-        //     {
-        //         indices
-        //     } else {
-        //         (0..position_counts[prim] as u32).collect()
-        //     };
+        let mut compressor_params = CompressorParams::new();
+        compressor_params.set_generate_mipmaps(false);
+        compressor_params.set_basis_format(basis_universal::BasisTextureFormat::UASTC4x4);
+        compressor_params.set_uastc_quality_level(basis_universal::UASTC_QUALITY_DEFAULT);
+        compressor_params.set_print_status_to_stdout(false);
 
-        //     let positions = scene.gltf.mesh_positions(self.mesh_index, prim).unwrap();
-        //     let normals = scene.gltf.mesh_normals(self.mesh_index, prim).unwrap();
+        let mut compressor_image = compressor_params.source_image_mut(0);
+        compressor_image.init(
+            image_data.pixels.as_slice(),
+            image_data.width,
+            image_data.height,
+            channel_count,
+        );
 
-        //     vertices.reserve(positions.len());
-        //     for (position, normal) in positions.into_iter().zip(normals.into_iter()) {
-        //         vertices.push(VertexLayout { position, normal });
-        //     }
+        let mut compressor = Compressor::default();
+        unsafe {
+            compressor.init(&compressor_params);
+            compressor.process().unwrap();
+        }
 
-        //     let (_, remap_table) =
-        //         meshopt::generate_vertex_remap(vertices.as_slice(), Some(indices.as_slice()));
-        //     indices = meshopt::remap_index_buffer(
-        //         Some(indices.as_slice()),
-        //         vertices.len(),
-        //         remap_table.as_slice(),
-        //     );
-        //     vertices = meshopt::remap_vertex_buffer(
-        //         vertices.as_slice(),
-        //         vertices.len(),
-        //         remap_table.as_slice(),
-        //     );
+        let basis_file = compressor.basis_file();
 
-        //     meshopt::optimize_vertex_cache_in_place(indices.as_slice(), vertices.len());
-        //     meshopt::optimize_vertex_fetch_in_place(
-        //         indices.as_mut_slice(),
-        //         vertices.as_mut_slice(),
-        //     );
+        let mut transcoder = Transcoder::new();
+        transcoder.prepare_transcoding(basis_file).unwrap();
+        let result = transcoder
+            .transcode_image_level(
+                basis_file,
+                basis_universal::TranscoderTextureFormat::RGBA32,
+                TranscodeParameters {
+                    image_index: 0,
+                    level_index: 0,
+                    ..Default::default()
+                },
+            )
+            .unwrap();
 
-        //     let vertex_adapter = meshopt::VertexDataAdapter::new(
-        //         unsafe { vertices.as_slice().align_to::<u8>().1 },
-        //         std::mem::size_of::<VertexLayout>(),
-        //         0,
-        //     )
-        //     .unwrap();
+        let image_description = transcoder
+            .image_level_description(basis_file, 0, 0)
+            .unwrap();
 
-        //     // TODO: find better values for max vertices/triangles
-        //     let (meshlets, meshlet_vertices, meshlet_indices) =
-        //         meshopt::build_meshlets(indices.as_slice(), &vertex_adapter, 128, 128, 0.0);
-
-        //     // Currently every meshlet have position and count inside the meshlet_vertices/meshlet_indices arrays. meshlet_vertices has indices inside the vertices array
-        //     // For now lets remove the indirection
-        //     vertices = {
-        //         let mut ordered_vertices = Vec::<VertexLayout>::new();
-        //         ordered_vertices.reserve(meshlet_vertices.len());
-        //         for vertex_index in meshlet_vertices {
-        //             ordered_vertices.push(vertices[vertex_index as usize]);
-        //         }
-        //         ordered_vertices
-        //     };
-
-        //     // Prepare whole mesh indices
-        //     let whole_mesh_indices = {
-        //         let mut indices = Vec::new();
-        //         indices.reserve(meshlet_indices.len());
-        //         for meshlet in &meshlets {
-        //             for index in &meshlet_indices[(meshlet.triangle_offset as usize)
-        //                 ..(meshlet.triangle_offset + (meshlet.triangle_count * 3)) as usize]
-        //             {
-        //                 indices.push(*index as u32 + meshlet.vertex_offset);
-        //             }
-        //         }
-        //         indices
-        //     };
-        //     primitive_meshes.push(PrimitiveMeshData {
-        //         meshlets,
-        //         vertices,
-        //         meshlet_indices,
-        //         whole_mesh_indices,
-        //     });
-        // }
-
-        // MeshData { primitive_meshes }
         CompiledTextureData {
-            data: Vec::new(),
-            texture_info: TextureData::new(1, 1, TextureFormat::RGBA8),
+            data: result,
+            texture_info: TextureData::new(
+                image_description.original_width,
+                image_description.original_height,
+                TextureFormat::RGBA8,
+            ),
         }
     }
 }

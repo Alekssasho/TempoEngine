@@ -32,7 +32,11 @@ struct Meshlet
 // TODO: Materials could probably be in another database altogether
 struct Material
 {
-    base_color: Common.Tempest.Color;
+    // TODO: We can try to have only a texture inputs, but we need to create procedural textures with specific color
+    // So for now lets use both color and texture, if the texture is not used, we will use the color. -1 will be invalid value
+    // for texture index in order to determine if present
+    albedo_color: Common.Tempest.Color;
+    albedo_color_texture: uint32;
 }
 
 table GeometryDatabase

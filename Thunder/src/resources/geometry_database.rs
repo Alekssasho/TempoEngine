@@ -1,4 +1,7 @@
-use std::sync::{Arc, Weak};
+use std::{
+    sync::{Arc, Weak},
+    u32,
+};
 
 use crate::scene::Scene;
 use data_definition_generated::flatbuffer_derive::FlatbufferSerializeRoot;
@@ -47,12 +50,32 @@ impl Resource for GeometryDatabaseResource {
         let mut materials = Vec::new();
         let mut mappings = Vec::new();
 
-        // TODO: Proper materials
-        materials.push(data_definition_generated::Material::new(
-            &data_definition_generated::Color::new(0.0, 1.0, 1.0, 1.0),
-        ));
-
         let scene = self.scene.upgrade().unwrap();
+        // TODO: This could be in seperate database or can be done async
+        materials.reserve(scene.materials.len());
+        for material_index in &scene.materials {
+            let gltf_material = scene.gltf.material(*material_index);
+            // For now we only support textures
+            let texture_index = if let Some(texture) =
+                gltf_material.pbr_metallic_roughness().base_color_texture()
+            {
+                texture.texture().source().index() as u32
+            } else {
+                u32::MAX
+            };
+            let texture_color = gltf_material.pbr_metallic_roughness().base_color_factor();
+
+            materials.push(data_definition_generated::Material::new(
+                &data_definition_generated::Color::new(
+                    texture_color[0],
+                    texture_color[1],
+                    texture_color[2],
+                    texture_color[3],
+                ),
+                texture_index,
+            ));
+        }
+
         let mut current_vertex_buffer_offset = 0;
         let mut current_indices_buffer_offset = 0;
         let mut current_meshlet_buffer_offset = 0;
@@ -65,12 +88,12 @@ impl Resource for GeometryDatabaseResource {
                 ),
             ));
 
-            primitive_meshes.reserve(primitive_meshes.len() + mesh_data.primitive_meshes.len());
+            primitive_meshes.reserve(mesh_data.primitive_meshes.len());
             for primitive_mesh in &mesh_data.primitive_meshes {
                 let meshlets_count = primitive_mesh.meshlets.len() as u32;
 
                 // Fill up buffers
-                meshlets.reserve(meshlets.len() + meshlets_count as usize);
+                meshlets.reserve(meshlets_count as usize);
                 for meshlet in &primitive_mesh.meshlets {
                     meshlets.push(data_definition_generated::Meshlet::new(
                         current_vertex_buffer_offset + meshlet.vertex_offset,
@@ -87,7 +110,7 @@ impl Resource for GeometryDatabaseResource {
                 primitive_meshes.push(data_definition_generated::PrimitiveMeshData::new(
                     current_meshlet_buffer_offset,
                     meshlets_count,
-                    0,
+                    primitive_mesh.material_index as u32,
                 ));
 
                 // Update the current offsets

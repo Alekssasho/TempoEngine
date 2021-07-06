@@ -142,20 +142,26 @@ FLATBUFFERS_STRUCT_END(Meshlet, 16);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Material FLATBUFFERS_FINAL_CLASS {
  private:
-  Common::Tempest::Color base_color_;
+  Common::Tempest::Color albedo_color_;
+  uint32_t albedo_color_texture_;
 
  public:
   Material()
-      : base_color_() {
+      : albedo_color_(),
+        albedo_color_texture_(0) {
   }
-  Material(const Common::Tempest::Color &_base_color)
-      : base_color_(_base_color) {
+  Material(const Common::Tempest::Color &_albedo_color, uint32_t _albedo_color_texture)
+      : albedo_color_(_albedo_color),
+        albedo_color_texture_(flatbuffers::EndianScalar(_albedo_color_texture)) {
   }
-  const Common::Tempest::Color &base_color() const {
-    return base_color_;
+  const Common::Tempest::Color &albedo_color() const {
+    return albedo_color_;
+  }
+  uint32_t albedo_color_texture() const {
+    return flatbuffers::EndianScalar(albedo_color_texture_);
   }
 };
-FLATBUFFERS_STRUCT_END(Material, 16);
+FLATBUFFERS_STRUCT_END(Material, 20);
 
 struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef GeometryDatabaseBuilder Builder;

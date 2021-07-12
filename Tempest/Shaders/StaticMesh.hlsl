@@ -34,6 +34,7 @@ struct Meshlet
 struct Material
 {
 	float4 BaseColor;
+	uint TextureIndex;
 };
 
 [NumThreads(128, 1, 1)]
@@ -44,9 +45,9 @@ void MeshShaderMain(
 	out indices uint3 tris[128],
 	out vertices VertexOutput verts[128])
 {
-	StructuredBuffer<Meshlet> meshlets = ResourceDescriptorHeap[1];
-	Buffer<uint> meshletsIndices = ResourceDescriptorHeap[2];
-	StructuredBuffer<VertexLayout> meshletsVertices = ResourceDescriptorHeap[3];
+	StructuredBuffer<Meshlet> meshlets = ResourceDescriptorHeap[0];
+	Buffer<uint> meshletsIndices = ResourceDescriptorHeap[1];
+	StructuredBuffer<VertexLayout> meshletsVertices = ResourceDescriptorHeap[2];
 
 	Meshlet meshlet = meshlets[gid + g_Geometry.meshletOffset];
 	SetMeshOutputCounts(meshlet.vertex_count, meshlet.triangle_count);
@@ -74,7 +75,7 @@ void MeshShaderMain(
 
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
-	StructuredBuffer<Material> materials = ResourceDescriptorHeap[4];
+	StructuredBuffer<Material> materials = ResourceDescriptorHeap[3];
 
 	float3 normal = input.NormalWorld;
 

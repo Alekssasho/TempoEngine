@@ -18,4 +18,5 @@ struct RendererCommandList;
 
 using MeshHandle = uint32_t;
 using BufferHandle = uint32_t;
+using TextureHandle = uint32_t;
 }

@@ -144,6 +144,9 @@
     <ClInclude Include="Graphics\Features\LightsFeature.h">
       <Filter>Graphics\Features</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Managers\TextureManager.h">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -226,6 +229,9 @@
     <ClCompile Include="CommonIncludesPch.cpp" />
     <ClCompile Include="Graphics\Features\LightsFeature.cpp">
       <Filter>Graphics\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Managers\TextureManager.cpp">
+      <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

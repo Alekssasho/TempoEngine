@@ -20,13 +20,13 @@ Dx12Device::Dx12Device()
 {
 	UINT dxgiFactoryFlags = 0;
 
-	// TODO: Add GPU Side validation as well
 #if defined(_DEBUG)
 	{
-		ComPtr<ID3D12Debug> debugController;
+		ComPtr<ID3D12Debug1> debugController;
 		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
 		{
 			debugController->EnableDebugLayer();
+			debugController->SetEnableGPUBasedValidation(true);
 
 			// Enable additional debug layers.
 			dxgiFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
@@ -219,18 +219,18 @@ void Dx12Device::Initialize(WindowHandle handle)
 		m_MainCommandLists.push_back({ allocator, list });
 	}
 
-	{
-		// TODO: this could be copy only, but we cannot make any resource barriers on copy lists.
-		CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&copyList.CommandAllocator)));
-		copyList.CommandAllocator->SetName(L"Copy Command Allocator");
+	//{
+	//	// TODO: this could be copy only, but we cannot make any resource barriers on copy lists.
+	//	CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&copyList.CommandAllocator)));
+	//	copyList.CommandAllocator->SetName(L"Copy Command Allocator");
 
-		CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, copyList.CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&copyList.DxCommandList)));
-		copyList.DxCommandList->SetName(L"Copy Command List");
+	//	CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, copyList.CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&copyList.DxCommandList)));
+	//	copyList.DxCommandList->SetName(L"Copy Command List");
 
-		copyList.DxCommandList->Close();
-	}
+	//	copyList.DxCommandList->Close();
+	//}
 
-	// Initializa UI
+	// Initialize UI
 	{
 		auto& io = ImGui::GetIO();
 		io.DisplaySize.x = float(m_SwapChainSize.x);
@@ -246,18 +246,18 @@ void Dx12Device::Initialize(WindowHandle handle)
 		// TODO: Make this real code and remove imgui_impl_dx12
 
 		D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-		srvHeapDesc.NumDescriptors = uint32_t(ShaderResourceSlot::Count);
+		srvHeapDesc.NumDescriptors = 1;
 		srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_SRVHeap)));
+		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_UISRVHeap)));
 
 		ImGui_ImplDX12_Init(
 			m_Device.Get(),
 			2,
 			DXGI_FORMAT_R8G8B8A8_UNORM,
-			m_SRVHeap.Get(),
-			m_SRVHeap->GetCPUDescriptorHandleForHeapStart(),
-			m_SRVHeap->GetGPUDescriptorHandleForHeapStart()
+			m_UISRVHeap.Get(),
+			m_UISRVHeap->GetCPUDescriptorHandleForHeapStart(),
+			m_UISRVHeap->GetGPUDescriptorHandleForHeapStart()
 		);
 
 		ImGui_ImplDX12_CreateDeviceObjects();
@@ -271,7 +271,8 @@ Dx12FrameData Dx12Device::StartNewFrame()
 	list.CommandAllocator->Reset();
 	list.DxCommandList->Reset(list.CommandAllocator.Get(), nullptr);
 
-	list.DxCommandList->SetDescriptorHeaps(1, m_SRVHeap.GetAddressOf());
+	assert(m_DescriptorHeap);
+	list.DxCommandList->SetDescriptorHeaps(1, m_DescriptorHeap.GetAddressOf());
 
 	D3D12_RESOURCE_BARRIER barrier;
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -303,7 +304,7 @@ void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 	{
 		OPTICK_EVENT("ImGUI GPU Draw");
 		frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, false, nullptr);
-		frame.CommandList->SetDescriptorHeaps(1, m_SRVHeap.GetAddressOf());
+		frame.CommandList->SetDescriptorHeaps(1, m_UISRVHeap.GetAddressOf());
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), frame.CommandList);
 	}
 
@@ -340,36 +341,45 @@ void Dx12Device::Present()
 	}
 }
 
-void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState)
+//void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState)
+//{
+//	copyList.CommandAllocator->Reset();
+//	copyList.DxCommandList->Reset(copyList.CommandAllocator.Get(), nullptr);
+//
+//	copyList.DxCommandList->CopyResource(dst, src);
+//
+//	D3D12_RESOURCE_BARRIER barrier;
+//	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+//	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+//	barrier.Transition.pResource = dst;
+//	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+//	barrier.Transition.StateAfter = requiredDstState;
+//	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+//	
+//	copyList.DxCommandList->ResourceBarrier(1, &barrier);
+//	
+//	copyList.DxCommandList->Close();
+//	ID3D12CommandList* cmdList = copyList.DxCommandList.Get();
+//	m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
+//	
+//	const UINT64 fence = m_FenceValue;
+//	m_GraphicsQueue->Signal(m_Fence.Get(), fence);
+//	m_FenceValue++;
+//
+//	if(m_Fence->GetCompletedValue() < m_FenceValue - 1)
+//	{
+//		m_Fence->SetEventOnCompletion(m_FenceValue - 1, m_FenceEvent);
+//		WaitForSingleObject(m_FenceEvent, INFINITE);
+//	}
+//}
+
+void Dx12Device::AllocateMainDescriptorHeap(const int numTextures)
 {
-	copyList.CommandAllocator->Reset();
-	copyList.DxCommandList->Reset(copyList.CommandAllocator.Get(), nullptr);
-
-	copyList.DxCommandList->CopyResource(dst, src);
-
-	D3D12_RESOURCE_BARRIER barrier;
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = dst;
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-	barrier.Transition.StateAfter = requiredDstState;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	
-	copyList.DxCommandList->ResourceBarrier(1, &barrier);
-	
-	copyList.DxCommandList->Close();
-	ID3D12CommandList* cmdList = copyList.DxCommandList.Get();
-	m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
-	
-	const UINT64 fence = m_FenceValue;
-	m_GraphicsQueue->Signal(m_Fence.Get(), fence);
-	m_FenceValue++;
-
-	if(m_Fence->GetCompletedValue() < m_FenceValue - 1)
-	{
-		m_Fence->SetEventOnCompletion(m_FenceValue - 1, m_FenceEvent);
-		WaitForSingleObject(m_FenceEvent, INFINITE);
-	}
+	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
+	srvHeapDesc.NumDescriptors = static_cast<int>(ShaderResourceSlot::NonTextureCount) + numTextures;
+	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_DescriptorHeap)));
 }
 
 void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const
@@ -390,7 +400,7 @@ void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numEleme
 	}
 
 	// Go to appropriate descriptor
-	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_SRVHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 	handle.ptr += static_cast<uint32_t>(slot) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_Device->CreateShaderResourceView(

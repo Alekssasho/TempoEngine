@@ -63,6 +63,11 @@ public:
 	{
 		return m_Physics;
 	}
+
+	Job::JobSystem& GetJobSystem()
+	{
+		return m_JobSystem;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;

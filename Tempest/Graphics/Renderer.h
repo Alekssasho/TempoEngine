@@ -25,7 +25,8 @@ public:
 	~Renderer();
 	bool CreateWindowSurface(WindowHandle handle);
 
-	void LoadGeometryDatabase(const char* geometryDatabaseName);
+	void LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, const char* textureDatabaseName);
+	void LoadGeometryDatabase(const char* geometryDatabaseName); // Don't use this directly, go through LoadGeometryAndTextureDatabase
 	void InitializeAfterLevelLoad(const World& world);
 	FrameData GatherWorldData(const World& world);
 	void RenderFrame(const FrameData& data);

@@ -108,16 +108,26 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	const Definition::Level* level = gEngine->GetResourceLoader().LoadResource<Definition::Level>(levelToLoad);
 	const char* levelName = level->name()->c_str();
 	const char* geometryDatabase = level->geometry_database_file()->c_str();
+	const char* textureDatabase = level->texture_database_file()->c_str();
 	const char* audioDatabase = level->audio_database_file()->c_str();
 	FORMAT_LOG(Info, EngineCore, "Loading Level \"%s\".", levelName);
 
-	// Async Load the geometry database
-	Job::Counter geometryDatabaseCounter;
+	// Async Load the rendering databases
+	Job::Counter renderingDatabasesCounter;
+	struct RenderingDatabases
 	{
-		Job::JobDecl loadGeometryDatabase{ [](uint32_t, void* geometryDatabaseName) {
-			gEngine->GetRenderer().LoadGeometryDatabase((const char*)geometryDatabaseName);
-		}, (void*)geometryDatabase };
-		gEngine->m_JobSystem.RunJobs("Load Geometry Database", &loadGeometryDatabase, 1, &geometryDatabaseCounter);
+		const char* geometryDatabase;
+		const char* textureDatabase;
+	} databases {
+		geometryDatabase,
+		textureDatabase
+	};
+	{
+		Job::JobDecl loadGeometryDatabase{ [](uint32_t, void* databasesPtr) {
+			RenderingDatabases* databases = (RenderingDatabases*)databasesPtr;
+			gEngine->GetRenderer().LoadGeometryAndTextureDatabase(databases->geometryDatabase, databases->textureDatabase);
+		}, (void*)&databases };
+		gEngine->m_JobSystem.RunJobs("Load Geometry Database", &loadGeometryDatabase, 1, &renderingDatabasesCounter);
 	}
 
 	// Async Load the audio database
@@ -166,8 +176,8 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	// Patch the world with the loaded physics
 	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld());
 
-	// Wait for the loading of the geometry before initializing it
-	gEngine->m_JobSystem.WaitForCounter(&geometryDatabaseCounter, 0);
+	// Wait for the loading of the rendering databases before initializing it
+	gEngine->m_JobSystem.WaitForCounter(&renderingDatabasesCounter, 0);
 	gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 
 	// Wait for audio as well

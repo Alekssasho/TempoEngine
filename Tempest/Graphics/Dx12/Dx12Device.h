@@ -30,32 +30,30 @@ public:
 		return m_SwapChainSize;
 	}
 
-	ID3D12Device2* GetDevice()
+	ID3D12Device3* GetDevice()
 	{
 		return m_Device.Get();
 	}
 
-	void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
+	//void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
+	void AllocateMainDescriptorHeap(const int numTextures);
+
 	// TODO: This should be refactored
 	enum class ShaderResourceSlot
 	{
-		UI,
+		//UI, This is in another heap
 		Meshlets,
 		MeshletIndices,
 		MeshletVertices,
 		Materials,
-		Count
+		TextureStart,
+		NonTextureCount = TextureStart
 	};
 	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
-	D3D12_GPU_DESCRIPTOR_HANDLE GetSRVHeapStart()
-	{
-		D3D12_GPU_DESCRIPTOR_HANDLE handle = m_SRVHeap->GetGPUDescriptorHandleForHeapStart();
-		//handle.ptr += m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		return handle;
-	}
-private:
+	// TODO: Remove this abstraction and just use device code inside the backend
+public:
 	ComPtr<IDXGIFactory4> m_Factory;
-	ComPtr<ID3D12Device2> m_Device;
+	ComPtr<ID3D12Device3> m_Device;
 	ComPtr<ID3D12CommandQueue> m_GraphicsQueue;
 	ComPtr<IDXGISwapChain3> m_SwapChain;
 	ComPtr<ID3D12DescriptorHeap> m_RTVHeap;
@@ -81,10 +79,13 @@ private:
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
 
-	CommandList copyList;
+	ComPtr<ID3D12DescriptorHeap> m_DescriptorHeap;
 
 	// UI Stuff
-	ComPtr<ID3D12DescriptorHeap> m_SRVHeap;
+	ComPtr<ID3D12DescriptorHeap> m_UISRVHeap;
+
+public: // TODO: Wrong, rething how are we going to do device management
+	CommandList copyList;
 };
 }
 }

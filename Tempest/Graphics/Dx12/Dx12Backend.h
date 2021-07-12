@@ -3,6 +3,7 @@
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/Dx12/Managers/PipelineManager.h>
 #include <Graphics/Dx12/Managers/BufferManager.h>
+#include <Graphics/Dx12/Managers/TextureManager.h>
 #include <World/Camera.h>
 
 namespace Tempest
@@ -17,10 +18,21 @@ struct BackendManagers
 	BackendManagers(Dx12Device& device)
 		: Pipeline(device)
 		, Buffer(device)
+		, Texture(device)
 	{}
 
 	PipelineManager Pipeline;
 	BufferManager Buffer;
+	TextureManager Texture;
+};
+
+struct UploadData
+{
+	ComPtr<ID3D12CommandAllocator> Allocator;
+	ComPtr<ID3D12GraphicsCommandList6> CommandList;
+	ComPtr<ID3D12Resource> UploadHeap;
+	void* MappedData;
+	uint64_t CurrentOffset;
 };
 
 class Backend
@@ -34,7 +46,9 @@ public:
 	// TODO: Remove Camera and frame data as this are not concepts backend should be concerned with
 	void RenderFrame(const Camera* view, const FrameData& frameData, const RendererCommandList& commandList);
 
-	const Dx12Device* GetDevice() const { return m_Device.get(); }
+	Dx12Device* GetDevice() const { return m_Device.get(); }
+	UploadData PrepareUpload(uint32_t size);
+	void ExecuteUpload(UploadData& uploadData);
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
 

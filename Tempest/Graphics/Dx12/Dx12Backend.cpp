@@ -50,7 +50,7 @@ void Backend::Initialize(WindowHandle handle)
 	// Allocate scene constant buffers
 	for (int i = 0; i < std::size(m_SceneConstantBufferData); ++i)
 	{
-		m_SceneConstantBufferData[i] = Managers.Buffer.CreateBuffer({ BufferType::Constant, sizeof(SceneConstantData), nullptr });
+		m_SceneConstantBufferData[i] = Managers.Buffer.CreateBuffer({ BufferType::Constant, sizeof(SceneConstantData), nullptr }, nullptr);
 	}
 }
 
@@ -112,7 +112,7 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 			Managers.Buffer.DestroyBuffer(m_GeometryConstantBufferData[frame.BackBufferIndex]);
 		}
 
-		BufferHandle bufferHandle = Managers.Buffer.CreateBuffer({ BufferType::Constant, commandList.m_ConstantBufferData.size(), nullptr });
+		BufferHandle bufferHandle = Managers.Buffer.CreateBuffer({ BufferType::Constant, commandList.m_ConstantBufferData.size(), nullptr }, nullptr);
 		m_GeometryConstantBufferData[frame.BackBufferIndex] = bufferHandle;
 
 		Managers.Buffer.MapWriteData(bufferHandle, commandList.m_ConstantBufferData.data(), commandList.m_ConstantBufferData.size());
@@ -155,6 +155,63 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 	m_Device->SubmitFrame(frame);
 
 	m_Device->Present();
+}
+
+UploadData Backend::PrepareUpload(uint32_t size)
+{
+	UploadData result;
+
+	D3D12_HEAP_PROPERTIES props;
+	::ZeroMemory(&props, sizeof(D3D12_HEAP_PROPERTIES));
+	props.Type = D3D12_HEAP_TYPE_UPLOAD;
+
+	D3D12_RESOURCE_DESC desc;
+	::ZeroMemory(&desc, sizeof(D3D12_RESOURCE_DESC));
+	desc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	desc.Width = size;
+	desc.Height = 1;
+	desc.DepthOrArraySize = 1;
+	desc.MipLevels = 1;
+	desc.Format = DXGI_FORMAT_UNKNOWN;
+	desc.SampleDesc.Count = 1;
+	desc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+
+	CHECK_SUCCESS(m_Device->GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_GENERIC_READ, NULL, IID_PPV_ARGS(&result.UploadHeap)));
+	
+	D3D12_RANGE range;
+	::ZeroMemory(&range, sizeof(D3D12_RANGE)); // This will tell that we won't read the data from CPU
+	CHECK_SUCCESS(result.UploadHeap->Map(0, &range, &result.MappedData));
+	result.CurrentOffset = 0;
+
+	// TODO: this could be copy only, but we cannot make any resource barriers on copy lists.
+	CHECK_SUCCESS(m_Device->GetDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&result.Allocator)));
+	result.Allocator->SetName(L"Copy Command Allocator");
+
+	CHECK_SUCCESS(m_Device->GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, result.Allocator.Get(), nullptr, IID_PPV_ARGS(&result.CommandList)));
+	result.CommandList->SetName(L"Copy Command List");
+
+	return result;
+}
+
+void Backend::ExecuteUpload(UploadData& uploadData)
+{
+	// For good measure
+	uploadData.UploadHeap->Unmap(0, nullptr);
+
+	uploadData.CommandList->Close();
+	ID3D12CommandList* cmdList = uploadData.CommandList.Get();
+	m_Device->m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
+	
+	const UINT64 fence = m_Device->m_FenceValue;
+	m_Device->m_GraphicsQueue->Signal(m_Device->m_Fence.Get(), fence);
+	m_Device->m_FenceValue++;
+
+	if(m_Device->m_Fence->GetCompletedValue() < m_Device->m_FenceValue - 1)
+	{
+		m_Device->m_Fence->SetEventOnCompletion(m_Device->m_FenceValue - 1, m_Device->m_FenceEvent);
+		WaitForSingleObject(m_Device->m_FenceEvent, INFINITE);
+	}
 }
 }
 }

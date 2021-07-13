@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Graphics/Dx12/Dx12Common.h>
-#include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/RendererTypes.h>
 
 namespace Tempest
@@ -12,16 +11,36 @@ struct TextureDatabase;
 }
 namespace Dx12
 {
+class Dx12Device;
+struct UploadData;
+
+enum class TextureType
+{
+	Texture2D,
+};
+
+enum class TextureFormat
+{
+	RGBA8,
+};
+
+struct TextureDescription
+{
+	TextureType Type;
+	TextureFormat Format;
+	uint32_t Width;
+	uint32_t Height;
+	size_t Size;
+	const void* Data;
+};
 
 class TextureManager
 {
 public:
 	TextureManager(Dx12Device& device);
-	void LoadDatabase(const Definition::TextureDatabase* database);
+	TextureHandle CreateTexture(const TextureDescription& description, UploadData* upload);
+	ID3D12Resource* GetTexture(uint32_t textureHandle);
 private:
-	ComPtr<ID3D12Resource> CreateStagingBuffer(size_t size);
-	void InitializeTextureData(ID3D12Resource* dst, size_t size, const void* data);
-
 	eastl::unordered_map<TextureHandle, ComPtr<ID3D12Resource>> m_Textures;
 	TextureHandle m_NextHandle = 0;
 	Dx12Device& m_Device;

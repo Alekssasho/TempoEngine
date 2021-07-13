@@ -382,6 +382,30 @@ void Dx12Device::AllocateMainDescriptorHeap(const int numTextures)
 	CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_DescriptorHeap)));
 }
 
+void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, Dx12::TextureFormat format, uint32_t mipLevels, uint32_t slot)
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
+	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	assert(format == TextureFormat::RGBA8);
+	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	desc.Texture2D.MostDetailedMip = 0;
+	desc.Texture2D.MipLevels = mipLevels;
+	desc.Texture2D.PlaneSlice = 0;
+	desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+	// Go to appropriate descriptor
+	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	handle.ptr += (slot + static_cast<uint32_t>(ShaderResourceSlot::TextureStart)) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	m_Device->CreateShaderResourceView(
+		resource,
+		&desc,
+		handle
+	);
+}
+
 void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
@@ -409,5 +433,6 @@ void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numEleme
 		handle
 	);
 }
+
 }
 }

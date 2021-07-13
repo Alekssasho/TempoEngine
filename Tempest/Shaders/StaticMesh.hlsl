@@ -73,6 +73,8 @@ void MeshShaderMain(
 	}
 }
 
+SamplerState MaterialTextureSampler;
+
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
 	StructuredBuffer<Material> materials = ResourceDescriptorHeap[3];
@@ -84,6 +86,10 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 	float ambientFactor = 0.15f;
 
 	float4 color = materials[g_Geometry.materialIndex].BaseColor;
+	if(materials[g_Geometry.materialIndex].TextureIndex != -1) {
+		Texture2D baseTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].TextureIndex];
+		color = baseTexture.Sample(MaterialTextureSampler, float2(0.5, 0.5));
+	}
 
 	return (color * diffuseFactor * g_Scene.LightColor)
 			+ (color * ambientFactor);

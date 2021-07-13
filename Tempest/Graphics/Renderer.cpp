@@ -162,9 +162,26 @@ void Renderer::LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, 
 	gEngine->GetJobSystem().RunJobs("Load Geometry Database", &loadGeometryJob, 1, &counter);
 
 	// Now the actual loading of texture database
-	m_Backend->Managers.Texture.LoadDatabase(textureDatabase);
+	Dx12::UploadData uploadData = m_Backend->PrepareUpload(textureDatabase->texture_data_buffer()->size());
+	for (uint32_t i = 0; i < textureDatabase->mappings()->size(); ++i)
+	{
+		const auto& texture = textureDatabase->mappings()->Get(i);
+		Dx12::TextureDescription textureDescription;
+		textureDescription.Type = Dx12::TextureType::Texture2D;
+		textureDescription.Format = Dx12::TextureFormat::RGBA8;
+		assert(texture->texture_data().format() == Definition::TextureFormat_RGBA8);
+		textureDescription.Width = texture->texture_data().width();
+		textureDescription.Height = texture->texture_data().height();
+		textureDescription.Size = texture->texture_buffer_byte_count();
+		textureDescription.Data = textureDatabase->texture_data_buffer()->data() + texture->texture_buffer_offset();
+
+		TextureHandle handle = m_Backend->Managers.Texture.CreateTexture(textureDescription, &uploadData);
+		m_Backend->GetDevice()->AddTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), textureDescription.Format, 1, i);
+	}
 
 	gEngine->GetJobSystem().WaitForCounter(&counter, 0);
+	// TODO: This should happen before the wait, but the method is currently thread unsafe and will fail, due to Fence objects used
+	m_Backend->ExecuteUpload(uploadData);
 }
 
 void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)

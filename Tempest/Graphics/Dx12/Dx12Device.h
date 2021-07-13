@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Graphics/Dx12/Dx12Common.h>
+#include <Graphics/Dx12/Managers/TextureManager.h>
 #include <Platform/WindowsPlatform.h>
 
 namespace Tempest
@@ -50,6 +51,7 @@ public:
 		NonTextureCount = TextureStart
 	};
 	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
+	void AddTextureDescriptor(ID3D12Resource* resource, Dx12::TextureFormat format, uint32_t mipLevels, uint32_t slot);
 	// TODO: Remove this abstraction and just use device code inside the backend
 public:
 	ComPtr<IDXGIFactory4> m_Factory;

@@ -29,7 +29,6 @@ struct PipelineStreamBuilder
 	eastl::vector<uint8_t> Memory;
 };
 
-
 PipelineManager::PipelineManager(Dx12Device& device)
 	: m_Device(device)
 {
@@ -52,13 +51,21 @@ PipelineManager::PipelineManager(Dx12Device& device)
 		geometryConstants
 	};
 
+	D3D12_STATIC_SAMPLER_DESC sampler;
+	::ZeroMemory(&sampler, sizeof(D3D12_STATIC_SAMPLER_DESC));
+	sampler.Filter  = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	// TODO: We don't need input assembler as we are doing bindless
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 	rootSignatureDesc.NumParameters = UINT(std::size(params));
 	rootSignatureDesc.pParameters = params;
-	rootSignatureDesc.NumStaticSamplers = 0;
-	rootSignatureDesc.pStaticSamplers = nullptr;
+	rootSignatureDesc.NumStaticSamplers = 1;
+	rootSignatureDesc.pStaticSamplers = &sampler;
 
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;

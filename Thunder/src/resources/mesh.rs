@@ -1,5 +1,6 @@
 use std::sync::Weak;
 
+use itertools::izip;
 use crate::{compiler::AsyncCompiler, scene::Scene};
 
 use super::Resource;
@@ -18,6 +19,7 @@ impl MeshResource {
 pub struct VertexLayout {
     position: math::Vec3,
     normal: math::Vec3,
+    uv: math::Vec2,
 }
 
 #[derive(Debug)]
@@ -67,10 +69,11 @@ impl Resource for MeshResource {
 
             let positions = scene.gltf.mesh_positions(self.mesh_index, prim).unwrap();
             let normals = scene.gltf.mesh_normals(self.mesh_index, prim).unwrap();
+            let uvs = scene.gltf.mesh_uvs(self.mesh_index, prim).unwrap();
 
             vertices.reserve(positions.len());
-            for (position, normal) in positions.into_iter().zip(normals.into_iter()) {
-                vertices.push(VertexLayout { position, normal });
+            for (position, normal, uv) in izip!(positions, normals, uvs)  {
+                vertices.push(VertexLayout { position, normal, uv });
             }
 
             let (_, remap_table) =

@@ -188,7 +188,7 @@ fn main() {
     });
 
     let vertex_buffer_layout = [wgpu::VertexBufferLayout {
-        array_stride: (std::mem::size_of::<f32>() * 6) as u64,
+        array_stride: (std::mem::size_of::<f32>() * 8) as u64,
         step_mode: wgpu::InputStepMode::Vertex,
         attributes: &[
             wgpu::VertexAttribute {

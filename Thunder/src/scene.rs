@@ -186,6 +186,23 @@ impl GltfData {
         })
     }
 
+    pub fn mesh_uvs(&self, mesh_index: usize, prim_index: usize) -> Option<Vec<math::Vec2>> {
+        let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
+        let reader = primitive.reader(|buffer| Some(&self.buffers[buffer.index()]));
+        reader.read_tex_coords(0).and_then(|tex_coord_reader| {
+            Some(
+                match tex_coord_reader {
+                    gltf::mesh::util::ReadTexCoords::U8(iter) =>
+                        iter.map(|tex_coord| math::vec2(tex_coord[0] as f32 / 255.0, tex_coord[1] as f32 / 255.0)).collect(),
+                    gltf::mesh::util::ReadTexCoords::U16(iter) =>
+                        iter.map(|tex_coord| math::vec2(tex_coord[0] as f32 / 65535.0, tex_coord[1] as f32 / 65535.0)).collect(),
+                    gltf::mesh::util::ReadTexCoords::F32(iter) =>
+                        iter.map(|tex_coord| math::vec2(tex_coord[0], tex_coord[1])).collect(),
+                }
+            )
+        })
+    }
+
     pub fn mesh_material_index(&self, mesh_index: usize, prim_index: usize) -> Option<usize> {
         let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
         primitive.material().index()

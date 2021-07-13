@@ -1,10 +1,12 @@
 pub use nalgebra_glm::Mat4x4;
 pub use nalgebra_glm::Quat;
 pub use nalgebra_glm::Vec3;
+pub use nalgebra_glm::Vec2;
 
 pub use nalgebra_glm::mat4x4;
 pub use nalgebra_glm::quat_cross_vec;
 pub use nalgebra_glm::vec3;
+pub use nalgebra_glm::vec2;
 
 pub struct TRS {
     pub translate: nalgebra_glm::Vec3,

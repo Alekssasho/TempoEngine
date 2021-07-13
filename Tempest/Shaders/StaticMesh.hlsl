@@ -5,6 +5,7 @@ struct VertexLayout
 {
 	float3 Position;
 	float3 Normal;
+	float2 UV;
 };
 
 struct VertexOutput
@@ -12,6 +13,7 @@ struct VertexOutput
 	float4 Position : SV_POSITION;
 	float3 PositionWorld : POSITION;
 	float3 NormalWorld : NORMAL;
+	float2 UV : TEX_COORD;
 };
 
 struct GeometryConstants
@@ -68,6 +70,7 @@ void MeshShaderMain(
 		result.PositionWorld = mul(g_Geometry.WorldMatrix, float4(vertexData.Position, 1.0)).xyz;
 		// TODO: This should be inverse transpose of the world matrix
 		result.NormalWorld = mul(g_Geometry.WorldMatrix, float4(vertexData.Normal, 0.0)).xyz;
+		result.UV = vertexData.UV;
 
 		verts[gtid] = result;
 	}
@@ -88,7 +91,7 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 	float4 color = materials[g_Geometry.materialIndex].BaseColor;
 	if(materials[g_Geometry.materialIndex].TextureIndex != -1) {
 		Texture2D baseTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].TextureIndex];
-		color = baseTexture.Sample(MaterialTextureSampler, float2(0.5, 0.5));
+		color = baseTexture.Sample(MaterialTextureSampler, input.UV);
 	}
 
 	return (color * diffuseFactor * g_Scene.LightColor)

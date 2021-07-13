@@ -208,7 +208,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, &uploadData);
 
 		// TODO: Add type for vertex layout
-		const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2;
+		const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2 + sizeof(glm::vec2);
 		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
 
 		Dx12::BufferDescription bufferDescription2;

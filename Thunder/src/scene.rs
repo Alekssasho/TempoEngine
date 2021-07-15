@@ -1,5 +1,7 @@
 use std::{collections::HashSet, path::PathBuf};
 
+use itertools::Itertools;
+
 #[derive(Debug)]
 pub struct GltfData {
     document: gltf::Document,
@@ -83,7 +85,10 @@ impl GltfData {
             node_stack.remove(0);
         }
 
-        (meshes.drain().collect(), materials.drain().collect())
+        (
+            meshes.drain().collect(),
+            materials.drain().sorted().collect(),
+        )
     }
 
     fn node_transform(&self, index: usize) -> math::Mat4x4 {
@@ -190,16 +195,21 @@ impl GltfData {
         let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
         let reader = primitive.reader(|buffer| Some(&self.buffers[buffer.index()]));
         reader.read_tex_coords(0).and_then(|tex_coord_reader| {
-            Some(
-                match tex_coord_reader {
-                    gltf::mesh::util::ReadTexCoords::U8(iter) =>
-                        iter.map(|tex_coord| math::vec2(tex_coord[0] as f32 / 255.0, tex_coord[1] as f32 / 255.0)).collect(),
-                    gltf::mesh::util::ReadTexCoords::U16(iter) =>
-                        iter.map(|tex_coord| math::vec2(tex_coord[0] as f32 / 65535.0, tex_coord[1] as f32 / 65535.0)).collect(),
-                    gltf::mesh::util::ReadTexCoords::F32(iter) =>
-                        iter.map(|tex_coord| math::vec2(tex_coord[0], tex_coord[1])).collect(),
-                }
-            )
+            Some(match tex_coord_reader {
+                gltf::mesh::util::ReadTexCoords::U8(iter) => iter
+                    .map(|tex_coord| {
+                        math::vec2(tex_coord[0] as f32 / 255.0, tex_coord[1] as f32 / 255.0)
+                    })
+                    .collect(),
+                gltf::mesh::util::ReadTexCoords::U16(iter) => iter
+                    .map(|tex_coord| {
+                        math::vec2(tex_coord[0] as f32 / 65535.0, tex_coord[1] as f32 / 65535.0)
+                    })
+                    .collect(),
+                gltf::mesh::util::ReadTexCoords::F32(iter) => iter
+                    .map(|tex_coord| math::vec2(tex_coord[0], tex_coord[1]))
+                    .collect(),
+            })
         })
     }
 

@@ -7,7 +7,7 @@ namespace Tempest
 {
 namespace Definition
 {
-struct TextureDatabase;
+struct TextureData;
 }
 namespace Dx12
 {
@@ -19,20 +19,18 @@ enum class TextureType
 	Texture2D,
 };
 
-enum class TextureFormat
-{
-	RGBA8,
-};
-
 struct TextureDescription
 {
 	TextureType Type;
-	TextureFormat Format;
+	DXGI_FORMAT Format;
 	uint32_t Width;
 	uint32_t Height;
 	size_t Size;
 	const void* Data;
 };
+
+DXGI_FORMAT DxFormatForStorageFromTextureFormat(const Definition::TextureData& data);
+DXGI_FORMAT DxFormatForViewFromTextureFormat(const Definition::TextureData& data);
 
 class TextureManager
 {

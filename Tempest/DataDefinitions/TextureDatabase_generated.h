@@ -18,29 +18,65 @@ struct TextureDatabaseBuilder;
 
 enum TextureFormat {
   TextureFormat_RGBA8 = 0,
+  TextureFormat_BC1_RGB = 1,
+  TextureFormat_BC7_RGBA = 2,
   TextureFormat_MIN = TextureFormat_RGBA8,
-  TextureFormat_MAX = TextureFormat_RGBA8
+  TextureFormat_MAX = TextureFormat_BC7_RGBA
 };
 
-inline const TextureFormat (&EnumValuesTextureFormat())[1] {
+inline const TextureFormat (&EnumValuesTextureFormat())[3] {
   static const TextureFormat values[] = {
-    TextureFormat_RGBA8
+    TextureFormat_RGBA8,
+    TextureFormat_BC1_RGB,
+    TextureFormat_BC7_RGBA
   };
   return values;
 }
 
 inline const char * const *EnumNamesTextureFormat() {
-  static const char * const names[2] = {
+  static const char * const names[4] = {
     "RGBA8",
+    "BC1_RGB",
+    "BC7_RGBA",
     nullptr
   };
   return names;
 }
 
 inline const char *EnumNameTextureFormat(TextureFormat e) {
-  if (flatbuffers::IsOutRange(e, TextureFormat_RGBA8, TextureFormat_RGBA8)) return "";
+  if (flatbuffers::IsOutRange(e, TextureFormat_RGBA8, TextureFormat_BC7_RGBA)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTextureFormat()[index];
+}
+
+enum ColorSpace {
+  ColorSpace_Linear = 0,
+  ColorSpace_sRGB = 1,
+  ColorSpace_MIN = ColorSpace_Linear,
+  ColorSpace_MAX = ColorSpace_sRGB
+};
+
+inline const ColorSpace (&EnumValuesColorSpace())[2] {
+  static const ColorSpace values[] = {
+    ColorSpace_Linear,
+    ColorSpace_sRGB
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesColorSpace() {
+  static const char * const names[3] = {
+    "Linear",
+    "sRGB",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameColorSpace(ColorSpace e) {
+  if (flatbuffers::IsOutRange(e, ColorSpace_Linear, ColorSpace_sRGB)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesColorSpace()[index];
 }
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureData FLATBUFFERS_FINAL_CLASS {
@@ -48,24 +84,24 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureData FLATBUFFERS_FINAL_CLASS {
   uint32_t width_;
   uint32_t height_;
   int8_t format_;
-  int8_t padding0__;  int16_t padding1__;
+  int8_t color_space_;
+  int16_t padding0__;
 
  public:
   TextureData()
       : width_(0),
         height_(0),
         format_(0),
-        padding0__(0),
-        padding1__(0) {
+        color_space_(0),
+        padding0__(0) {
     (void)padding0__;
-    (void)padding1__;
   }
-  TextureData(uint32_t _width, uint32_t _height, Tempest::Definition::TextureFormat _format)
+  TextureData(uint32_t _width, uint32_t _height, Tempest::Definition::TextureFormat _format, Tempest::Definition::ColorSpace _color_space)
       : width_(flatbuffers::EndianScalar(_width)),
         height_(flatbuffers::EndianScalar(_height)),
         format_(flatbuffers::EndianScalar(static_cast<int8_t>(_format))),
-        padding0__(0),
-        padding1__(0) {
+        color_space_(flatbuffers::EndianScalar(static_cast<int8_t>(_color_space))),
+        padding0__(0) {
   }
   uint32_t width() const {
     return flatbuffers::EndianScalar(width_);
@@ -75,6 +111,9 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureData FLATBUFFERS_FINAL_CLASS {
   }
   Tempest::Definition::TextureFormat format() const {
     return static_cast<Tempest::Definition::TextureFormat>(flatbuffers::EndianScalar(format_));
+  }
+  Tempest::Definition::ColorSpace color_space() const {
+    return static_cast<Tempest::Definition::ColorSpace>(flatbuffers::EndianScalar(color_space_));
   }
 };
 FLATBUFFERS_STRUCT_END(TextureData, 12);

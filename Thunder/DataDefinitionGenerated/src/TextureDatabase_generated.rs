@@ -28,10 +28,12 @@ pub mod tempest {
         #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
         pub enum TextureFormat {
             RGBA8 = 0,
+            BC1_RGB = 1,
+            BC7_RGBA = 2,
         }
 
         pub const ENUM_MIN_TEXTURE_FORMAT: i8 = 0;
-        pub const ENUM_MAX_TEXTURE_FORMAT: i8 = 0;
+        pub const ENUM_MAX_TEXTURE_FORMAT: i8 = 2;
 
         impl<'a> flatbuffers::Follow<'a> for TextureFormat {
             type Inner = Self;
@@ -65,14 +67,71 @@ pub mod tempest {
         }
 
         #[allow(non_camel_case_types)]
-        pub const ENUM_VALUES_TEXTURE_FORMAT: [TextureFormat; 1] = [TextureFormat::RGBA8];
+        pub const ENUM_VALUES_TEXTURE_FORMAT: [TextureFormat; 3] = [
+            TextureFormat::RGBA8,
+            TextureFormat::BC1_RGB,
+            TextureFormat::BC7_RGBA,
+        ];
 
         #[allow(non_camel_case_types)]
-        pub const ENUM_NAMES_TEXTURE_FORMAT: [&'static str; 1] = ["RGBA8"];
+        pub const ENUM_NAMES_TEXTURE_FORMAT: [&'static str; 3] = ["RGBA8", "BC1_RGB", "BC7_RGBA"];
 
         pub fn enum_name_texture_format(e: TextureFormat) -> &'static str {
             let index = e as i8;
             ENUM_NAMES_TEXTURE_FORMAT[index as usize]
+        }
+
+        #[allow(non_camel_case_types)]
+        #[repr(i8)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+        pub enum ColorSpace {
+            Linear = 0,
+            sRGB = 1,
+        }
+
+        pub const ENUM_MIN_COLOR_SPACE: i8 = 0;
+        pub const ENUM_MAX_COLOR_SPACE: i8 = 1;
+
+        impl<'a> flatbuffers::Follow<'a> for ColorSpace {
+            type Inner = Self;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                flatbuffers::read_scalar_at::<Self>(buf, loc)
+            }
+        }
+
+        impl flatbuffers::EndianScalar for ColorSpace {
+            #[inline]
+            fn to_little_endian(self) -> Self {
+                let n = i8::to_le(self as i8);
+                let p = &n as *const i8 as *const ColorSpace;
+                unsafe { *p }
+            }
+            #[inline]
+            fn from_little_endian(self) -> Self {
+                let n = i8::from_le(self as i8);
+                let p = &n as *const i8 as *const ColorSpace;
+                unsafe { *p }
+            }
+        }
+
+        impl flatbuffers::Push for ColorSpace {
+            type Output = ColorSpace;
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                flatbuffers::emplace_scalar::<ColorSpace>(dst, *self);
+            }
+        }
+
+        #[allow(non_camel_case_types)]
+        pub const ENUM_VALUES_COLOR_SPACE: [ColorSpace; 2] = [ColorSpace::Linear, ColorSpace::sRGB];
+
+        #[allow(non_camel_case_types)]
+        pub const ENUM_NAMES_COLOR_SPACE: [&'static str; 2] = ["Linear", "sRGB"];
+
+        pub fn enum_name_color_space(e: ColorSpace) -> &'static str {
+            let index = e as i8;
+            ENUM_NAMES_COLOR_SPACE[index as usize]
         }
 
         // struct TextureData, aligned to 4
@@ -82,8 +141,8 @@ pub mod tempest {
             width_: u32,
             height_: u32,
             format_: TextureFormat,
-            padding0__: u8,
-            padding1__: u16,
+            color_space_: ColorSpace,
+            padding0__: u16,
         } // pub struct TextureData
         impl flatbuffers::SafeSliceAccess for TextureData {}
         impl<'a> flatbuffers::Follow<'a> for TextureData {
@@ -129,14 +188,19 @@ pub mod tempest {
         }
 
         impl TextureData {
-            pub fn new<'a>(_width: u32, _height: u32, _format: TextureFormat) -> Self {
+            pub fn new<'a>(
+                _width: u32,
+                _height: u32,
+                _format: TextureFormat,
+                _color_space: ColorSpace,
+            ) -> Self {
                 TextureData {
                     width_: _width.to_little_endian(),
                     height_: _height.to_little_endian(),
                     format_: _format.to_little_endian(),
+                    color_space_: _color_space.to_little_endian(),
 
                     padding0__: 0,
-                    padding1__: 0,
                 }
             }
             pub fn width<'a>(&'a self) -> u32 {
@@ -147,6 +211,9 @@ pub mod tempest {
             }
             pub fn format<'a>(&'a self) -> TextureFormat {
                 self.format_.from_little_endian()
+            }
+            pub fn color_space<'a>(&'a self) -> ColorSpace {
+                self.color_space_.from_little_endian()
             }
         }
 

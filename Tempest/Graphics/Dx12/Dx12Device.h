@@ -51,7 +51,7 @@ public:
 		NonTextureCount = TextureStart
 	};
 	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
-	void AddTextureDescriptor(ID3D12Resource* resource, Dx12::TextureFormat format, uint32_t mipLevels, uint32_t slot);
+	void AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot);
 	// TODO: Remove this abstraction and just use device code inside the backend
 public:
 	ComPtr<IDXGIFactory4> m_Factory;

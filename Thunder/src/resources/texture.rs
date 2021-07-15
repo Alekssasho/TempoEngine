@@ -1,7 +1,7 @@
 use std::sync::Weak;
 
 use basis_universal::{Compressor, CompressorParams, TranscodeParameters, Transcoder};
-use data_definition_generated::{TextureData, TextureFormat};
+use data_definition_generated::{ColorSpace, TextureData, TextureFormat};
 
 use crate::{compiler::AsyncCompiler, scene::Scene};
 
@@ -53,6 +53,10 @@ impl Resource for TextureResource {
         compressor_params.set_uastc_quality_level(basis_universal::UASTC_QUALITY_DEFAULT);
         compressor_params.set_print_status_to_stdout(false);
 
+        // For now we are cooking only albedo textures, so use sRGB, as Linear is for normal maps and other material properties
+        //compressor_params.set_color_space(basis_universal::ColorSpace::Linear);
+        compressor_params.set_color_space(basis_universal::ColorSpace::Srgb);
+
         let mut compressor_image = compressor_params.source_image_mut(0);
         compressor_image.init(
             image_data.pixels.as_slice(),
@@ -71,10 +75,11 @@ impl Resource for TextureResource {
 
         let mut transcoder = Transcoder::new();
         transcoder.prepare_transcoding(basis_file).unwrap();
+        // Currenlty we cook only albedo textures, so just use the smallest format bc1 for that
         let result = transcoder
             .transcode_image_level(
                 basis_file,
-                basis_universal::TranscoderTextureFormat::RGBA32,
+                basis_universal::TranscoderTextureFormat::BC1_RGB,
                 TranscodeParameters {
                     image_index: 0,
                     level_index: 0,
@@ -92,7 +97,8 @@ impl Resource for TextureResource {
             texture_info: TextureData::new(
                 image_description.original_width,
                 image_description.original_height,
-                TextureFormat::RGBA8,
+                TextureFormat::BC1_RGB,
+                ColorSpace::sRGB,
             ),
         }
     }

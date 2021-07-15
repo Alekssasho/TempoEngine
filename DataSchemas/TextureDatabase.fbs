@@ -1,13 +1,21 @@
 namespace Tempest.Definition;
 
 enum TextureFormat: byte {
-    RGBA8
+    RGBA8,
+    BC1_RGB,
+    BC7_RGBA,
+}
+
+enum ColorSpace: byte {
+    Linear,
+    sRGB,
 }
 
 struct TextureData {
     width: uint;
     height: uint;
     format: TextureFormat;
+    color_space: ColorSpace;
 }
 
 struct TextureMapping

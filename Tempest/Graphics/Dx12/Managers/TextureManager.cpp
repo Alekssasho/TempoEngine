@@ -2,6 +2,7 @@
 #include <Graphics/Dx12/Dx12Device.h>
 #include <Graphics/Dx12/Dx12Backend.h>
 #include <Graphics/Dx12/Managers/TextureManager.h>
+#include <DataDefinitions/TextureDatabase_generated.h>
 
 namespace Tempest
 {
@@ -25,8 +26,7 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 	desc.Height = description.Height;
 	desc.DepthOrArraySize = 1;
 	desc.MipLevels = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	assert(description.Format == TextureFormat::RGBA8);
+	desc.Format = description.Format;
 	desc.SampleDesc.Count = 1;
 	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
 	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
@@ -73,6 +73,40 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 ID3D12Resource* TextureManager::GetTexture(uint32_t textureHandle)
 {
 	return m_Textures[textureHandle].Get();
+}
+
+DXGI_FORMAT DxFormatForStorageFromTextureFormat(const Definition::TextureData& data)
+{
+	switch (data.format())
+	{
+	case Definition::TextureFormat_RGBA8:
+		return DXGI_FORMAT_R8G8B8A8_TYPELESS;
+	case Definition::TextureFormat_BC1_RGB:
+		return DXGI_FORMAT_BC1_TYPELESS;
+	case Definition::TextureFormat_BC7_RGBA:
+		return DXGI_FORMAT_BC7_TYPELESS;
+	default:
+		assert(false);
+		return DXGI_FORMAT_UNKNOWN;
+	}
+}
+
+DXGI_FORMAT DxFormatForViewFromTextureFormat(const Definition::TextureData& data)
+{
+	// TODO: If we add more than linear/srgb, change this to switch
+	const bool isSrgb = data.color_space() == Definition::ColorSpace_sRGB;
+	switch (data.format())
+	{
+	case Definition::TextureFormat_RGBA8:
+		return isSrgb ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
+	case Definition::TextureFormat_BC1_RGB:
+		return isSrgb ? DXGI_FORMAT_BC1_UNORM_SRGB : DXGI_FORMAT_BC1_UNORM;
+	case Definition::TextureFormat_BC7_RGBA:
+		return isSrgb ? DXGI_FORMAT_BC7_UNORM_SRGB : DXGI_FORMAT_BC7_UNORM;
+	default:
+		assert(false);
+		return DXGI_FORMAT_UNKNOWN;
+	}
 }
 }
 }

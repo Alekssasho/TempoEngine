@@ -168,15 +168,14 @@ void Renderer::LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, 
 		const auto& texture = textureDatabase->mappings()->Get(i);
 		Dx12::TextureDescription textureDescription;
 		textureDescription.Type = Dx12::TextureType::Texture2D;
-		textureDescription.Format = Dx12::TextureFormat::RGBA8;
-		assert(texture->texture_data().format() == Definition::TextureFormat_RGBA8);
+		textureDescription.Format = Dx12::DxFormatForStorageFromTextureFormat(texture->texture_data());
 		textureDescription.Width = texture->texture_data().width();
 		textureDescription.Height = texture->texture_data().height();
 		textureDescription.Size = texture->texture_buffer_byte_count();
 		textureDescription.Data = textureDatabase->texture_data_buffer()->data() + texture->texture_buffer_offset();
 
 		TextureHandle handle = m_Backend->Managers.Texture.CreateTexture(textureDescription, &uploadData);
-		m_Backend->GetDevice()->AddTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), textureDescription.Format, 1, i);
+		m_Backend->GetDevice()->AddTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), Dx12::DxFormatForViewFromTextureFormat(texture->texture_data()), 1, i);
 	}
 
 	gEngine->GetJobSystem().WaitForCounter(&counter, 0);

@@ -146,7 +146,11 @@ void Dx12Device::Initialize(WindowHandle handle)
 		{
 			m_SwapChainImages.push_back(SwapChainImage{});
 			CHECK_SUCCESS(m_SwapChain->GetBuffer(n, IID_PPV_ARGS(&m_SwapChainImages[n].Resource)));
-			m_Device->CreateRenderTargetView(m_SwapChainImages[n].Resource.Get(), nullptr, rtvHandle);
+			D3D12_RENDER_TARGET_VIEW_DESC rtvDesc;
+			::ZeroMemory(&rtvDesc, sizeof(D3D12_RENDER_TARGET_VIEW_DESC));
+			rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+			rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+			m_Device->CreateRenderTargetView(m_SwapChainImages[n].Resource.Get(), &rtvDesc, rtvHandle);
 			m_SwapChainImages[n].RTVHandle = rtvHandle;
 
 			rtvHandle.ptr += 1 * rtvDescriptorSize;
@@ -382,12 +386,11 @@ void Dx12Device::AllocateMainDescriptorHeap(const int numTextures)
 	CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_DescriptorHeap)));
 }
 
-void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, Dx12::TextureFormat format, uint32_t mipLevels, uint32_t slot)
+void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot)
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	assert(format == TextureFormat::RGBA8);
+	desc.Format = format;
 	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
 	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	desc.Texture2D.MostDetailedMip = 0;

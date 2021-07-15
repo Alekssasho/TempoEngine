@@ -258,7 +258,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 		ImGui_ImplDX12_Init(
 			m_Device.Get(),
 			2,
-			DXGI_FORMAT_R8G8B8A8_UNORM,
+			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 			m_UISRVHeap.Get(),
 			m_UISRVHeap->GetCPUDescriptorHandleForHeapStart(),
 			m_UISRVHeap->GetGPUDescriptorHandleForHeapStart()

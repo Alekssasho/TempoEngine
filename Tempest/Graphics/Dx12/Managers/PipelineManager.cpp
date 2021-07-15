@@ -110,7 +110,7 @@ void PipelineManager::PrepareDefaultPipelineStateDesc(PipelineStreamBuilder& bui
 	depthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
 
 	D3D12_RT_FORMAT_ARRAY rtvFormats = { 0 };
-	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
 	rtvFormats.NumRenderTargets = 1;
 
 	DXGI_SAMPLE_DESC sampleDesc = {0};

@@ -249,6 +249,10 @@ void EngineCore::DoFrame()
 
 	// Test Code
 	//ImGui::ShowDemoWindow();
+	//ImGui::Begin("Test");
+	//ImGui::Checkbox("Perspective Projection Negative To One", &m_Camera.proper);
+	//ImGui::DragFloat("Znear", &m_Camera.znear);
+	//ImGui::End();
 
 	// Input Handling
 	UpdateInput();

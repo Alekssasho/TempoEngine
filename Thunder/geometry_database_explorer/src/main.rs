@@ -182,7 +182,7 @@ fn main() {
         label: None,
         bind_group_layouts: &[],
         push_constant_ranges: &[wgpu::PushConstantRange {
-            stages: wgpu::ShaderStage::VERTEX,
+            stages: wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT,
             range: 0..std::mem::size_of::<ShaderConstants>() as u32,
         }],
     });
@@ -200,6 +200,11 @@ fn main() {
                 format: wgpu::VertexFormat::Float3,
                 offset: (std::mem::size_of::<f32>() * 3) as u64,
                 shader_location: 1,
+            },
+            wgpu::VertexAttribute {
+                format: wgpu::VertexFormat::Float2,
+                offset: (std::mem::size_of::<f32>() * 6) as u64,
+                shader_location: 2,
             },
         ],
     }];
@@ -287,6 +292,7 @@ fn main() {
     let mut all_primitive_meshes = true;
     let mut current_mesh_meshlet_index: u32 = 0;
     let mut current_primitive_mesh_index: u32 = 0;
+    let mut current_render_mode = mesh_shader::RenderMode::Gray;
 
     event_loop.run(move |event, _, control_flow| {
         let _ = (&depth_texture, &depth_texture_view);
@@ -387,6 +393,17 @@ fn main() {
                         ui.horizontal(|ui| {
                             ui.label("Radius: ");
                             ui.add(egui::DragValue::f32(&mut camera.radius).speed(1.0));
+                        });
+
+                        ui.separator();
+
+                        ui.horizontal(|ui| {
+                            ui.label("Render Mode: ");
+                            egui::combo_box_with_label(ui, "", format!("{:?}", current_render_mode), |ui| {
+                                ui.selectable_value(&mut current_render_mode, mesh_shader::RenderMode::Gray, "Gray");
+                                ui.selectable_value(&mut current_render_mode, mesh_shader::RenderMode::Normal, "Normal");
+                                ui.selectable_value(&mut current_render_mode, mesh_shader::RenderMode::UVs, "UV");
+                            });
                         });
 
                         ui.separator();
@@ -529,9 +546,10 @@ fn main() {
                             0.1,
                             1000.0,
                         ) * camera.create_view_matrix(),
+                        render_mode: current_render_mode,
                     };
 
-                    rpass.set_push_constants(wgpu::ShaderStage::VERTEX, 0, unsafe {
+                    rpass.set_push_constants(wgpu::ShaderStage::VERTEX | wgpu::ShaderStage::FRAGMENT, 0, unsafe {
                         any_as_u8_slice(&push_constants)
                     });
 

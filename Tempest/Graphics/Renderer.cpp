@@ -175,7 +175,7 @@ void Renderer::LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, 
 		textureDescription.Data = textureDatabase->texture_data_buffer()->data() + texture->texture_buffer_offset();
 
 		TextureHandle handle = m_Backend->Managers.Texture.CreateTexture(textureDescription, &uploadData);
-		m_Backend->GetDevice()->AddTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), Dx12::DxFormatForViewFromTextureFormat(texture->texture_data()), 1, i);
+		m_Backend->GetDevice()->AddStaticTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), Dx12::DxFormatForViewFromTextureFormat(texture->texture_data()), 1, i);
 	}
 
 	gEngine->GetJobSystem().WaitForCounter(&counter, 0);
@@ -208,7 +208,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 
 		// TODO: Add type for vertex layout
 		const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2 + sizeof(glm::vec2);
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
+		m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
 
 		Dx12::BufferDescription bufferDescription2;
 		bufferDescription2.Type = Dx12::BufferType::Vertex;
@@ -216,7 +216,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		bufferDescription2.Data = geometryDatabase->meshlet_buffer()->data();
 		m_MeshletData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription2, &uploadData);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletData), geometryDatabase->meshlet_buffer()->size(), sizeof(Definition::Meshlet), Dx12::Dx12Device::ShaderResourceSlot::Meshlets);
+		m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletData), geometryDatabase->meshlet_buffer()->size(), sizeof(Definition::Meshlet), Dx12::Dx12Device::ShaderResourceSlot::Meshlets);
 
 		Dx12::BufferDescription bufferDescription3;
 		bufferDescription3.Type = Dx12::BufferType::Vertex;
@@ -224,7 +224,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		bufferDescription3.Data = geometryDatabase->meshlet_indices_buffer()->data();
 		m_MeshletIndicesData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription3, &uploadData);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletIndicesData), uint32_t(bufferDescription3.Size), sizeof(uint8_t), Dx12::Dx12Device::ShaderResourceSlot::MeshletIndices);
+		m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MeshletIndicesData), uint32_t(bufferDescription3.Size), sizeof(uint8_t), Dx12::Dx12Device::ShaderResourceSlot::MeshletIndices);
 
 		Dx12::BufferDescription bufferDescription4;
 		bufferDescription4.Type = Dx12::BufferType::Vertex;
@@ -232,7 +232,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		bufferDescription4.Data = geometryDatabase->materials()->data();
 		m_MaterialData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription4, &uploadData);
 
-		m_Backend->GetDevice()->AddBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MaterialData), geometryDatabase->materials()->size(), sizeof(Definition::Material), Dx12::Dx12Device::ShaderResourceSlot::Materials);
+		m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_MaterialData), geometryDatabase->materials()->size(), sizeof(Definition::Material), Dx12::Dx12Device::ShaderResourceSlot::Materials);
 	}
 
 	m_Backend->ExecuteUpload(uploadData);

@@ -275,8 +275,8 @@ Dx12FrameData Dx12Device::StartNewFrame()
 	list.CommandAllocator->Reset();
 	list.DxCommandList->Reset(list.CommandAllocator.Get(), nullptr);
 
-	assert(m_DescriptorHeap);
-	list.DxCommandList->SetDescriptorHeaps(1, m_DescriptorHeap.GetAddressOf());
+	assert(m_MainDescriptorHeap.Heap);
+	list.DxCommandList->SetDescriptorHeaps(1, m_MainDescriptorHeap.Heap.GetAddressOf());
 
 	D3D12_RESOURCE_BARRIER barrier;
 	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -306,6 +306,7 @@ void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 		ImGui_ImplDX12_NewFrame();
 	}
 	{
+		// TODO: Merge ui srv heap into main descriptor heap
 		OPTICK_EVENT("ImGUI GPU Draw");
 		frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, false, nullptr);
 		frame.CommandList->SetDescriptorHeaps(1, m_UISRVHeap.GetAddressOf());
@@ -345,48 +346,13 @@ void Dx12Device::Present()
 	}
 }
 
-//void Dx12Device::CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState)
-//{
-//	copyList.CommandAllocator->Reset();
-//	copyList.DxCommandList->Reset(copyList.CommandAllocator.Get(), nullptr);
-//
-//	copyList.DxCommandList->CopyResource(dst, src);
-//
-//	D3D12_RESOURCE_BARRIER barrier;
-//	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-//	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-//	barrier.Transition.pResource = dst;
-//	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-//	barrier.Transition.StateAfter = requiredDstState;
-//	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-//	
-//	copyList.DxCommandList->ResourceBarrier(1, &barrier);
-//	
-//	copyList.DxCommandList->Close();
-//	ID3D12CommandList* cmdList = copyList.DxCommandList.Get();
-//	m_GraphicsQueue->ExecuteCommandLists(1, &cmdList);
-//	
-//	const UINT64 fence = m_FenceValue;
-//	m_GraphicsQueue->Signal(m_Fence.Get(), fence);
-//	m_FenceValue++;
-//
-//	if(m_Fence->GetCompletedValue() < m_FenceValue - 1)
-//	{
-//		m_Fence->SetEventOnCompletion(m_FenceValue - 1, m_FenceEvent);
-//		WaitForSingleObject(m_FenceEvent, INFINITE);
-//	}
-//}
-
 void Dx12Device::AllocateMainDescriptorHeap(const int numTextures)
 {
-	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-	srvHeapDesc.NumDescriptors = static_cast<int>(ShaderResourceSlot::NonTextureCount) + numTextures;
-	srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_DescriptorHeap)));
+	m_MainDescriptorHeap.Initialize(m_Device.Get());
+	m_MainDescriptorHeap.AllocateStaticResources(static_cast<int>(ShaderResourceSlot::NonTextureCount) + numTextures);
 }
 
-void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot)
+void Dx12Device::AddStaticTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot)
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
@@ -399,7 +365,7 @@ void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT form
 	desc.Texture2D.ResourceMinLODClamp = 0.0f;
 
 	// Go to appropriate descriptor
-	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_MainDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
 	handle.ptr += (slot + static_cast<uint32_t>(ShaderResourceSlot::TextureStart)) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_Device->CreateShaderResourceView(
@@ -409,7 +375,7 @@ void Dx12Device::AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT form
 	);
 }
 
-void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const
+void Dx12Device::AddStaticBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const
 {
 	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
 	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
@@ -427,7 +393,7 @@ void Dx12Device::AddBufferDescriptor(ID3D12Resource* resource, uint32_t numEleme
 	}
 
 	// Go to appropriate descriptor
-	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_MainDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
 	handle.ptr += static_cast<uint32_t>(slot) * m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	m_Device->CreateShaderResourceView(

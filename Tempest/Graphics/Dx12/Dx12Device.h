@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Graphics/Dx12/Dx12Common.h>
+#include <Graphics/Dx12/MainDescriptorHeapManager.h>
 #include <Graphics/Dx12/Managers/TextureManager.h>
 #include <Platform/WindowsPlatform.h>
 
@@ -36,7 +37,6 @@ public:
 		return m_Device.Get();
 	}
 
-	//void CopyResources(ID3D12Resource* dst, ID3D12Resource* src, D3D12_RESOURCE_STATES requiredDstState);
 	void AllocateMainDescriptorHeap(const int numTextures);
 
 	// TODO: This should be refactored
@@ -50,8 +50,8 @@ public:
 		TextureStart,
 		NonTextureCount = TextureStart
 	};
-	void AddBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
-	void AddTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot);
+	void AddStaticBufferDescriptor(ID3D12Resource* resource, uint32_t numElements, uint32_t stride, ShaderResourceSlot slot) const;
+	void AddStaticTextureDescriptor(ID3D12Resource* resource, DXGI_FORMAT format, uint32_t mipLevels, uint32_t slot);
 	// TODO: Remove this abstraction and just use device code inside the backend
 public:
 	ComPtr<IDXGIFactory4> m_Factory;
@@ -81,9 +81,10 @@ public:
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
 
-	ComPtr<ID3D12DescriptorHeap> m_DescriptorHeap;
+	MainDescriptorHeapManager m_MainDescriptorHeap;
 
 	// UI Stuff
+	// TODO: Merge this with main descriptor heap
 	ComPtr<ID3D12DescriptorHeap> m_UISRVHeap;
 
 public: // TODO: Wrong, rething how are we going to do device management

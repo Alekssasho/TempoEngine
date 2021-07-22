@@ -17,7 +17,13 @@ void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
 	m_Query.Init<Components::Transform, Components::StaticMesh>(world);
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
-		"StaticMesh"
+		"StaticMesh",
+		RenderPhase::Main
+	});
+
+	m_ShadowHandle = renderer.RequestPipelineState(PipelineStateDescription{
+		"StaticMesh",
+		RenderPhase::Shadow
 	});
 }
 
@@ -43,7 +49,7 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 	}
 }
 
-void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer)
+void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase)
 {
 	struct GeometryConstants
 	{
@@ -63,7 +69,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 			constants.materialIndex = meshData.material_index();
 
 			RendererCommandDrawMeshlet command;
-			command.Pipeline = m_Handle;
+			command.Pipeline = phase == RenderPhase::Main ? m_Handle : m_ShadowHandle;
 			command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
 			command.MeshletCount = meshData.meshlets_count();
 			commandList.AddCommand(command);

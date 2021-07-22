@@ -16,6 +16,7 @@ namespace Definition { struct ShaderLibrary; }
 struct PipelineStateDescription
 {
 	const char* ShaderName;
+	RenderPhase Phase;
 };
 
 class Renderer

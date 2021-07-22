@@ -78,7 +78,7 @@ void Renderer::RenderFrame(const FrameData& data)
 	RendererCommandList commandList;
 	for (const auto& feature : m_RenderFeatures)
 	{
-		feature->GenerateCommands(data, commandList, *this);
+		feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
 	}
 
 	// TODO: more views
@@ -121,8 +121,12 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 		desc.MSCode = msShader->code()->Data();
 		desc.MSCodeSize = msShader->code()->size();
 	}
-	desc.PSCode = psShader->code()->Data();
-	desc.PSCodeSize = psShader->code()->size();
+	// Shadow phase does not use Pixel Shaders
+	if (description.Phase == RenderPhase::Main)
+	{
+		desc.PSCode = psShader->code()->Data();
+		desc.PSCodeSize = psShader->code()->size();
+	}
 
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
 }

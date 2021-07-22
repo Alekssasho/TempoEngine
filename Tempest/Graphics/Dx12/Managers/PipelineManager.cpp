@@ -131,10 +131,13 @@ PipelineStateHandle PipelineManager::CreateGraphicsPipeline(const GraphicsPipeli
 	// TODO: Temp memory
 	PipelineStreamBuilder builder;
 	builder.Add(PipelineStreamSubobject<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, ID3D12RootSignature*>(m_Signature.Get()));
-	builder.Add(PipelineStreamSubobject<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, D3D12_SHADER_BYTECODE>(D3D12_SHADER_BYTECODE{
-		description.PSCode,
-		description.PSCodeSize
-	}));
+	if(description.PSCode)
+	{
+		builder.Add(PipelineStreamSubobject<D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, D3D12_SHADER_BYTECODE>(D3D12_SHADER_BYTECODE{
+			description.PSCode,
+			description.PSCodeSize
+		}));
+	}
 
 	if(description.MSCode)
 	{

@@ -17,6 +17,6 @@ members = [
 [patch.crates-io]
 gltf = {path = "ThirdParty/gltf" }
 meshopt = {path = "ThirdParty/meshopt-rs" }
-spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }
-spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }
-spirv-std-macros = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.5" }
+spirv-builder = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.10" }
+spirv-std = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.10" }
+spirv-std-macros = { git = "https://github.com/EmbarkStudios/rust-gpu", tag = "v0.4.0-alpha.10" }

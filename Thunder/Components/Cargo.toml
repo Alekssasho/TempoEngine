@@ -10,4 +10,4 @@ edition = "2018"
 bindgen = "0.55.1"
 
 [dependencies]
-nalgebra-glm = "0.7.0"
+math = { path="../math" }

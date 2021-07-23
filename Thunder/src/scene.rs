@@ -91,7 +91,7 @@ impl GltfData {
         )
     }
 
-    fn node_transform(&self, index: usize) -> math::Mat4x4 {
+    fn node_transform(&self, index: usize) -> math::Mat4 {
         let mat = self
             .document
             .nodes()
@@ -99,10 +99,7 @@ impl GltfData {
             .unwrap()
             .transform()
             .matrix();
-        math::mat4x4(
-            mat[0][0], mat[1][0], mat[2][0], mat[3][0], mat[0][1], mat[1][1], mat[2][1], mat[3][1],
-            mat[0][2], mat[1][2], mat[2][2], mat[3][2], mat[0][3], mat[1][3], mat[2][3], mat[3][3],
-        )
+        math::Mat4::from_cols_array_2d(&mat)
     }
 
     fn node(&self, index: usize) -> gltf::Node {
@@ -224,13 +221,13 @@ impl Scene {
     fn walk_nodes<T, F>(
         gltf: &GltfData,
         node_index: usize,
-        parent_transform: &math::Mat4x4,
+        parent_transform: &math::Mat4,
         walk_function: &mut F,
     ) -> Option<T>
     where
-        F: FnMut(&GltfData, usize, &math::Mat4x4) -> Option<T>,
+        F: FnMut(&GltfData, usize, &math::Mat4) -> Option<T>,
     {
-        let world_transform = parent_transform * gltf.node_transform(node_index);
+        let world_transform = *parent_transform * gltf.node_transform(node_index);
 
         let return_value = walk_function(gltf, node_index, &world_transform);
         if return_value.is_some() {
@@ -276,9 +273,8 @@ impl Scene {
                 let trs = math::TRS::new(&transform);
 
                 // TRS is in Tempest LH system, so we use Tempest oriented Up and Forward directions
-                let rotated_up = math::quat_cross_vec(&trs.rotate, &math::vec3(0.0, 1.0, 0.0));
-                let rotated_forward =
-                    math::quat_cross_vec(&trs.rotate, &math::vec3(0.0, 0.0, -1.0));
+                let rotated_up = trs.rotate * math::vec3(0.0, 1.0, 0.0);
+                let rotated_forward = trs.rotate * math::vec3(0.0, 0.0, -1.0);
 
                 return data_definition_generated::Camera::new(
                     camera.0,
@@ -314,7 +310,7 @@ impl Scene {
 
     pub fn walk_root_nodes<T, F>(&self, mut walk_function: F) -> Option<T>
     where
-        F: FnMut(&GltfData, usize, &math::Mat4x4) -> Option<T>,
+        F: FnMut(&GltfData, usize, &math::Mat4) -> Option<T>,
     {
         for node in &self.root_nodes {
             let return_value = Scene::walk_nodes(

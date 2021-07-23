@@ -38,13 +38,13 @@ struct OrbitCamera {
 }
 
 impl OrbitCamera {
-    fn create_view_matrix(&self) -> glam::Mat4 {
-        let eye = glam::vec3(
+    fn create_view_matrix(&self) -> math::Mat4 {
+        let eye = math::vec3(
             self.radius * self.azimuth.cos() * self.polar.sin(),
             self.radius * self.azimuth.sin() * self.polar.sin(),
             self.radius * self.polar.cos(),
         );
-        glam::Mat4::look_at_rh(eye, glam::vec3(0.0, 0.0, 0.0), glam::vec3(0.0, 1.0, 0.0))
+        math::Mat4::look_at_rh(eye, math::vec3(0.0, 0.0, 0.0), math::vec3(0.0, 1.0, 0.0))
     }
 }
 
@@ -68,8 +68,8 @@ fn main() {
             let vertex_buffer = database.vertex_buffer().unwrap();
             let vertex_buffer_vec3 = unsafe {
                 ::std::slice::from_raw_parts(
-                    vertex_buffer.as_ptr() as *const glam::Vec3,
-                    vertex_buffer.len() / std::mem::size_of::<glam::Vec3>(),
+                    vertex_buffer.as_ptr() as *const math::Vec3,
+                    vertex_buffer.len() / std::mem::size_of::<math::Vec3>(),
                 )
             };
             let mut map = HashMap::new();
@@ -90,10 +90,10 @@ fn main() {
                                     ..((first_vertex + meshlet.vertex_count()) as usize)];
                                 let min_sizes = mesh_slice
                                     .iter()
-                                    .fold(glam::Vec3::default(), |init, vertex| init.min(*vertex));
+                                    .fold(math::Vec3::default(), |init, vertex| init.min(*vertex));
                                 let max_sizes = mesh_slice
                                     .iter()
-                                    .fold(glam::Vec3::default(), |init, vertex| init.max(*vertex));
+                                    .fold(math::Vec3::default(), |init, vertex| init.max(*vertex));
                                 (min_sizes, max_sizes)
                             })
                             .reduce(|a, b| (a.0.min(b.0), a.1.max(b.1)))
@@ -286,7 +286,7 @@ fn main() {
     let mut current_mesh_index = 0;
     let start_time = Instant::now();
     let mut should_move_camera = false;
-    let mut last_pointer_pos = glam::vec2(0.0, 0.0);
+    let mut last_pointer_pos = math::vec2(0.0, 0.0);
 
     let mut whole_mesh = true;
     let mut all_primitive_meshes = true;
@@ -323,7 +323,7 @@ fn main() {
                     }
                 }
                 CursorMoved { position, .. } => {
-                    let current_pos = glam::vec2(position.x as f32, position.y as f32);
+                    let current_pos = math::vec2(position.x as f32, position.y as f32);
                     if should_move_camera {
                         let delta = current_pos - last_pointer_pos;
                         camera.polar += (delta.x / 16.0).to_radians();
@@ -540,7 +540,7 @@ fn main() {
                     rpass.set_index_buffer(index_buffer.slice(..), wgpu::IndexFormat::Uint16);
 
                     let push_constants = ShaderConstants {
-                        view_projection_matrix: glam::Mat4::perspective_rh(
+                        view_projection_matrix: math::Mat4::perspective_rh(
                             60f32.to_radians(),
                             sc_desc.width as f32 / sc_desc.height as f32,
                             0.1,

@@ -3,8 +3,7 @@
 #![allow(non_snake_case)]
 include!(concat!(env!("OUT_DIR"), "/component_bindings.rs"));
 
-pub use nalgebra_glm as glm;
-pub type glm_vec3 = glm::Vec3;
-pub type glm_vec4 = glm::Vec4;
-pub type glm_mat4x4 = glm::Mat4x4;
-pub type glm_quat = glm::Quat;
+pub type glm_vec3 = math::Vec3;
+pub type glm_vec4 = math::Vec4;
+pub type glm_mat4x4 = math::Mat4;
+pub type glm_quat = math::Quat;

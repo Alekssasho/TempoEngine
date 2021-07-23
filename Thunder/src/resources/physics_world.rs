@@ -47,7 +47,7 @@ impl Resource for PhysicsWorldResource {
                 let trs = math::TRS::new(world_transform);
                 let px_transform = PxTransform::from_translation_rotation(
                     &PxVec3::new(trs.translate.x, trs.translate.y, trs.translate.z),
-                    &PxQuat::new(trs.rotate.i, trs.rotate.j, trs.rotate.k, trs.rotate.w),
+                    &PxQuat::new(trs.rotate.x, trs.rotate.y, trs.rotate.z, trs.rotate.w),
                 );
                 match physics_body.collision_shape.type_ {
                     gltf::json::validation::Checked::Valid(tempest_extension::Type::Mesh) => {

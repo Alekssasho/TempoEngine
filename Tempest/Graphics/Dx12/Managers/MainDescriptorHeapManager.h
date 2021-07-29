@@ -12,7 +12,7 @@ namespace Dx12
 // Second part is dynamic resources, which are allocated per frame, based on ring buffer scheme.
 // To avoid having to do synchronizations because multiple frames could be in flight, we allocated
 // 1 000 000 descriptors (this is the hardware limit for Tier 1 (lowest tier))
-struct MainDescriptorHeapManager
+struct MainDescriptorHeapManager : Utils::NonCopyable
 {
 	void Initialize(ID3D12Device3* device);
 	void Destroy();

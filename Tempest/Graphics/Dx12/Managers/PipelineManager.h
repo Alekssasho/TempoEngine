@@ -19,7 +19,7 @@ struct GraphicsPipelineStateDescription
 	size_t MSCodeSize = 0;
 };
 
-class PipelineManager
+class PipelineManager : Utils::NonCopyable
 {
 public:
 	PipelineManager(Dx12Device& device);

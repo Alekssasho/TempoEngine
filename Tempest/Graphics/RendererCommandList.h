@@ -11,9 +11,16 @@ enum class RendererCommandType : uint8_t
 	Count
 };
 
+enum class ShaderParameterType : uint8_t
+{
+	Scene,
+	Geometry,
+	Count
+};
+
 struct ShaderParameterView
 {
-	uint32_t GeometryConstantDataOffset;
+	uint32_t ConstantDataOffset;
 };
 
 template<RendererCommandType TType>
@@ -29,7 +36,7 @@ struct alignas(16) RendererCommand
 struct RendererCommandDrawInstanced : RendererCommand<RendererCommandType::DrawInstanced>
 {
 	PipelineStateHandle Pipeline;
-	ShaderParameterView ParameterView;
+	ShaderParameterView ParameterViews[size_t(ShaderParameterType::Count)];
 	uint32_t VertexCountPerInstance;
 	uint32_t InstanceCount;
 };
@@ -37,7 +44,7 @@ struct RendererCommandDrawInstanced : RendererCommand<RendererCommandType::DrawI
 struct RendererCommandDrawMeshlet : RendererCommand<RendererCommandType::DrawMeshlet>
 {
 	PipelineStateHandle Pipeline;
-	ShaderParameterView ParameterView;
+	ShaderParameterView ParameterViews[size_t(ShaderParameterType::Count)];
 	uint32_t MeshletCount;
 };
 
@@ -50,21 +57,7 @@ struct RendererCommandList
 		m_DataBuffer.insert(m_DataBuffer.end(), reinterpret_cast<const uint8_t*>(&command), reinterpret_cast<const uint8_t*>(&command) + sizeof(T));
 	}
 
-	// Insert data into the constant buffer data and return offset into the constant data for later binding to shaders.
-	template<typename T>
-	uint32_t AddConstantData(const T& data)
-	{
-		uint32_t offset = uint32_t(m_ConstantBufferData.size());
-		// TODO: this 256 should come from backend. Maybe there should be queried as well.
-		const size_t alignedSize = ((sizeof(T) + 255) / 256) * 256;
-		m_ConstantBufferData.resize(offset + alignedSize);
-		memcpy(m_ConstantBufferData.data() + offset, &data, sizeof(T));
-		return offset;
-	}
-
 //private:
 	eastl::vector<uint8_t> m_DataBuffer;
-	// TODO: This should probably be multiple per shader parameter space
-	eastl::vector<uint8_t> m_ConstantBufferData;
 };
 }

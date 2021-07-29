@@ -35,7 +35,7 @@ struct UploadData
 	uint64_t CurrentOffset;
 };
 
-class Backend
+class Backend : Utils::NonCopyable
 {
 public:
 	Backend();
@@ -43,19 +43,13 @@ public:
 
 	void Initialize(WindowHandle handle);
 	// TODO: It should take Render Graph structure for barriers & a vector of command lists as we will not put everything in one list
-	// TODO: Remove Camera and frame data as this are not concepts backend should be concerned with
-	void RenderFrame(const Camera* view, const FrameData& frameData, const RendererCommandList& commandList);
+	void RenderFrame(const RendererCommandList& commandList);
 
 	Dx12Device* GetDevice() const { return m_Device.get(); }
 	UploadData PrepareUpload(uint32_t size);
 	void ExecuteUpload(UploadData& uploadData);
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
-
-	// Use more than one buffer for every backbuffer index to avoid hazards
-	using ConstantBufferHandle = eastl::array<BufferHandle, 2>;
-	ConstantBufferHandle m_GeometryConstantBufferData = { sInvalidHandle, sInvalidHandle };
-	ConstantBufferHandle m_SceneConstantBufferData = { sInvalidHandle, sInvalidHandle };
 public:
 	// Managers
 	BackendManagers Managers;

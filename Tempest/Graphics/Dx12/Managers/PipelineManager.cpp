@@ -46,6 +46,7 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	geometryConstants.Descriptor.ShaderRegister = 0;
 	geometryConstants.Descriptor.RegisterSpace = 1;
 
+	// TODO: This must be in sync with ShaderParameterType
 	D3D12_ROOT_PARAMETER params[] = {
 		sceneConstants,
 		geometryConstants

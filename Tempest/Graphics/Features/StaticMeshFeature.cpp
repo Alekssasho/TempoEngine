@@ -7,6 +7,7 @@
 #include <World/World.h>
 #include <World/Components/Components.h>
 #include <World/EntityQueryImpl.h>
+#include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 
 namespace Tempest
 {
@@ -57,6 +58,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 		uint32_t meshletOffset;
 		uint32_t materialIndex;
 	};
+	Dx12::ConstantBufferDataManager& constantDataManager = renderer.GetConstantDataManager();
 
 	for (const auto& mesh : data.StaticMeshes)
 	{
@@ -70,11 +72,11 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 
 			RendererCommandDrawMeshlet command;
 			command.Pipeline = phase == RenderPhase::Main ? m_Handle : m_ShadowHandle;
-			command.ParameterView.GeometryConstantDataOffset = commandList.AddConstantData(constants);
+			command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = renderer.GetCurrentSceneConstantDataOffset();
+			command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(constants);
 			command.MeshletCount = meshData.meshlets_count();
 			commandList.AddCommand(command);
 		}
-
 	}
 }
 }

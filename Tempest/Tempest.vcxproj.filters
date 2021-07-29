@@ -147,8 +147,11 @@
     <ClInclude Include="Graphics\Dx12\Managers\TextureManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\Dx12\MainDescriptorHeapManager.h">
-      <Filter>Graphics\Dx12</Filter>
+    <ClInclude Include="Graphics\Dx12\Managers\ConstantBufferDataManager.h">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="Graphics\Dx12\Managers\MainDescriptorHeapManager.h">
+      <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -236,8 +239,11 @@
     <ClCompile Include="Graphics\Dx12\Managers\TextureManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\Dx12\MainDescriptorHeapManager.cpp">
-      <Filter>Graphics\Dx12</Filter>
+    <ClCompile Include="Graphics\Dx12\Managers\MainDescriptorHeapManager.cpp">
+      <Filter>Graphics\Dx12\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\Dx12\Managers\ConstantBufferDataManager.cpp">
+      <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

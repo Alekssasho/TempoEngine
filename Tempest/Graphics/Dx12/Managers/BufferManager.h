@@ -23,7 +23,7 @@ struct BufferDescription
 	const void* Data;
 };
 
-class BufferManager
+class BufferManager : Utils::NonCopyable
 {
 public:
 	BufferManager(Dx12Device& device);

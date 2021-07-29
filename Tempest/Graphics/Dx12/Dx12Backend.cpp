@@ -35,26 +35,12 @@ Backend::~Backend()
 #endif
 }
 
-// TODO: move this to the renderer and add UpdateBuffer commands in the backend. It is not Dx12 job to now what a scene is, it needs only to update buffers/textures and issues draw/dispatch commands
-struct SceneConstantData
-{
-	glm::mat4x4 ViewProjection;
-	glm::vec4 LightDirection;
-	glm::vec4 LightColor;
-};
-
 void Backend::Initialize(WindowHandle handle)
 {
 	m_Device->Initialize(handle);
-
-	// Allocate scene constant buffers
-	for (int i = 0; i < std::size(m_SceneConstantBufferData); ++i)
-	{
-		m_SceneConstantBufferData[i] = Managers.Buffer.CreateBuffer({ BufferType::Constant, sizeof(SceneConstantData), nullptr }, nullptr);
-	}
 }
 
-void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const RendererCommandList& commandList)
+void Backend::RenderFrame(const RendererCommandList& commandList)
 {
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
 
@@ -95,28 +81,14 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 		}
 	};
 
-	// Prepare constant buffer data
-	assert(frameData.DirectionalLights.size() == 1);
-	SceneConstantData sceneData{
-		view->GetViewProjection(),
-		glm::vec4(frameData.DirectionalLights[0].Direction, 0.0f),
-		glm::vec4(frameData.DirectionalLights[0].Color, 1.0f)
-	};
-	Managers.Buffer.MapWriteData(m_SceneConstantBufferData[frame.BackBufferIndex], &sceneData, sizeof(SceneConstantData));
-
-	// TODO: Make this not allocate every frame
-	if(commandList.m_ConstantBufferData.size() > 0)
-	{
-		if(m_GeometryConstantBufferData[frame.BackBufferIndex] != sInvalidHandle)
+	const D3D12_GPU_VIRTUAL_ADDRESS constantBufferData = m_Device->GetConstantDataManager().GetGPUAddress();
+	auto setShaderParameters = [&](const ShaderParameterView parameters[size_t(ShaderParameterType::Count)]) {
+		// TODO: Maybe some kind of cache ?
+		for(int i = 0; i < int(ShaderParameterType::Count); ++i)
 		{
-			Managers.Buffer.DestroyBuffer(m_GeometryConstantBufferData[frame.BackBufferIndex]);
+			frame.CommandList->SetGraphicsRootConstantBufferView(i, constantBufferData + parameters[i].ConstantDataOffset);
 		}
-
-		BufferHandle bufferHandle = Managers.Buffer.CreateBuffer({ BufferType::Constant, commandList.m_ConstantBufferData.size(), nullptr }, nullptr);
-		m_GeometryConstantBufferData[frame.BackBufferIndex] = bufferHandle;
-
-		Managers.Buffer.MapWriteData(bufferHandle, commandList.m_ConstantBufferData.data(), commandList.m_ConstantBufferData.size());
-	}
+	};
 
 	const uint8_t* commandListIterator = commandList.m_DataBuffer.begin();
 	while (commandListIterator && commandListIterator < commandList.m_DataBuffer.end())
@@ -129,8 +101,7 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 		{
 			const RendererCommandDrawInstanced* command = reinterpret_cast<const RendererCommandDrawInstanced*>(commandListIterator);
 			setPipeline(command->Pipeline);
-			frame.CommandList->SetGraphicsRootConstantBufferView(0, Managers.Buffer.GetGPUAddress(m_SceneConstantBufferData[frame.BackBufferIndex]));
-			frame.CommandList->SetGraphicsRootConstantBufferView(1, Managers.Buffer.GetGPUAddress(m_GeometryConstantBufferData[frame.BackBufferIndex]) + command->ParameterView.GeometryConstantDataOffset);
+			setShaderParameters(command->ParameterViews);
 			frame.CommandList->DrawInstanced(command->VertexCountPerInstance, command->InstanceCount, 0, 0);
 
 			commandListIterator += sizeof(RendererCommandDrawInstanced);
@@ -140,8 +111,7 @@ void Backend::RenderFrame(const Camera* view, const FrameData& frameData, const 
 		{
 			const RendererCommandDrawMeshlet* command = reinterpret_cast<const RendererCommandDrawMeshlet*>(commandListIterator);
 			setPipeline(command->Pipeline);
-			frame.CommandList->SetGraphicsRootConstantBufferView(0, Managers.Buffer.GetGPUAddress(m_SceneConstantBufferData[frame.BackBufferIndex]));
-			frame.CommandList->SetGraphicsRootConstantBufferView(1, Managers.Buffer.GetGPUAddress(m_GeometryConstantBufferData[frame.BackBufferIndex]) + command->ParameterView.GeometryConstantDataOffset);
+			setShaderParameters(command->ParameterViews);
 			frame.CommandList->DispatchMesh(command->MeshletCount, 1, 1);
 			commandListIterator += sizeof(RendererCommandDrawMeshlet);
 			break;

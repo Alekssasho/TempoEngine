@@ -71,18 +71,35 @@ FrameData Renderer::GatherWorldData(const World& world)
 	return frameData;
 }
 
+// TODO: this will be good to be shared between the shader code and C++ if possible
+struct SceneConstantData
+{
+	glm::mat4x4 ViewProjection;
+	glm::vec4 LightDirection;
+	glm::vec4 LightColor;
+};
+
 void Renderer::RenderFrame(const FrameData& data)
 {
 	OPTICK_EVENT();
 
 	RendererCommandList commandList;
+	// Prepare constant buffer data
+	assert(data.DirectionalLights.size() == 1);
+	SceneConstantData sceneData{
+		m_Views[0]->GetViewProjection(),
+		glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+		glm::vec4(data.DirectionalLights[0].Color, 1.0f)
+	};
+	m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
+
 	for (const auto& feature : m_RenderFeatures)
 	{
 		feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
 	}
 
 	// TODO: more views
-	m_Backend->RenderFrame(m_Views[0], data, commandList);
+	m_Backend->RenderFrame(commandList);
 }
 
 void Renderer::RegisterView(Camera* camera)
@@ -129,6 +146,11 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 	}
 
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
+}
+
+Dx12::ConstantBufferDataManager& Renderer::GetConstantDataManager() const
+{
+	return m_Backend->GetDevice()->GetConstantDataManager();
 }
 
 struct LoadGeometryStaticFunctionData

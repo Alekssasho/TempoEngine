@@ -11,7 +11,7 @@ namespace Definition {
 	struct GeometryDatabase;
 }
 
-class MeshManager
+class MeshManager : Utils::NonCopyable
 {
 public:
 	eastl::span<const Definition::PrimitiveMeshData> GetMeshData(MeshHandle handle) const;

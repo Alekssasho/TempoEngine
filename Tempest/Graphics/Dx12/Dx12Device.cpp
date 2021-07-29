@@ -81,6 +81,9 @@ Dx12Device::Dx12Device()
 
 Dx12Device::~Dx12Device()
 {
+	m_MainDescriptorHeap.Destroy();
+	m_ConstantBufferData.Destroy();
+
 	ImGui_ImplDX12_InvalidateDeviceObjects();
 	ImGui_ImplDX12_Shutdown();
 }
@@ -223,16 +226,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 		m_MainCommandLists.push_back({ allocator, list });
 	}
 
-	//{
-	//	// TODO: this could be copy only, but we cannot make any resource barriers on copy lists.
-	//	CHECK_SUCCESS(m_Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&copyList.CommandAllocator)));
-	//	copyList.CommandAllocator->SetName(L"Copy Command Allocator");
-
-	//	CHECK_SUCCESS(m_Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, copyList.CommandAllocator.Get(), nullptr, IID_PPV_ARGS(&copyList.DxCommandList)));
-	//	copyList.DxCommandList->SetName(L"Copy Command List");
-
-	//	copyList.DxCommandList->Close();
-	//}
+	m_ConstantBufferData.Initialize(m_Device.Get());
 
 	// Initialize UI
 	{

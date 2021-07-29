@@ -10,7 +10,7 @@ class World;
 class Camera;
 struct RenderFeature;
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
-namespace Dx12 { class Backend; }
+namespace Dx12 { class Backend; struct ConstantBufferDataManager; }
 namespace Definition { struct ShaderLibrary; }
 
 struct PipelineStateDescription
@@ -19,7 +19,7 @@ struct PipelineStateDescription
 	RenderPhase Phase;
 };
 
-class Renderer
+class Renderer : Utils::NonCopyable
 {
 public:
 	Renderer();
@@ -40,6 +40,12 @@ public:
 
 	// Managers
 	MeshManager Meshes;
+
+	uint32_t GetCurrentSceneConstantDataOffset() const
+	{
+		return m_CurrentSceneConstantDataOffset;
+	}
+	Dx12::ConstantBufferDataManager& GetConstantDataManager() const;
 private:
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
@@ -51,6 +57,8 @@ private:
 	BufferHandle m_MeshletData;
 	BufferHandle m_MeshletIndicesData;
 	BufferHandle m_MaterialData;
+
+	uint32_t m_CurrentSceneConstantDataOffset;
 };
 }
 

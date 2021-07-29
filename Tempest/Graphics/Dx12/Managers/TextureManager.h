@@ -32,7 +32,7 @@ struct TextureDescription
 DXGI_FORMAT DxFormatForStorageFromTextureFormat(const Definition::TextureData& data);
 DXGI_FORMAT DxFormatForViewFromTextureFormat(const Definition::TextureData& data);
 
-class TextureManager
+class TextureManager : Utils::NonCopyable
 {
 public:
 	TextureManager(Dx12Device& device);

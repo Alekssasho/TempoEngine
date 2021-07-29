@@ -1,6 +1,6 @@
 #include <CommonIncludes.h>
 
-#include <Graphics/Dx12/MainDescriptorHeapManager.h>
+#include <Graphics/Dx12/Managers/MainDescriptorHeapManager.h>
 
 namespace Tempest
 {

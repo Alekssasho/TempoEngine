@@ -1,7 +1,8 @@
 #pragma once
 
 #include <Graphics/Dx12/Dx12Common.h>
-#include <Graphics/Dx12/MainDescriptorHeapManager.h>
+#include <Graphics/Dx12/Managers/MainDescriptorHeapManager.h>
+#include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 #include <Graphics/Dx12/Managers/TextureManager.h>
 #include <Platform/WindowsPlatform.h>
 
@@ -18,7 +19,7 @@ struct Dx12FrameData
 	D3D12_CPU_DESCRIPTOR_HANDLE BackBufferDSV;
 };
 
-class Dx12Device
+class Dx12Device : Utils::NonCopyable
 {
 public:
 	Dx12Device();
@@ -35,6 +36,11 @@ public:
 	ID3D12Device3* GetDevice()
 	{
 		return m_Device.Get();
+	}
+
+	ConstantBufferDataManager& GetConstantDataManager()
+	{
+		return m_ConstantBufferData;
 	}
 
 	void AllocateMainDescriptorHeap(const int numTextures);
@@ -82,13 +88,11 @@ public:
 	eastl::vector<CommandList> m_MainCommandLists;
 
 	MainDescriptorHeapManager m_MainDescriptorHeap;
+	ConstantBufferDataManager m_ConstantBufferData;
 
 	// UI Stuff
 	// TODO: Merge this with main descriptor heap
 	ComPtr<ID3D12DescriptorHeap> m_UISRVHeap;
-
-public: // TODO: Wrong, rething how are we going to do device management
-	CommandList copyList;
 };
 }
 }

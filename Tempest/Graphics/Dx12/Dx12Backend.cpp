@@ -44,27 +44,6 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 {
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
 
-	const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
-	frame.CommandList->ClearRenderTargetView(frame.BackBufferRTV, clearColor, 0, nullptr);
-	frame.CommandList->ClearDepthStencilView(frame.BackBufferDSV, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
-
-	frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, 0, &frame.BackBufferDSV);
-	D3D12_VIEWPORT viewport;
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = float(m_Device->GetSwapChainSize().x);
-	viewport.Height = float(m_Device->GetSwapChainSize().y);
-	viewport.MinDepth = 0;
-	viewport.MaxDepth = 1;
-	frame.CommandList->RSSetViewports(1, &viewport);
-
-	D3D12_RECT scissor;
-	scissor.left = 0;
-	scissor.top = 0;
-	scissor.right = m_Device->GetSwapChainSize().x;
-	scissor.bottom = m_Device->GetSwapChainSize().y;
-	frame.CommandList->RSSetScissorRects(1, &scissor);
-
 	// TODO: This should probably be part of the pipeline itself
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
 	// TODO: better support for indices of root parameters
@@ -97,6 +76,64 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		RendererCommandType type = reinterpret_cast<const RendererCommand<RendererCommandType::Count>*>(commandListIterator)->Type;
 		switch (type)
 		{
+		// TODO: Maybe use render pass api
+		case RendererCommandType::BeginRenderPass:
+		{
+			const RendererCommandBeginRenderPass* command = reinterpret_cast<const RendererCommandBeginRenderPass*>(commandListIterator);
+
+			D3D12_CPU_DESCRIPTOR_HANDLE* rtv = nullptr;
+			D3D12_CPU_DESCRIPTOR_HANDLE* dsv = nullptr;
+			uint32_t width = 0;
+			uint32_t height = 0;
+			if(command->ColorTarget.Texture == -2)
+			{
+				rtv = &frame.BackBufferRTV;
+				width = m_Device->GetSwapChainSize().x;
+				height = m_Device->GetSwapChainSize().y;
+			}
+			if(command->DepthStencilTarget.Texture == -2)
+			{
+				dsv = &frame.BackBufferDSV;
+				width = m_Device->GetSwapChainSize().x;
+				height = m_Device->GetSwapChainSize().y;
+			}
+
+			if(rtv && command->ColorTarget.LoadAction == TextureTargetLoadAction::Clear)
+			{
+				const float clearColor[] = { 1.0f, 0.0f, 0.0f, 1.0f };
+				frame.CommandList->ClearRenderTargetView(*rtv, clearColor, 0, nullptr);
+			}
+			if(dsv && command->DepthStencilTarget.LoadAction == TextureTargetLoadAction::Clear)
+			{
+				frame.CommandList->ClearDepthStencilView(*dsv, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+			}
+
+			frame.CommandList->OMSetRenderTargets(rtv ? 1 : 0, rtv, 0, dsv);
+			// TODO: This should be taken from somewhere
+			D3D12_VIEWPORT viewport;
+			viewport.TopLeftX = 0;
+			viewport.TopLeftY = 0;
+			viewport.Width = float(width);
+			viewport.Height = float(height);
+			viewport.MinDepth = 0;
+			viewport.MaxDepth = 1;
+			frame.CommandList->RSSetViewports(1, &viewport);
+
+			D3D12_RECT scissor;
+			scissor.left = 0;
+			scissor.top = 0;
+			scissor.right = width;
+			scissor.bottom = height;
+			frame.CommandList->RSSetScissorRects(1, &scissor);
+
+			commandListIterator += sizeof(RendererCommandBeginRenderPass);
+			break;
+		}
+		case RendererCommandType::EndRenderPass:
+		{
+			commandListIterator += sizeof(RendererCommandEndRenderPass);
+			break;
+		}
 		case RendererCommandType::DrawInstanced:
 		{
 			const RendererCommandDrawInstanced* command = reinterpret_cast<const RendererCommandDrawInstanced*>(commandListIterator);

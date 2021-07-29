@@ -93,12 +93,22 @@ void Renderer::RenderFrame(const FrameData& data)
 	};
 	m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
 
+	RendererCommandBeginRenderPass beginRenderPassCommand;
+	// TODO: Use special constant for backbuffer
+	beginRenderPassCommand.ColorTarget = {
+		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
+	};
+	beginRenderPassCommand.DepthStencilTarget = {
+		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare
+	};
+	commandList.AddCommand(beginRenderPassCommand);
 	for (const auto& feature : m_RenderFeatures)
 	{
 		feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
 	}
+	RendererCommandEndRenderPass endRenderPassCommand;
+	commandList.AddCommand(endRenderPassCommand);
 
-	// TODO: more views
 	m_Backend->RenderFrame(commandList);
 }
 

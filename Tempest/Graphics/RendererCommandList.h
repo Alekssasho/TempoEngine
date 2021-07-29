@@ -8,6 +8,8 @@ enum class RendererCommandType : uint8_t
 {
 	DrawInstanced,
 	DrawMeshlet,
+	BeginRenderPass,
+	EndRenderPass,
 	Count
 };
 
@@ -46,6 +48,36 @@ struct RendererCommandDrawMeshlet : RendererCommand<RendererCommandType::DrawMes
 	PipelineStateHandle Pipeline;
 	ShaderParameterView ParameterViews[size_t(ShaderParameterType::Count)];
 	uint32_t MeshletCount;
+};
+
+
+enum class TextureTargetStoreAction : uint8_t
+{
+	DoNotCare,
+	Store
+};
+
+enum class TextureTargetLoadAction : uint8_t
+{
+	DoNotCare,
+	Clear,
+	Load,
+};
+
+struct RendererCommandBeginRenderPass : RendererCommand<RendererCommandType::BeginRenderPass>
+{
+	struct TextureTarget
+	{
+		TextureHandle Texture;
+		TextureTargetLoadAction LoadAction;
+		TextureTargetStoreAction StoreAction;
+	};
+	TextureTarget ColorTarget;
+	TextureTarget DepthStencilTarget;
+};
+
+struct RendererCommandEndRenderPass : RendererCommand<RendererCommandType::EndRenderPass>
+{
 };
 
 struct RendererCommandList

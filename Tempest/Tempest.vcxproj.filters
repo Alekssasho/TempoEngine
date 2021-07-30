@@ -153,6 +153,9 @@
     <ClInclude Include="Graphics\Dx12\Managers\TwoPartRingBufferDescriptorHeapManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="DataDefinitions\TextureDatabase_generated.h">
+      <Filter>DataDefinitions</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />

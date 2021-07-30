@@ -61,7 +61,7 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	::ZeroMemory(&samplers[1], sizeof(D3D12_STATIC_SAMPLER_DESC));
-	samplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplers[1].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
 	samplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;

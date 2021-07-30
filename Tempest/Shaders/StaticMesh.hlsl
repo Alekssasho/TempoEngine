@@ -77,8 +77,8 @@ void MeshShaderMain(
 }
 
 // TODO: Use sampler descriptor heaps for thouse
-SamplerState MaterialTextureSampler;
-SamplerState ShadowMapSampler;
+SamplerState MaterialTextureSampler : register(s0, space0);
+SamplerComparisonState ShadowMapSampler : register(s1, space0);
 
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
@@ -102,10 +102,8 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 	shadowMapCoords.xy = shadowMapCoords.xy * 0.5 + 0.5; // Clip space is [-1;1] so we need to convert it to uv space [0;1]
 	shadowMapCoords.y = 1.0 - shadowMapCoords.y; // After uv space transform bottom is at 0 and top is 1, but texture space is opposite so invert
 	Texture2D shadowMap = ResourceDescriptorHeap[g_Scene.LightShadowMapIndex];
-	//float shadowFactor = shadowMap.SampleCmpLevelZero(ShadowMapSampler, shadowMapCoords.xy, shadowMapCoords.z);
-	float shadowFactor = shadowMap.Sample(ShadowMapSampler, shadowMapCoords.xy).x >= shadowMapCoords.z ? 1.0f : 0.0f;
+	float shadowFactor = shadowMap.SampleCmpLevelZero(ShadowMapSampler, shadowMapCoords.xy, shadowMapCoords.z);
 
 	return (color * diffuseFactor * g_Scene.LightColor * shadowFactor)
 			+ (color * ambientFactor);
-	//return float4(0.0f, shadowFactor, shadowFactor, 1.0f);
 }

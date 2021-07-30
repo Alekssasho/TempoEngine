@@ -52,21 +52,30 @@ PipelineManager::PipelineManager(Dx12Device& device)
 		geometryConstants
 	};
 
-	D3D12_STATIC_SAMPLER_DESC sampler;
-	::ZeroMemory(&sampler, sizeof(D3D12_STATIC_SAMPLER_DESC));
-	sampler.Filter  = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
-	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	D3D12_STATIC_SAMPLER_DESC samplers[2];
+	::ZeroMemory(&samplers[0], sizeof(D3D12_STATIC_SAMPLER_DESC));
+	samplers[0].Filter  = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplers[0].AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	::ZeroMemory(&samplers[1], sizeof(D3D12_STATIC_SAMPLER_DESC));
+	samplers[1].Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	samplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplers[1].ComparisonFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	samplers[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	samplers[1].ShaderRegister = 1;
 
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	// TODO: We don't need input assembler as we are doing bindless
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | D3D12_ROOT_SIGNATURE_FLAG_CBV_SRV_UAV_HEAP_DIRECTLY_INDEXED;
 	rootSignatureDesc.NumParameters = UINT(std::size(params));
 	rootSignatureDesc.pParameters = params;
-	rootSignatureDesc.NumStaticSamplers = 1;
-	rootSignatureDesc.pStaticSamplers = &sampler;
+	rootSignatureDesc.NumStaticSamplers = 2;
+	rootSignatureDesc.pStaticSamplers = samplers;
 
 	ComPtr<ID3DBlob> signature;
 	ComPtr<ID3DBlob> error;

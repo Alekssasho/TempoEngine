@@ -86,8 +86,10 @@ FrameData Renderer::GatherWorldData(const World& world)
 struct SceneConstantData
 {
 	glm::mat4x4 ViewProjection;
+	glm::mat4x4 LightShadowMatrix;
 	glm::vec4 LightDirection;
 	glm::vec4 LightColor;
+	uint32_t LightShadowMapIndex;
 };
 
 void Renderer::RenderFrame(const FrameData& data)
@@ -96,14 +98,18 @@ void Renderer::RenderFrame(const FrameData& data)
 
 	RendererCommandList commandList;
 
+	glm::mat4 shadowMatrix;
 	// Shadow Rendering Pass
 	{
 		auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
 		auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+		shadowMatrix = projectionMatrix * viewMatrix;
 		SceneConstantData sceneData{
-			projectionMatrix * viewMatrix,
+			shadowMatrix,
+			shadowMatrix,
 			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-			glm::vec4(data.DirectionalLights[0].Color, 1.0f)
+			glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+			0,
 		};
 		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
 
@@ -125,18 +131,40 @@ void Renderer::RenderFrame(const FrameData& data)
 		RendererCommandBarrier transitionToDepthRead;
 		transitionToDepthRead.TextureHandle = m_ShadowTexture;
 		transitionToDepthRead.BeforeState = ResourceState::DepthWrite;
-		transitionToDepthRead.AfterState = ResourceState::DepthRead;
+		transitionToDepthRead.AfterState = ResourceState::PixelShaderRead;
 		commandList.AddCommand(transitionToDepthRead);
 	}
 
 	// Main Pass
 	{
 		// Prepare constant buffer data
+		uint32_t shadowTextureSlot = m_Backend->GetDevice()->m_MainDescriptorHeap.AllocateDynamicResource();
+
+		D3D12_CPU_DESCRIPTOR_HANDLE handle(m_Backend->GetDevice()->m_MainDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
+		handle.ptr += shadowTextureSlot * m_Backend->GetDevice()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC desc;
+		::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+		desc.Format = DXGI_FORMAT_R32_FLOAT;
+		desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		desc.Texture2D.MostDetailedMip = 0;
+		desc.Texture2D.MipLevels = 1;
+		desc.Texture2D.PlaneSlice = 0;
+		desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+		m_Backend->GetDevice()->GetDevice()->CreateShaderResourceView(
+			m_Backend->Managers.Texture.GetTexture(m_ShadowTexture),
+			&desc,
+			handle
+		);
 		assert(data.DirectionalLights.size() == 1);
 		SceneConstantData sceneData{
 			m_Views[0]->GetViewProjection(),
+			shadowMatrix,
 			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-			glm::vec4(data.DirectionalLights[0].Color, 1.0f)
+			glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+			shadowTextureSlot
 		};
 		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
 
@@ -158,7 +186,7 @@ void Renderer::RenderFrame(const FrameData& data)
 
 		RendererCommandBarrier transitionToDepthWrite;
 		transitionToDepthWrite.TextureHandle = m_ShadowTexture;
-		transitionToDepthWrite.BeforeState = ResourceState::DepthRead;
+		transitionToDepthWrite.BeforeState = ResourceState::PixelShaderRead;
 		transitionToDepthWrite.AfterState = ResourceState::DepthWrite;
 		commandList.AddCommand(transitionToDepthWrite);
 	}

@@ -76,7 +76,9 @@ void MeshShaderMain(
 	}
 }
 
+// TODO: Use sampler descriptor heaps for thouse
 SamplerState MaterialTextureSampler;
+SamplerState ShadowMapSampler;
 
 float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
@@ -94,6 +96,16 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 		color = baseTexture.Sample(MaterialTextureSampler, input.UV);
 	}
 
-	return (color * diffuseFactor * g_Scene.LightColor)
+	// TODO: no need for perspective divide, as directional lights are using ortho projection matrix
+	float3 shadowMapCoords = mul(g_Scene.LightShadowMatrix, float4(input.PositionWorld, 1.0f)).xyz;
+	// TODO: Bake this into the shadow matrix
+	shadowMapCoords.xy = shadowMapCoords.xy * 0.5 + 0.5; // Clip space is [-1;1] so we need to convert it to uv space [0;1]
+	shadowMapCoords.y = 1.0 - shadowMapCoords.y; // After uv space transform bottom is at 0 and top is 1, but texture space is opposite so invert
+	Texture2D shadowMap = ResourceDescriptorHeap[g_Scene.LightShadowMapIndex];
+	//float shadowFactor = shadowMap.SampleCmpLevelZero(ShadowMapSampler, shadowMapCoords.xy, shadowMapCoords.z);
+	float shadowFactor = shadowMap.Sample(ShadowMapSampler, shadowMapCoords.xy).x >= shadowMapCoords.z ? 1.0f : 0.0f;
+
+	return (color * diffuseFactor * g_Scene.LightColor * shadowFactor)
 			+ (color * ambientFactor);
+	//return float4(0.0f, shadowFactor, shadowFactor, 1.0f);
 }

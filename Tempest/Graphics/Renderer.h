@@ -59,6 +59,9 @@ private:
 	BufferHandle m_MaterialData;
 
 	uint32_t m_CurrentSceneConstantDataOffset;
+
+	// TODO: Remove me
+	TextureHandle m_ShadowTexture;
 };
 }
 

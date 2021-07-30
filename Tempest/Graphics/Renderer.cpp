@@ -37,6 +37,17 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 	{
 		feature->Initialize(world, *this);
 	}
+
+	m_ShadowTexture = m_Backend->Managers.Texture.CreateTexture(Dx12::TextureDescription{
+			Dx12::TextureType::Texture2D,
+			DXGI_FORMAT_D32_FLOAT,
+			2048,
+			2048,
+			0,
+			nullptr
+		},
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		nullptr);
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -84,30 +95,73 @@ void Renderer::RenderFrame(const FrameData& data)
 	OPTICK_EVENT();
 
 	RendererCommandList commandList;
-	// Prepare constant buffer data
-	assert(data.DirectionalLights.size() == 1);
-	SceneConstantData sceneData{
-		m_Views[0]->GetViewProjection(),
-		glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-		glm::vec4(data.DirectionalLights[0].Color, 1.0f)
-	};
-	m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
 
-	RendererCommandBeginRenderPass beginRenderPassCommand;
-	// TODO: Use special constant for backbuffer
-	beginRenderPassCommand.ColorTarget = {
-		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
-	};
-	beginRenderPassCommand.DepthStencilTarget = {
-		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare
-	};
-	commandList.AddCommand(beginRenderPassCommand);
-	for (const auto& feature : m_RenderFeatures)
+	// Shadow Rendering Pass
 	{
-		feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
+		auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
+		auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+		SceneConstantData sceneData{
+			projectionMatrix * viewMatrix,
+			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+			glm::vec4(data.DirectionalLights[0].Color, 1.0f)
+		};
+		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
+
+		RendererCommandBeginRenderPass beginRenderPassCommand;
+		beginRenderPassCommand.ColorTarget = {
+			sInvalidHandle, TextureTargetLoadAction::DoNotCare, TextureTargetStoreAction::DoNotCare
+		};
+		beginRenderPassCommand.DepthStencilTarget = {
+			m_ShadowTexture, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
+		};
+		commandList.AddCommand(beginRenderPassCommand);
+		for (const auto& feature : m_RenderFeatures)
+		{
+			feature->GenerateCommands(data, commandList, *this, RenderPhase::Shadow);
+		}
+		RendererCommandEndRenderPass endRenderPassCommand;
+		commandList.AddCommand(endRenderPassCommand);
+
+		RendererCommandBarrier transitionToDepthRead;
+		transitionToDepthRead.TextureHandle = m_ShadowTexture;
+		transitionToDepthRead.BeforeState = ResourceState::DepthWrite;
+		transitionToDepthRead.AfterState = ResourceState::DepthRead;
+		commandList.AddCommand(transitionToDepthRead);
 	}
-	RendererCommandEndRenderPass endRenderPassCommand;
-	commandList.AddCommand(endRenderPassCommand);
+
+	// Main Pass
+	{
+		// Prepare constant buffer data
+		assert(data.DirectionalLights.size() == 1);
+		SceneConstantData sceneData{
+			m_Views[0]->GetViewProjection(),
+			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+			glm::vec4(data.DirectionalLights[0].Color, 1.0f)
+		};
+		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
+
+		RendererCommandBeginRenderPass beginRenderPassCommand;
+		// TODO: Use special constant for backbuffer
+		beginRenderPassCommand.ColorTarget = {
+			TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
+		};
+		beginRenderPassCommand.DepthStencilTarget = {
+			TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare
+		};
+		commandList.AddCommand(beginRenderPassCommand);
+		for (const auto& feature : m_RenderFeatures)
+		{
+			feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
+		}
+		RendererCommandEndRenderPass endRenderPassCommand;
+		commandList.AddCommand(endRenderPassCommand);
+
+		RendererCommandBarrier transitionToDepthWrite;
+		transitionToDepthWrite.TextureHandle = m_ShadowTexture;
+		transitionToDepthWrite.BeforeState = ResourceState::DepthRead;
+		transitionToDepthWrite.AfterState = ResourceState::DepthWrite;
+		commandList.AddCommand(transitionToDepthWrite);
+	}
 
 	m_Backend->RenderFrame(commandList);
 }
@@ -210,7 +264,7 @@ void Renderer::LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, 
 		textureDescription.Size = texture->texture_buffer_byte_count();
 		textureDescription.Data = textureDatabase->texture_data_buffer()->data() + texture->texture_buffer_offset();
 
-		TextureHandle handle = m_Backend->Managers.Texture.CreateTexture(textureDescription, &uploadData);
+		TextureHandle handle = m_Backend->Managers.Texture.CreateTexture(textureDescription, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, &uploadData);
 		m_Backend->GetDevice()->AddStaticTextureDescriptor(m_Backend->Managers.Texture.GetTexture(handle), Dx12::DxFormatForViewFromTextureFormat(texture->texture_data()), 1, i);
 	}
 

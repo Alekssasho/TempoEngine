@@ -36,10 +36,11 @@ class TextureManager : Utils::NonCopyable
 {
 public:
 	TextureManager(Dx12Device& device);
-	TextureHandle CreateTexture(const TextureDescription& description, UploadData* upload);
-	ID3D12Resource* GetTexture(uint32_t textureHandle);
+	TextureHandle CreateTexture(const TextureDescription& description, D3D12_RESOURCE_STATES initialState, UploadData* upload);
+	ID3D12Resource* GetTexture(TextureHandle textureHandle);
+	glm::ivec2 GetTextureDimensions(TextureHandle textureHandle);
 private:
-	eastl::unordered_map<TextureHandle, ComPtr<ID3D12Resource>> m_Textures;
+	eastl::unordered_map<TextureHandle, eastl::pair<TextureDescription, ComPtr<ID3D12Resource>>> m_Textures;
 	TextureHandle m_NextHandle = 0;
 	Dx12Device& m_Device;
 };

@@ -11,6 +11,8 @@
 #include <dxgidebug.h>
 #endif
 
+#include <eastl/optional.h>
+
 namespace Tempest
 {
 namespace Dx12
@@ -38,6 +40,19 @@ Backend::~Backend()
 void Backend::Initialize(WindowHandle handle)
 {
 	m_Device->Initialize(handle);
+}
+
+static D3D12_RESOURCE_STATES Dx12StateFromState(ResourceState state)
+{
+	switch (state)
+	{
+	case ResourceState::PixelShaderRead: return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	case ResourceState::DepthWrite: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	case ResourceState::DepthRead: return D3D12_RESOURCE_STATE_DEPTH_READ;
+	default:
+		assert(false);
+		return D3D12_RESOURCE_STATE_COMMON;
+	}
 }
 
 void Backend::RenderFrame(const RendererCommandList& commandList)
@@ -81,21 +96,36 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		{
 			const RendererCommandBeginRenderPass* command = reinterpret_cast<const RendererCommandBeginRenderPass*>(commandListIterator);
 
-			D3D12_CPU_DESCRIPTOR_HANDLE* rtv = nullptr;
-			D3D12_CPU_DESCRIPTOR_HANDLE* dsv = nullptr;
+			eastl::optional<D3D12_CPU_DESCRIPTOR_HANDLE> rtv;
+			eastl::optional<D3D12_CPU_DESCRIPTOR_HANDLE> dsv;
 			uint32_t width = 0;
 			uint32_t height = 0;
 			if(command->ColorTarget.Texture == -2)
 			{
-				rtv = &frame.BackBufferRTV;
+				rtv = frame.BackBufferRTV;
 				width = m_Device->GetSwapChainSize().x;
 				height = m_Device->GetSwapChainSize().y;
 			}
+
 			if(command->DepthStencilTarget.Texture == -2)
 			{
-				dsv = &frame.BackBufferDSV;
+				dsv = frame.BackBufferDSV;
 				width = m_Device->GetSwapChainSize().x;
 				height = m_Device->GetSwapChainSize().y;
+			}
+			else if (command->DepthStencilTarget.Texture != sInvalidHandle)
+			{
+				uint32_t slot = GetDevice()->m_DSVDescriptorHeap.AllocateDynamicResource();
+
+				D3D12_CPU_DESCRIPTOR_HANDLE heapStart = GetDevice()->m_DSVDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart();
+				UINT heapIncrement = GetDevice()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+				heapStart.ptr += heapIncrement * slot;
+				GetDevice()->GetDevice()->CreateDepthStencilView(Managers.Texture.GetTexture(command->DepthStencilTarget.Texture), nullptr, heapStart);
+				dsv = heapStart;
+
+				auto dimensions = Managers.Texture.GetTextureDimensions(command->DepthStencilTarget.Texture);
+				width = dimensions.x;
+				height = dimensions.y;
 			}
 
 			if(rtv && command->ColorTarget.LoadAction == TextureTargetLoadAction::Clear)
@@ -108,7 +138,7 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 				frame.CommandList->ClearDepthStencilView(*dsv, D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 			}
 
-			frame.CommandList->OMSetRenderTargets(rtv ? 1 : 0, rtv, 0, dsv);
+			frame.CommandList->OMSetRenderTargets(rtv ? 1 : 0, rtv ? &*rtv : nullptr, 0, dsv ? &*dsv : nullptr);
 			// TODO: This should be taken from somewhere
 			D3D12_VIEWPORT viewport;
 			viewport.TopLeftX = 0;
@@ -132,6 +162,22 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		case RendererCommandType::EndRenderPass:
 		{
 			commandListIterator += sizeof(RendererCommandEndRenderPass);
+			break;
+		}
+		case RendererCommandType::Barrier:
+		{
+			const RendererCommandBarrier* command = reinterpret_cast<const RendererCommandBarrier*>(commandListIterator);
+
+			D3D12_RESOURCE_BARRIER barrier;
+			barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+			barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+			barrier.Transition.pResource = Managers.Texture.GetTexture(command->TextureHandle); // TODO: It could be a buffer ?
+			barrier.Transition.StateBefore = Dx12StateFromState(command->BeforeState);
+			barrier.Transition.StateAfter = Dx12StateFromState(command->AfterState);
+			barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+			frame.CommandList->ResourceBarrier(1, &barrier);
+
+			commandListIterator += sizeof(RendererCommandBarrier);
 			break;
 		}
 		case RendererCommandType::DrawInstanced:

@@ -107,7 +107,7 @@
     <ClInclude Include="Graphics\BackendTypes.h" />
     <ClInclude Include="Graphics\Dx12\Managers\BufferManager.h" />
     <ClInclude Include="Graphics\Dx12\Managers\ConstantBufferDataManager.h" />
-    <ClInclude Include="Graphics\Dx12\Managers\MainDescriptorHeapManager.h" />
+    <ClInclude Include="Graphics\Dx12\Managers\TwoPartRingBufferDescriptorHeapManager.h" />
     <ClInclude Include="Graphics\Dx12\Managers\TextureManager.h" />
     <ClInclude Include="Graphics\Features\LightsFeature.h" />
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h" />
@@ -184,7 +184,7 @@
     <ClCompile Include="Graphics\Dx12\Dx12Device.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\BufferManager.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\ConstantBufferDataManager.cpp" />
-    <ClCompile Include="Graphics\Dx12\Managers\MainDescriptorHeapManager.cpp" />
+    <ClCompile Include="Graphics\Dx12\Managers\TwoPartRingBufferDescriptorHeapManager.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\PipelineManager.cpp" />
     <ClCompile Include="Graphics\Dx12\Managers\TextureManager.cpp" />
     <ClCompile Include="Graphics\Features\LightsFeature.cpp" />

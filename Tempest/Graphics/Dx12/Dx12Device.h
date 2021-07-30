@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Graphics/Dx12/Dx12Common.h>
-#include <Graphics/Dx12/Managers/MainDescriptorHeapManager.h>
+#include <Graphics/Dx12/Managers/TwoPartRingBufferDescriptorHeapManager.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 #include <Graphics/Dx12/Managers/TextureManager.h>
 #include <Platform/WindowsPlatform.h>
@@ -64,8 +64,6 @@ public:
 	ComPtr<ID3D12Device3> m_Device;
 	ComPtr<ID3D12CommandQueue> m_GraphicsQueue;
 	ComPtr<IDXGISwapChain3> m_SwapChain;
-	ComPtr<ID3D12DescriptorHeap> m_RTVHeap;
-	ComPtr<ID3D12DescriptorHeap> m_DSVHeap;
 	ComPtr<ID3D12Resource> m_DSV;
 	D3D12_CPU_DESCRIPTOR_HANDLE m_DSVHandle;
 	struct SwapChainImage
@@ -87,7 +85,9 @@ public:
 	};
 	eastl::vector<CommandList> m_MainCommandLists;
 
-	MainDescriptorHeapManager m_MainDescriptorHeap;
+	TwoPartRingBufferDescriptorHeapManager m_MainDescriptorHeap;
+	TwoPartRingBufferDescriptorHeapManager m_RTVDescriptorHeap;
+	TwoPartRingBufferDescriptorHeapManager m_DSVDescriptorHeap;
 	ConstantBufferDataManager m_ConstantBufferData;
 
 	// UI Stuff

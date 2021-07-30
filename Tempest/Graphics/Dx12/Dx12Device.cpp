@@ -81,6 +81,8 @@ Dx12Device::Dx12Device()
 
 Dx12Device::~Dx12Device()
 {
+	m_DSVDescriptorHeap.Destroy();
+	m_RTVDescriptorHeap.Destroy();
 	m_MainDescriptorHeap.Destroy();
 	m_ConstantBufferData.Destroy();
 
@@ -121,28 +123,17 @@ void Dx12Device::Initialize(WindowHandle handle)
 
 	FORMAT_LOG(Info, Dx12, "Initialized Swap Chain with size %d %d", m_SwapChainSize.x, m_SwapChainSize.y);
 
-	UINT rtvDescriptorSize;
+	UINT rtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	// Create descriptor heaps.
-	{
-		// Describe and create a render target view (RTV) descriptor heap.
-		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-		rtvHeapDesc.NumDescriptors = 2;
-		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_RTVHeap)));
+	m_RTVDescriptorHeap.Initialize(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 1000);
+	m_RTVDescriptorHeap.AllocateStaticResources(2); // 2 Backbuffer rtvs
 
-		rtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-		D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-		dsvHeapDesc.NumDescriptors = 1;
-		dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-		dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap)));
-	}
+	m_DSVDescriptorHeap.Initialize(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1000);
+	m_DSVDescriptorHeap.AllocateStaticResources(1); // 1 Backbuffer depth stencil
 
 	// Create frame resources.
 	{
-		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVHeap->GetCPUDescriptorHandleForHeapStart());
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
 
 		// Create a RTV for each frame.
 		for (UINT n = 0; n < 2; n++)
@@ -195,8 +186,7 @@ void Dx12Device::Initialize(WindowHandle handle)
 				IID_PPV_ARGS(&m_DSV)
 			));
 
-
-			m_DSVHandle = m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
+			m_DSVHandle = m_DSVDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart();
 			m_Device->CreateDepthStencilView(m_DSV.Get(), nullptr, m_DSVHandle);
 		}
 	}
@@ -342,7 +332,7 @@ void Dx12Device::Present()
 
 void Dx12Device::AllocateMainDescriptorHeap(const int numTextures)
 {
-	m_MainDescriptorHeap.Initialize(m_Device.Get());
+	m_MainDescriptorHeap.Initialize(m_Device.Get(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1000000 /* Hardware Tier 1 limit*/);
 	m_MainDescriptorHeap.AllocateStaticResources(static_cast<int>(ShaderResourceSlot::NonTextureCount) + numTextures);
 }
 

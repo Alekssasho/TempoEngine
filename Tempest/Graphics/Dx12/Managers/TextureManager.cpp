@@ -13,8 +13,10 @@ TextureManager::TextureManager(Dx12Device& device)
 {
 }
 
-TextureHandle TextureManager::CreateTexture(const TextureDescription& description, UploadData* upload)
+TextureHandle TextureManager::CreateTexture(const TextureDescription& description, D3D12_RESOURCE_STATES initialState, UploadData* upload)
 {
+	const bool isDepth = description.Format == DXGI_FORMAT_D32_FLOAT;
+
 	D3D12_HEAP_PROPERTIES props;
 	::ZeroMemory(&props, sizeof(D3D12_HEAP_PROPERTIES));
 	props.Type = D3D12_HEAP_TYPE_DEFAULT;
@@ -29,12 +31,22 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 	desc.Format = description.Format;
 	desc.SampleDesc.Count = 1;
 	desc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
-	desc.Flags = D3D12_RESOURCE_FLAG_NONE;
+	desc.Flags = !isDepth ? D3D12_RESOURCE_FLAG_NONE : D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL; // TODO: more types of depth
 
 	PipelineStateHandle resultHandle = m_NextHandle++;
-	ComPtr<ID3D12Resource>& texture = m_Textures[resultHandle];
-	D3D12_RESOURCE_STATES state = D3D12_RESOURCE_STATE_COPY_DEST;
-	CHECK_SUCCESS(m_Device.GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, state, NULL, IID_PPV_ARGS(&texture)));
+	eastl::pair<TextureDescription, ComPtr<ID3D12Resource>>& texture = m_Textures[resultHandle];
+	texture.first = description;
+	D3D12_RESOURCE_STATES state = (description.Data && upload) ? D3D12_RESOURCE_STATE_COPY_DEST : initialState;
+
+	D3D12_CLEAR_VALUE clearValue;
+	::ZeroMemory(&clearValue, sizeof(D3D12_CLEAR_VALUE));
+	clearValue.Format = description.Format;
+	if(isDepth)
+	{
+		clearValue.DepthStencil.Depth = 1.0f;
+		clearValue.DepthStencil.Stencil = 0;
+	}
+	CHECK_SUCCESS(m_Device.GetDevice()->CreateCommittedResource(&props, D3D12_HEAP_FLAG_NONE, &desc, state, isDepth ? &clearValue : nullptr, IID_PPV_ARGS(&texture.second)));
 
 	if (description.Data && upload)
 	{
@@ -42,7 +54,7 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 
 		D3D12_TEXTURE_COPY_LOCATION dstCopyLocation;
 		::ZeroMemory(&dstCopyLocation, sizeof(D3D12_TEXTURE_COPY_LOCATION));
-		dstCopyLocation.pResource = texture.Get();
+		dstCopyLocation.pResource = texture.second.Get();
 		dstCopyLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 		dstCopyLocation.SubresourceIndex = 0;
 
@@ -58,9 +70,9 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 		D3D12_RESOURCE_BARRIER barrier;
 		barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
 		barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-		barrier.Transition.pResource = texture.Get();
+		barrier.Transition.pResource = texture.second.Get();
 		barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
-		barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE; // TODO: If we need to read from non Pixel Shader must add another state as well
+		barrier.Transition.StateAfter = initialState;
 		barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
 
 		// TODO: Batch those
@@ -72,7 +84,12 @@ TextureHandle TextureManager::CreateTexture(const TextureDescription& descriptio
 
 ID3D12Resource* TextureManager::GetTexture(uint32_t textureHandle)
 {
-	return m_Textures[textureHandle].Get();
+	return m_Textures[textureHandle].second.Get();
+}
+
+glm::ivec2 TextureManager::GetTextureDimensions(TextureHandle textureHandle)
+{
+	return glm::ivec2(m_Textures[textureHandle].first.Width, m_Textures[textureHandle].first.Height);
 }
 
 DXGI_FORMAT DxFormatForStorageFromTextureFormat(const Definition::TextureData& data)

@@ -10,6 +10,7 @@ enum class RendererCommandType : uint8_t
 	DrawMeshlet,
 	BeginRenderPass,
 	EndRenderPass,
+	Barrier,
 	Count
 };
 
@@ -78,6 +79,26 @@ struct RendererCommandBeginRenderPass : RendererCommand<RendererCommandType::Beg
 
 struct RendererCommandEndRenderPass : RendererCommand<RendererCommandType::EndRenderPass>
 {
+};
+
+enum class ResourceState : uint8_t
+{
+	PixelShaderRead,
+	DepthWrite,
+	DepthRead,
+};
+
+struct RendererCommandBarrier : RendererCommand<RendererCommandType::Barrier>
+{
+	union
+	{
+		TextureHandle TextureHandle;
+		BufferHandle BufferHandle;
+	};
+
+	// TODO: Consider having only after state, and tracking state of resource internally
+	ResourceState BeforeState;
+	ResourceState AfterState;
 };
 
 struct RendererCommandList

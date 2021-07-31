@@ -61,7 +61,7 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	samplers[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
 	::ZeroMemory(&samplers[1], sizeof(D3D12_STATIC_SAMPLER_DESC));
-	samplers[1].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_POINT;
+	samplers[1].Filter = D3D12_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
 	samplers[1].AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplers[1].AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 	samplers[1].AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
@@ -84,20 +84,30 @@ PipelineManager::PipelineManager(Dx12Device& device)
 	CHECK_SUCCESS(m_Device.GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_Signature)));
 }
 
-void PipelineManager::PrepareDefaultPipelineStateDesc(PipelineStreamBuilder& builder)
+void PipelineManager::PrepareDefaultPipelineStateDesc(PipelineStreamBuilder& builder, const GraphicsPipelineStateDescription& description)
 {
 	D3D12_RASTERIZER_DESC rasterizerState = {0};
 	rasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	rasterizerState.CullMode = D3D12_CULL_MODE_BACK;
 	rasterizerState.FrontCounterClockwise = TRUE;
-	rasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
-	rasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
-	rasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
 	rasterizerState.DepthClipEnable = TRUE;
 	rasterizerState.MultisampleEnable = FALSE;
 	rasterizerState.AntialiasedLineEnable = FALSE;
 	rasterizerState.ForcedSampleCount = 0;
 	rasterizerState.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+
+	if(description.DepthBias != 0.0f)
+	{
+		rasterizerState.DepthBias = int(description.DepthBias / (1 / powf(2, 23)));
+		rasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+		rasterizerState.SlopeScaledDepthBias = 2.0f;
+	}
+	else
+	{
+		rasterizerState.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+		rasterizerState.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+		rasterizerState.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	}
 
 	D3D12_BLEND_DESC blendState = {0};
 	blendState.AlphaToCoverageEnable = FALSE;
@@ -167,7 +177,7 @@ PipelineStateHandle PipelineManager::CreateGraphicsPipeline(const GraphicsPipeli
 	{
 		assert(false);
 	}
-	PrepareDefaultPipelineStateDesc(builder);
+	PrepareDefaultPipelineStateDesc(builder, description);
 
 	D3D12_PIPELINE_STATE_STREAM_DESC streamDesc = {0};
 	streamDesc.SizeInBytes = builder.Memory.size();

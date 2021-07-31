@@ -88,7 +88,7 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 
 	float diffuseFactor = saturate(dot(normal, -g_Scene.LightDirection.xyz));
 
-	float ambientFactor = 0.15f;
+	float ambientFactor = 0.05f;
 
 	float4 color = materials[g_Geometry.materialIndex].BaseColor;
 	if(materials[g_Geometry.materialIndex].TextureIndex != -1) {
@@ -101,8 +101,23 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 	// TODO: Bake this into the shadow matrix
 	shadowMapCoords.xy = shadowMapCoords.xy * 0.5 + 0.5; // Clip space is [-1;1] so we need to convert it to uv space [0;1]
 	shadowMapCoords.y = 1.0 - shadowMapCoords.y; // After uv space transform bottom is at 0 and top is 1, but texture space is opposite so invert
+
 	Texture2D shadowMap = ResourceDescriptorHeap[g_Scene.LightShadowMapIndex];
-	float shadowFactor = shadowMap.SampleCmpLevelZero(ShadowMapSampler, shadowMapCoords.xy, shadowMapCoords.z);
+	uint shadowMapWidth, shadowMapHeight;
+	shadowMap.GetDimensions(shadowMapWidth, shadowMapHeight);
+
+	// 16 tap PCF
+	float sum = 0;
+	for(float y = -1.5; y <= 1.5; y += 1.0)
+	{
+		for(float x = -1.5; x <= 1.5; x += 1.0)
+		{
+			// Sample CmpLevelZero is using linear sampler, so it is essentially 4 tap
+			// We call it 4 times (per dimensions) to total of 16 taps
+			sum += shadowMap.SampleCmpLevelZero(ShadowMapSampler, shadowMapCoords.xy + float2(x * 1.0 / shadowMapWidth, y * 1.0 / shadowMapHeight), shadowMapCoords.z);
+		}
+	}
+	float shadowFactor = sum / 16.0;
 
 	return (color * diffuseFactor * g_Scene.LightColor * shadowFactor)
 			+ (color * ambientFactor);

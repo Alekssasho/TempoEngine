@@ -237,6 +237,12 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 		desc.PSCodeSize = psShader->code()->size();
 	}
 
+	if(description.Phase == RenderPhase::Shadow)
+	{
+		// TODO: When we switch to reverse Z this needs to be reversed as well
+		desc.DepthBias = 0.001f;
+	}
+
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
 }
 

@@ -17,6 +17,7 @@ struct GraphicsPipelineStateDescription
 	size_t VSCodeSize = 0;
 	size_t PSCodeSize = 0;
 	size_t MSCodeSize = 0;
+	float DepthBias = 0.0f;
 };
 
 class PipelineManager : Utils::NonCopyable
@@ -29,7 +30,7 @@ public:
 	ID3D12PipelineState* GetPipeline(PipelineStateHandle handle);
 	ID3D12RootSignature* GetSignature();
 private:
-	void PrepareDefaultPipelineStateDesc(struct PipelineStreamBuilder& builder);
+	void PrepareDefaultPipelineStateDesc(struct PipelineStreamBuilder& builder, const GraphicsPipelineStateDescription& description);
 
 	eastl::unordered_map<PipelineStateHandle, ComPtr<ID3D12PipelineState>> m_Pipelines;
 	PipelineStateHandle m_NextPipelineHandle = 0;

@@ -63,5 +63,15 @@ struct DirectionalLight
 {
 	static constexpr const char* Name = "DirectionalLight";
 };
+
+struct CarChassis
+{
+	static constexpr const char* Name = "CarChassis";
+};
+
+struct CarWheel
+{
+	static constexpr const char* Name = "CarWheel";
+};
 }
 }

@@ -66,6 +66,8 @@ pub enum Components {
 pub enum Tags {
     Boids,
     DirectionalLight,
+    CarChassis,
+    CarWheel,
 }
 
 impl FlecsState {

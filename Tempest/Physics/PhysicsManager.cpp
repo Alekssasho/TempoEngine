@@ -5,6 +5,8 @@
 
 #include <PxPhysicsAPI.h>
 #include <extensions/PxExtensionsAPI.h>
+#include <vehicle/PxVehicleSDK.h>
+
 #include <World/EntityQuery.h>
 #include <World/EntityQueryImpl.h>
 #include <World/Components/Components.h>
@@ -82,6 +84,12 @@ PhysicsManager::PhysicsManager()
 
 	PxInitExtensions(*m_PhysicsEngine, m_VisualDebugger.get());
 
+	// Vehicle setup
+	physx::PxInitVehicleSDK(*m_PhysicsEngine);
+	physx::PxVehicleSetBasisVectors(physx::PxVec3(sUpDirection.x, sUpDirection.y, sUpDirection.z), physx::PxVec3(sForwardDirection.x, sForwardDirection.y, sForwardDirection.z));
+	physx::PxVehicleSetUpdateMode(physx::PxVehicleUpdateMode::eVELOCITY_CHANGE);
+
+	// Scene setup
 	physx::PxSceneDesc sceneDesc(m_PhysicsEngine->getTolerancesScale());
 	sceneDesc.gravity = physx::PxVec3(0.0f, -9.8f, 0.0f);
 	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
@@ -107,6 +115,7 @@ PhysicsManager::PhysicsManager()
 
 PhysicsManager::~PhysicsManager()
 {
+	physx::PxCloseVehicleSDK();
 	PxCloseExtensions();
 }
 

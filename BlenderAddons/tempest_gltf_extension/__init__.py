@@ -22,9 +22,14 @@ glTF_extension_name = "TEMPEST_extension"
 extension_is_required = False
 
 class TempestNodeProperties(bpy.types.PropertyGroup):
-    boids_enabled: bpy.props.BoolProperty(
-        name="Boids",
-        description='Should this object be parts of the boids system',
+    is_car: bpy.props.BoolProperty(
+        name="Is Car",
+        description='Is this object a car',
+        default=False
+        )
+    is_car_wheel: bpy.props.BoolProperty(
+        name="Is Car Wheel",
+        description='Is this object a wheel of a car',
         default=False
         )
 
@@ -62,7 +67,8 @@ class TempestNodePropertiesPanel(bpy.types.Panel):
 
         box = layout.box()
         active_systems = box.column(heading="Active Systems")
-        active_systems.prop(obj.tempest_props, "boids_enabled", toggle=True)
+        active_systems.prop(obj.tempest_props, "is_car", toggle=False)
+        active_systems.prop(obj.tempest_props, "is_car_wheel", toggle=False)
 
 
 class glTF2ExportUserExtension:
@@ -78,7 +84,8 @@ class glTF2ExportUserExtension:
             if gltf2_object.extensions is None:
                 gltf2_object.extensions = {}
             extension_data = {
-                "boids_enabled": blender_object.tempest_props.boids_enabled
+                "is_car": blender_object.tempest_props.is_car,
+                "is_car_wheel": blender_object.tempest_props.is_car_wheel
             }
             # Handle Physics
             if blender_object.rigid_body is not None:

@@ -11,7 +11,8 @@ int main()
 	options.Height = 720;
 	// Make real resource folder
 	options.ResourceFolder = "../../Tempest/Shaders/";
-	options.LevelToLoad = "Level_village.tlb";
+	//options.LevelToLoad = "Level_village.tlb";
+	options.LevelToLoad = "Level_car.tlb";
 
 	{
 		Tempest::EngineCore engine(options);

@@ -286,6 +286,13 @@ void Renderer::LoadGeometryAndTextureDatabase(const char* geometryDatabaseName, 
 	gEngine->GetJobSystem().RunJobs("Load Geometry Database", &loadGeometryJob, 1, &counter);
 
 	// Now the actual loading of texture database
+	if(numTextures == 0)
+	{
+		// Just wait for the geometry and return
+		gEngine->GetJobSystem().WaitForCounter(&counter, 0);
+		return;
+	}
+
 	Dx12::UploadData uploadData = m_Backend->PrepareUpload(textureDatabase->texture_data_buffer()->size());
 	for (uint32_t i = 0; i < textureDatabase->mappings()->size(); ++i)
 	{

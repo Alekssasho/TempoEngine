@@ -41,7 +41,7 @@ public:
 	glm::ivec2 GetTextureDimensions(TextureHandle textureHandle);
 private:
 	eastl::unordered_map<TextureHandle, eastl::pair<TextureDescription, ComPtr<ID3D12Resource>>> m_Textures;
-	TextureHandle m_NextHandle = 0;
+	TextureHandle m_NextHandle = 1; // TODO: for now invalid handle is 0
 	Dx12Device& m_Device;
 };
 }

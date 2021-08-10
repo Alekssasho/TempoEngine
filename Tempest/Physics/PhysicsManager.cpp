@@ -52,6 +52,33 @@ void PhysXAllocator::deallocate(void* ptr)
 	free(ptr);
 }
 
+enum
+{
+	DRIVABLE_SURFACE = 0xffff0000,
+	UNDRIVABLE_SURFACE = 0x0000ffff
+};
+
+physx::PxQueryHitType::Enum WheelSceneQueryPreFilterBlocking(
+	physx::PxFilterData filterData0,
+	physx::PxFilterData filterData1,
+	const void* constantBlock,
+	physx::PxU32 constantBlockSize,
+	physx::PxHitFlags& queryFlags
+) {
+	//filterData0 is the vehicle suspension query.
+	//filterData1 is the shape potentially hit by the query.
+	PX_UNUSED(filterData0);
+	PX_UNUSED(constantBlock);
+	PX_UNUSED(constantBlockSize);
+	PX_UNUSED(queryFlags);
+	return ((0 == (filterData1.word3 & DRIVABLE_SURFACE)) ? physx::PxQueryHitType::eNONE : physx::PxQueryHitType::eBLOCK);
+}
+
+const int numWheels = 4;
+const int groupGround = 0;
+const int groupWheel = 1;
+
+
 PhysicsManager::PhysicsManager()
 {
 	m_Foundation.reset(PxCreateFoundation(PX_PHYSICS_VERSION, m_Allocator, m_Logger));
@@ -111,6 +138,21 @@ PhysicsManager::PhysicsManager()
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
 		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
 	}
+
+	// 4 Wheel Vehicle setup
+	physx::PxRaycastQueryResult suspensionQueryResults[numWheels];
+	physx::PxRaycastHit suspensionQueryHitBuffer[numWheels];
+	physx::PxBatchQueryDesc suspensionQueryDesc(numWheels, 0, 0);
+	suspensionQueryDesc.queryMemory.userRaycastResultBuffer = suspensionQueryResults;
+	suspensionQueryDesc.queryMemory.userRaycastTouchBuffer = suspensionQueryHitBuffer;
+	suspensionQueryDesc.queryMemory.raycastTouchBufferSize = numWheels;
+	suspensionQueryDesc.preFilterShader = WheelSceneQueryPreFilterBlocking;
+	physx::PxBatchQuery* batchQuery = m_Scene->createBatchQuery(suspensionQueryDesc);
+
+	// Simulation filtering
+	physx::PxSetGroupCollisionFlag(groupGround, groupGround, true);
+	physx::PxSetGroupCollisionFlag(groupWheel, groupWheel, true);
+	physx::PxSetGroupCollisionFlag(groupGround, groupWheel, false);
 }
 
 PhysicsManager::~PhysicsManager()
@@ -184,7 +226,65 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			auto rigidBody = (*findItr)->is<physx::PxRigidBody>();
 			assert(rigidBody);
 
-			dynamicActor->Actor = rigidBody;
+			dynamicActor[row].Actor = rigidBody;
+		}
+	}
+
+	{
+		// TODO: WIP code
+		EntityQuery queryChassis;
+		queryChassis.Init<Components::DynamicPhysicsActor, Tags::CarChassis>(world);
+		EntityQuery queryWheel;
+		queryWheel.Init<Components::DynamicPhysicsActor, Tags::CarWheel>(world);
+
+		physx::PxActor* wheelActors[numWheels];
+		physx::PxActor* chassisActor;
+
+		for(int i = 0; i < queryChassis.GetMatchedArchetypesCount(); ++i)
+		{
+			assert(i == 0);
+			auto [_, iter] = queryChassis.GetIterForAchetype(i);
+			assert(iter.count == 1);
+			Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
+			for(int row = 0; row < iter.count; ++row)
+			{
+				chassisActor = dynamicActor[row].Actor;
+			}
+		}
+
+		for (int i = 0; i < queryWheel.GetMatchedArchetypesCount(); ++i)
+		{
+			assert(i == 0);
+			auto [_, iter] = queryWheel.GetIterForAchetype(i);
+			assert(iter.count == 4);
+			Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
+			for (int row = 0; row < iter.count; ++row)
+			{
+				wheelActors[row] = dynamicActor[row].Actor;
+			}
+		}
+
+
+		// Setup drivable planes
+		physx::PxActorTypeFlags selectionFlagsStatic = physx::PxActorTypeFlag::eRIGID_STATIC;
+		// TODO: Temp memory
+		eastl::vector<physx::PxActor*> staticActors(m_Scene->getNbActors(selectionFlagsStatic));
+		m_Scene->getActors(selectionFlagsStatic, staticActors.data(), physx::PxU32(staticActors.size()));
+		for(const auto staticActor : staticActors)
+		{
+			// Simulation filtering
+			physx::PxSetGroup(*staticActor, groupGround);
+
+			// Set query filtering
+			auto rigidBody = staticActor->is<physx::PxRigidBody>();
+			eastl::vector<physx::PxShape*> shapes(rigidBody->getNbShapes());
+			rigidBody->getShapes(shapes.data(), physx::PxU32(shapes.size()));
+			assert(shapes.size() == 1);
+			physx::PxFilterData filterData;
+			filterData.word3 = physx::PxU32(DRIVABLE_SURFACE);
+			shapes[0]->setQueryFilterData(filterData);
+
+			// TODO: Add simulation filtering to shapes and not actors
 		}
 	}
 }

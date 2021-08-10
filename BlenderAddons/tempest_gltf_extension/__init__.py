@@ -106,6 +106,14 @@ class glTF2ExportUserExtension:
                         }
                     }
                     extension_data["physics_body"] = rigid_body_data
+                elif blender_object.rigid_body.collision_shape == 'CONVEX_HULL':
+                    rigid_body_data = {
+                        "dynamic": blender_object.rigid_body.type == 'ACTIVE',
+                        "collision_shape" : {
+                            "type" : "convex"
+                        }
+                    }
+                    extension_data["physics_body"] = rigid_body_data
 
             gltf2_object.extensions[glTF_extension_name] = self.Extension(
                 name=glTF_extension_name,

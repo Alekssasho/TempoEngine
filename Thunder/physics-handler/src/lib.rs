@@ -1,5 +1,5 @@
 use physx::{
-    cooking::{PxCooking, PxCookingParams, TriangleMeshCookingResult},
+    cooking::{ConvexMeshCookingResult, PxCooking, PxCookingParams, TriangleMeshCookingResult},
     foundation::DefaultAllocator,
     prelude::*,
     traits::Class,
@@ -7,8 +7,8 @@ use physx::{
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
 use physx_sys::{
-    PxBoundedData_new, PxCollection, PxMeshGeometryFlags, PxMeshScale_new_2,
-    PxSerializationRegistry,
+    PxBoundedData_new, PxCollection, PxConvexFlag, PxConvexMeshGeometryFlags, PxMeshGeometryFlags,
+    PxMeshScale_new_2, PxSerializationRegistry,
 };
 
 type PxMaterial = physx::material::PxMaterial<()>;
@@ -170,6 +170,33 @@ impl PhysicsHandler {
         }
     }
 
+    pub fn create_convex_mesh(
+        &mut self,
+        vertices: &[f32],
+        vertices_count: usize,
+        vertices_stride: usize,
+    ) -> Option<Owner<physx::convex_mesh::ConvexMesh>> {
+        // TODO: Currently all of the meshes are not indexed so ingore that for the moment
+        let mut points_data = unsafe { PxBoundedData_new() };
+        points_data.count = vertices_count as u32;
+        points_data.data = vertices.as_ptr() as *const std::ffi::c_void;
+        points_data.stride = vertices_stride as u32;
+
+        let mut desc = physx::cooking::PxConvexMeshDesc::new();
+        desc.obj.points = points_data;
+        desc.obj.flags.mBits = PxConvexFlag::eCOMPUTE_CONVEX as u16;
+        desc.obj.vertexLimit = 64;
+
+        if let ConvexMeshCookingResult::Success(mesh) = self
+            .physx_cooking
+            .create_convex_mesh(self.physx_foundation.physics_mut(), &desc)
+        {
+            Some(mesh)
+        } else {
+            None
+        }
+    }
+
     pub fn create_mesh_geometry(
         &self,
         scale: PxVec3,
@@ -178,6 +205,20 @@ impl PhysicsHandler {
         let sys_vec: physx_sys::PxVec3 = scale.into();
         let mesh_scale = unsafe { PxMeshScale_new_2(&sys_vec as *const physx_sys::PxVec3) };
         PxTriangleMeshGeometry::new(mesh.as_mut(), &mesh_scale, PxMeshGeometryFlags { mBits: 0 })
+    }
+
+    pub fn create_convex_geometry(
+        &self,
+        scale: PxVec3,
+        mesh: &mut Owner<physx::convex_mesh::ConvexMesh>,
+    ) -> impl Geometry {
+        let sys_vec: physx_sys::PxVec3 = scale.into();
+        let mesh_scale = unsafe { PxMeshScale_new_2(&sys_vec as *const physx_sys::PxVec3) };
+        PxConvexMeshGeometry::new(
+            mesh.as_mut(),
+            &mesh_scale,
+            PxConvexMeshGeometryFlags { mBits: 0 },
+        )
     }
 
     pub fn create_sphere_geometry(&self, radius: f32) -> impl Geometry {

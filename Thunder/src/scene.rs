@@ -22,26 +22,29 @@ pub struct Scene {
 // Constructor
 impl Scene {
     pub fn new(filename: &PathBuf) -> Scene {
-        if let Ok((document, buffers, images)) = gltf::import(filename) {
-            let gltf = GltfData {
-                document,
-                buffers,
-                images,
-            };
-            // TODO: Support only a single scene inside the document
-            let root_nodes = gltf.gather_root_node_indices(0);
-            let camera = Scene::extract_camera_from_scene(&gltf, &root_nodes);
-            let (meshes, materials) = gltf.gather_mesh_and_materials_indices(&root_nodes);
+        match gltf::import(filename) {
+            Ok((document, buffers, images)) => {
+                let gltf = GltfData {
+                    document,
+                    buffers,
+                    images,
+                };
+                // TODO: Support only a single scene inside the document
+                let root_nodes = gltf.gather_root_node_indices(0);
+                let camera = Scene::extract_camera_from_scene(&gltf, &root_nodes);
+                let (meshes, materials) = gltf.gather_mesh_and_materials_indices(&root_nodes);
 
-            Scene {
-                gltf,
-                camera,
-                root_nodes,
-                meshes,
-                materials,
+                Scene {
+                    gltf,
+                    camera,
+                    root_nodes,
+                    meshes,
+                    materials,
+                }
+            },
+            Err(error) => {
+                panic!("Error loading file: {}", error);
             }
-        } else {
-            panic!("Cannot find scene file to load");
         }
     }
 }

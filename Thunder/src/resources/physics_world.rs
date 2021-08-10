@@ -112,6 +112,48 @@ impl Resource for PhysicsWorldResource {
                             *self.node_to_entity_map.get(&node_index).unwrap(),
                         );
                     }
+                    gltf::json::validation::Checked::Valid(tempest_extension::Type::Convex) => {
+                        // Find proper index
+                        let mesh_index = gltf.node_mesh_index(node_index).unwrap();
+                        let position_index = scene
+                            .meshes
+                            .iter()
+                            .position(|&index| index == mesh_index)
+                            .unwrap();
+                        let mesh_data = &self.meshes[position_index];
+
+                        // Meshes consist of seperate primitive meshes, with different rendering materials
+                        // For Physics we need only a single mesh (for now) so just concatenate it back together\
+                        let (vertices, vertices_count) = {
+                            let mut vertices = Vec::new();
+
+                            let mut vertices_current_offset = 0;
+                            for primitive_mesh in &mesh_data.primitive_meshes {
+                                vertices
+                                    .extend_from_slice(primitive_mesh.get_vertices_float_slice());
+                                vertices_current_offset += primitive_mesh.vertices.len() as u32;
+                            }
+                            (vertices, vertices_current_offset)
+                        };
+
+                        let mut mesh = physics
+                            .create_convex_mesh(
+                                vertices.as_slice(),
+                                vertices_count as usize,
+                                std::mem::size_of::<crate::resources::mesh::VertexLayout>(),
+                            )
+                            .unwrap();
+                        let geometry = physics.create_convex_geometry(
+                            PxVec3::new(trs.scale.x, trs.scale.y, trs.scale.z),
+                            &mut mesh,
+                        );
+                        physics.add_actor(
+                            physics_body.dynamic,
+                            px_transform,
+                            &geometry,
+                            *self.node_to_entity_map.get(&node_index).unwrap(),
+                        );
+                    }
                     gltf::json::validation::Checked::Invalid => {
                         panic!("There should be valid collision shape")
                     }

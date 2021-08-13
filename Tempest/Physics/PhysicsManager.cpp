@@ -6,6 +6,8 @@
 #include <PxPhysicsAPI.h>
 #include <extensions/PxExtensionsAPI.h>
 #include <vehicle/PxVehicleSDK.h>
+#include <vehicle/PxVehicleUtil.h>
+#include <vehicle/PxVehicleTireFriction.h>
 
 #include <World/EntityQuery.h>
 #include <World/EntityQueryImpl.h>
@@ -78,6 +80,9 @@ const int numWheels = 4;
 const int groupGround = 0;
 const int groupWheel = 1;
 
+physx::PxBatchQuery* gBatchQuery;
+physx::PxRaycastQueryResult suspensionQueryResults[numWheels];
+physx::PxRaycastHit suspensionQueryHitBuffer[numWheels];
 
 PhysicsManager::PhysicsManager()
 {
@@ -140,14 +145,12 @@ PhysicsManager::PhysicsManager()
 	}
 
 	// 4 Wheel Vehicle setup
-	physx::PxRaycastQueryResult suspensionQueryResults[numWheels];
-	physx::PxRaycastHit suspensionQueryHitBuffer[numWheels];
 	physx::PxBatchQueryDesc suspensionQueryDesc(numWheels, 0, 0);
 	suspensionQueryDesc.queryMemory.userRaycastResultBuffer = suspensionQueryResults;
 	suspensionQueryDesc.queryMemory.userRaycastTouchBuffer = suspensionQueryHitBuffer;
 	suspensionQueryDesc.queryMemory.raycastTouchBufferSize = numWheels;
 	suspensionQueryDesc.preFilterShader = WheelSceneQueryPreFilterBlocking;
-	physx::PxBatchQuery* batchQuery = m_Scene->createBatchQuery(suspensionQueryDesc);
+	gBatchQuery = m_Scene->createBatchQuery(suspensionQueryDesc);
 
 	// Simulation filtering
 	physx::PxSetGroupCollisionFlag(groupGround, groupGround, true);
@@ -194,6 +197,10 @@ void PhysicsManager::LoadFromData(void* data, uint32_t size)
 	collection->release();
 	registry->release();
 }
+
+physx::PxVehicleDrive4WRawInputData gVehicleInputData;
+physx::PxVehicleDrive4W* gVehicle4W;
+physx::PxVehicleDrivableSurfaceToTireFrictionPairs* gFrictionPairs;
 
 void PhysicsManager::PatchWorldComponents(World& world)
 {
@@ -290,18 +297,6 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		// Create new actor which is the car
 		physx::PxRigidDynamic* carActor = m_PhysicsEngine->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 
-		physx::PxShape* chassisShape;
-		chassisActor->getShapes(&chassisShape, 1);
-		chassisShape->acquireReference();
-		m_Scene->removeActor(*chassisActor);
-		chassisActor->release();
-
-		physx::PxFilterData filterData;
-		filterData.word3 = physx::PxU32(UNDRIVABLE_SURFACE);
-		chassisShape->setQueryFilterData(filterData);
-		chassisShape->setLocalPose(physx::PxTransform(physx::PxIdentity));
-		carActor->attachShape(*chassisShape);
-		chassisShape->release();
 		for (const auto& actor : wheelActors)
 		{
 			physx::PxShape* wheelShape;
@@ -317,6 +312,19 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			carActor->attachShape(*wheelShape);
 			wheelShape->release();
 		}
+		physx::PxShape* chassisShape;
+		chassisActor->getShapes(&chassisShape, 1);
+		chassisShape->acquireReference();
+		m_Scene->removeActor(*chassisActor);
+		chassisActor->release();
+
+		physx::PxFilterData filterData;
+		filterData.word3 = physx::PxU32(UNDRIVABLE_SURFACE);
+		chassisShape->setQueryFilterData(filterData);
+		chassisShape->setLocalPose(physx::PxTransform(physx::PxIdentity));
+		carActor->attachShape(*chassisShape);
+		chassisShape->release();
+
 		const physx::PxF32 chassisMass = 1500.0f;
 		const physx::PxVec3 chassisDims(2.75f, 2.0f, 5.18f);
 		const physx::PxVec3 chassisMOI
@@ -501,18 +509,85 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		vehDrive4W->mDriveDynData.forceGearChange(physx::PxVehicleGearsData::eFIRST);
 		vehDrive4W->mDriveDynData.setUseAutoGears(true);
 
-		physx::PxVehicleDrive4WRawInputData gVehicleInputData;
 		gVehicleInputData.setDigitalBrake(false);
 		gVehicleInputData.setDigitalAccel(true);
+
+		gVehicle4W = vehDrive4W;
+
+		physx::PxVehicleDrivableSurfaceType surfaceTypes[1];
+		surfaceTypes[0].mType = 0;
+
+		const physx::PxMaterial* surfaceMaterials[1];
+		surfaceMaterials[0] = chassisShape->getMaterialFromInternalFaceIndex(0);
+
+		physx::PxVehicleDrivableSurfaceToTireFrictionPairs* surfaceTirePairs =
+			physx::PxVehicleDrivableSurfaceToTireFrictionPairs::allocate(1, 1);
+
+		surfaceTirePairs->setup(1, 1, surfaceMaterials, surfaceTypes);
+
+		for (int i = 0; i < 1; i++)
+		{
+			for (int j = 0; j < 1; j++)
+			{
+				surfaceTirePairs->setTypePairFriction(i, j, 1);
+			}
+		}
+		gFrictionPairs = surfaceTirePairs;
 	}
 }
 
+physx::PxVehicleKeySmoothingData gKeySmoothingData =
+{
+	{
+		6.0f,	//rise rate eANALOG_INPUT_ACCEL
+		6.0f,	//rise rate eANALOG_INPUT_BRAKE
+		6.0f,	//rise rate eANALOG_INPUT_HANDBRAKE
+		2.5f,	//rise rate eANALOG_INPUT_STEER_LEFT
+		2.5f,	//rise rate eANALOG_INPUT_STEER_RIGHT
+	},
+	{
+		10.0f,	//fall rate eANALOG_INPUT_ACCEL
+		10.0f,	//fall rate eANALOG_INPUT_BRAKE
+		10.0f,	//fall rate eANALOG_INPUT_HANDBRAKE
+		5.0f,	//fall rate eANALOG_INPUT_STEER_LEFT
+		5.0f	//fall rate eANALOG_INPUT_STEER_RIGHT
+	}
+};
+
+physx::PxF32 gSteerVsForwardSpeedData[2 * 8] =
+{
+	0.0f,		0.75f,
+	5.0f,		0.75f,
+	30.0f,		0.125f,
+	120.0f,		0.1f,
+	PX_MAX_F32, PX_MAX_F32,
+	PX_MAX_F32, PX_MAX_F32,
+	PX_MAX_F32, PX_MAX_F32,
+	PX_MAX_F32, PX_MAX_F32
+};
+physx::PxFixedSizeLookupTable<8> gSteerVsForwardSpeedTable(gSteerVsForwardSpeedData, 4);
+bool					gIsVehicleInAir = true;
+
 void PhysicsManager::Update(float deltaTime)
 {
+	PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, gVehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
+
+	//Raycasts.
+	physx::PxVehicleWheels* vehicles[1] = { gVehicle4W };
+	PxVehicleSuspensionRaycasts(gBatchQuery, 1, vehicles, numWheels, suspensionQueryResults);
+
+	//Vehicle update.
+	const physx::PxVec3 grav = m_Scene->getGravity();
+	physx::PxWheelQueryResult wheelQueryResults[PX_MAX_NB_WHEELS];
+	physx::PxVehicleWheelQueryResult vehicleQueryResults[1] = { {wheelQueryResults, gVehicle4W->mWheelsSimData.getNbWheels()} };
+	PxVehicleUpdates(deltaTime, grav, *gFrictionPairs, 1, vehicles, vehicleQueryResults);
+
+	gIsVehicleInAir = gVehicle4W->getRigidDynamicActor()->isSleeping() ? false : physx::PxVehicleIsInAir(vehicleQueryResults[0]);
 	// TODO: Add scratch memory
 	m_Scene->simulate(deltaTime);
 
 	// TODO: Think of a way to not do it here, but do other work as well
 	m_Scene->fetchResults(true);
+
 }
 }

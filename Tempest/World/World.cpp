@@ -51,10 +51,12 @@ World::World()
 	//m_Systems.emplace_back(new Systems::BoidsSystem);
 
 	// This should be the last system in this bucket
-	m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
+	// TODO: Enable them again, after matching between car actors is done. We have to support
+	// Actors with multiple shapes
+	//m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
 
 	// This should be the first system in this bucket
-	m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);
+	//m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);
 }
 
 World::~World()

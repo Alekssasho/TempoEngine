@@ -267,7 +267,26 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
 			for (int row = 0; row < iter.count; ++row)
 			{
-				wheelActors[row] = dynamicActor[row].Actor->is<physx::PxRigidDynamic>();;
+				ecs_entity_t entity = iter.entities[row];
+				const char* name = ecs_get_name(world.m_EntityWorld, entity);
+				int indexToPut = 0;
+				if(strcmp(name, "FrontLeftWheel") == 0)
+				{
+					indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT;
+				}
+				else if(strcmp(name, "FrontRightWheel") == 0)
+				{
+					indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT;
+				}
+				else if (strcmp(name, "RearLeftWheel") == 0)
+				{
+					indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT;
+				}
+				else if (strcmp(name, "RearRightWheel") == 0)
+				{
+					indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT;
+				}
+				wheelActors[indexToPut] = dynamicActor[row].Actor->is<physx::PxRigidDynamic>();
 			}
 		}
 
@@ -326,7 +345,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		chassisShape->release();
 
 		const physx::PxF32 chassisMass = 1500.0f;
-		const physx::PxVec3 chassisDims(2.75f, 2.0f, 5.18f);
+		const physx::PxVec3 chassisDims(3.0f, 2.0f, 5.0f);
 		const physx::PxVec3 chassisMOI
 		((chassisDims.y * chassisDims.y + chassisDims.z * chassisDims.z) * chassisMass / 12.0f,
 			(chassisDims.x * chassisDims.x + chassisDims.z * chassisDims.z) * 0.8f * chassisMass / 12.0f,
@@ -338,10 +357,10 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 		physx::PxVehicleWheelsSimData* wheelsSimData = physx::PxVehicleWheelsSimData::allocate(numWheels);
 		physx::PxVec3 wheelCenterActorOffsets[numWheels];
-		const physx::PxF32 frontZ = chassisDims.z * 0.3f;
-		const physx::PxF32 rearZ = -chassisDims.z * 0.3f;
-		const physx::PxF32 wheelWidth = 0.145f;
-		const physx::PxF32 wheelRadius = 0.971f / 2.0f;
+		const physx::PxF32 frontZ = -chassisDims.z * 0.3f;
+		const physx::PxF32 rearZ = chassisDims.z * 0.3f;
+		const physx::PxF32 wheelWidth = 0.2f;
+		const physx::PxF32 wheelRadius = 1.0f / 2.0f;
 		const physx::PxF32 numLeftWheels = numWheels / 2.0f;
 		const physx::PxF32 deltaZ = (frontZ - rearZ) / (numLeftWheels - 1.0f);
 		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ + 0 * deltaZ * 0.5f);
@@ -483,8 +502,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			physx::PxVehicleAckermannGeometryData ackermann;
 			ackermann.mAccuracy = 1.0f;
 			ackermann.mAxleSeparation =
-				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z -
-				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT).z;
+				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT).z -
+				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z;
 			ackermann.mFrontWidth =
 				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT).x -
 				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).x;

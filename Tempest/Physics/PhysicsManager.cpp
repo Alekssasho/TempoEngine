@@ -239,57 +239,66 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 	{
 		// TODO: WIP code
-		EntityQuery queryChassis;
-		queryChassis.Init<Components::DynamicPhysicsActor, Tags::CarChassis>(world);
-		EntityQuery queryWheel;
-		queryWheel.Init<Components::DynamicPhysicsActor, Tags::CarWheel>(world);
+		EntityQuery queryCar;
+		queryCar.Init<Components::CarPhysicsPart>(world);
 
 		physx::PxRigidDynamic* wheelActors[numWheels];
 		physx::PxRigidDynamic* chassisActor = nullptr;
 
-		for(int i = 0; i < queryChassis.GetMatchedArchetypesCount(); ++i)
-		{
-			assert(i == 0);
-			auto [_, iter] = queryChassis.GetIterForAchetype(i);
-			assert(iter.count == 1);
-			Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
-			for(int row = 0; row < iter.count; ++row)
-			{
-				chassisActor = dynamicActor[row].Actor->is<physx::PxRigidDynamic>();
-			}
-		}
+		// Create new actor which is the car
+		physx::PxRigidDynamic* carActor = m_PhysicsEngine->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 
-		for (int i = 0; i < queryWheel.GetMatchedArchetypesCount(); ++i)
+		for(int i = 0; i < queryCar.GetMatchedArchetypesCount(); ++i)
 		{
 			assert(i == 0);
-			auto [_, iter] = queryWheel.GetIterForAchetype(i);
-			assert(iter.count == 4);
-			Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
-			for (int row = 0; row < iter.count; ++row)
+			auto [_, iter] = queryCar.GetIterForAchetype(i);
+			assert(iter.count == 5);
+			Components::CarPhysicsPart* dynamicActor = ecs_column(&iter, Components::CarPhysicsPart, 1);
+			for(int row = 0; row < iter.count; ++row)
 			{
 				ecs_entity_t entity = iter.entities[row];
 				const char* name = ecs_get_name(world.m_EntityWorld, entity);
-				int indexToPut = 0;
-				if(strcmp(name, "FrontLeftWheel") == 0)
+
+				// Find the id in userData in physics actors
+				auto findItr = eastl::find_if(actors.begin(), actors.end(), [entity](physx::PxActor* actor)
 				{
-					indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT;
-				}
-				else if(strcmp(name, "FrontRightWheel") == 0)
+					return ecs_entity_t(actor->userData) == entity;
+				});
+
+				assert(findItr != actors.end());
+				auto rigidBody = (*findItr)->is<physx::PxRigidDynamic>();
+				assert(rigidBody);
+
+				if(strcmp(name, "Chassis") == 0)
 				{
-					indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT;
-				}
-				else if (strcmp(name, "RearLeftWheel") == 0)
+					chassisActor = rigidBody;
+					dynamicActor[row].ShapeIndex = numWheels;
+				} else
 				{
-					indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT;
+					int indexToPut = 0;
+					if (strcmp(name, "FrontLeftWheel") == 0)
+					{
+						indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT;
+					}
+					else if (strcmp(name, "FrontRightWheel") == 0)
+					{
+						indexToPut = physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT;
+					}
+					else if (strcmp(name, "RearLeftWheel") == 0)
+					{
+						indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT;
+					}
+					else if (strcmp(name, "RearRightWheel") == 0)
+					{
+						indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT;
+					}
+					wheelActors[indexToPut] = rigidBody;
+					dynamicActor[row].ShapeIndex = indexToPut;
 				}
-				else if (strcmp(name, "RearRightWheel") == 0)
-				{
-					indexToPut = physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT;
-				}
-				wheelActors[indexToPut] = dynamicActor[row].Actor->is<physx::PxRigidDynamic>();
+
+				dynamicActor[row].CarActor = carActor;
 			}
 		}
-
 
 		// Setup drivable planes
 		physx::PxActorTypeFlags selectionFlagsStatic = physx::PxActorTypeFlag::eRIGID_STATIC;
@@ -312,9 +321,6 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 			// TODO: Add simulation filtering to shapes and not actors
 		}
-
-		// Create new actor which is the car
-		physx::PxRigidDynamic* carActor = m_PhysicsEngine->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
 
 		for (const auto& actor : wheelActors)
 		{

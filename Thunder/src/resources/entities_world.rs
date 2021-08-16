@@ -24,6 +24,7 @@ impl EntitiesWorldResource {
         mesh_index: u32,
         tags: Vec<Tags>,
         has_dynamic_physics: bool,
+        has_car_physics: bool,
     ) -> ecs_entity_t {
         let transform = Components::Transform(Tempest_Components_Transform {
             Position: trs.translate,
@@ -33,10 +34,20 @@ impl EntitiesWorldResource {
         let static_mesh =
             Components::StaticMesh(Tempest_Components_StaticMesh { Mesh: mesh_index });
         let mut components = vec![transform, static_mesh];
-        if has_dynamic_physics {
+        if has_dynamic_physics && !has_car_physics {
             components.push(Components::DynamicPhysicsActor(
                 Tempest_Components_DynamicPhysicsActor {
                     Actor: std::ptr::null_mut(), // This will be patched on loading time
+                },
+            ))
+        }
+
+        if has_car_physics {
+            components.push(Components::CarPhysicsPart(
+                // This will be patched on loading time
+                Tempest_Components_CarPhysicsPart {
+                    CarActor: std::ptr::null_mut(),
+                    ShapeIndex: 0
                 },
             ))
         }
@@ -59,16 +70,7 @@ impl Resource for EntitiesWorldResource {
         scene.walk_root_nodes(|gltf, node_index, world_transform| -> Option<()> {
             if let Some(mesh_index) = gltf.node_mesh_index(node_index) {
                 let tempest_extension = gltf.tempest_extension(node_index);
-                let tags = {
-                    let mut tags = Vec::new();
-                    if tempest_extension.is_car.unwrap_or(false) {
-                        tags.push(Tags::CarChassis);
-                    }
-                    if tempest_extension.is_car_wheel.unwrap_or(false) {
-                        tags.push(Tags::CarWheel);
-                    }
-                    tags
-                };
+                let tags = Vec::new();
                 let entity_id = EntitiesWorldResource::create_mesh_entity(
                     &flecs_state,
                     &gltf.node_name(node_index),
@@ -78,6 +80,7 @@ impl Resource for EntitiesWorldResource {
                     tempest_extension
                         .physics_body
                         .map_or(false, |physics_body| physics_body.dynamic),
+                    tempest_extension.is_car.unwrap_or(false) || tempest_extension.is_car_wheel.unwrap_or(false),
                 );
                 node_to_entity_map.insert(node_index, entity_id);
             } else if let Some(light_data) = gltf.light(node_index) {

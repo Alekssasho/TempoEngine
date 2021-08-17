@@ -198,7 +198,6 @@ void PhysicsManager::LoadFromData(void* data, uint32_t size)
 	registry->release();
 }
 
-physx::PxVehicleDrive4WRawInputData gVehicleInputData;
 physx::PxVehicleDrive4W* gVehicle4W;
 physx::PxVehicleDrivableSurfaceToTireFrictionPairs* gFrictionPairs;
 
@@ -367,12 +366,10 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		const physx::PxF32 rearZ = chassisDims.z * 0.3f;
 		const physx::PxF32 wheelWidth = 0.2f;
 		const physx::PxF32 wheelRadius = 1.0f / 2.0f;
-		const physx::PxF32 numLeftWheels = numWheels / 2.0f;
-		const physx::PxF32 deltaZ = (frontZ - rearZ) / (numLeftWheels - 1.0f);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ + 0 * deltaZ * 0.5f);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ + 0 * deltaZ * 0.5f);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ + (numLeftWheels - 1) * deltaZ);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ + (numLeftWheels - 1) * deltaZ);
+		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ);
+		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ );
+		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
+		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
 
 		const physx::PxF32 wheelMass = 20.0f;
 		const physx::PxF32 wheelMOI = 0.5f * wheelMass * wheelRadius * wheelRadius;
@@ -467,7 +464,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			wheelsSimData->setSuspForceAppPointOffset(i, suspForceAppCMOffsets[i]);
 			wheelsSimData->setTireForceAppPointOffset(i, tireForceAppCMOffsets[i]);
 			wheelsSimData->setSceneQueryFilterData(i, wheelFilterData);
-			wheelsSimData->setWheelShapeMapping(i, physx::PxI32(i)); // TODO: this could potentialy be wrong
+			wheelsSimData->setWheelShapeMapping(i, physx::PxI32(i));
 		}
 
 		physx::PxVehicleAntiRollBarData barFront;
@@ -534,9 +531,6 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		vehDrive4W->mDriveDynData.forceGearChange(physx::PxVehicleGearsData::eFIRST);
 		vehDrive4W->mDriveDynData.setUseAutoGears(true);
 
-		gVehicleInputData.setDigitalBrake(false);
-		gVehicleInputData.setDigitalAccel(true);
-
 		gVehicle4W = vehDrive4W;
 
 		physx::PxVehicleDrivableSurfaceType surfaceTypes[1];
@@ -595,7 +589,7 @@ bool					gIsVehicleInAir = true;
 
 void PhysicsManager::Update(float deltaTime)
 {
-	PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, gVehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
+	PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, VehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
 
 	//Raycasts.
 	physx::PxVehicleWheels* vehicles[1] = { gVehicle4W };

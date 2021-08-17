@@ -26,12 +26,22 @@ enum CameraMovement
 	MouseY,
 };
 
+enum VehicleMovement
+{
+	Accelerate,
+	Brake,
+	Handbrake,
+	SteerLeft,
+	SteerRight,
+};
+
 EngineCore::EngineCore(const EngineCoreOptions& options)
 	: m_Options(options)
 	, m_Logger()
 	, m_JobSystem(options.NumWorkerThreads, 64, 2 * 1024 * 1024)
 	// TODO: Initialize m_input without system time and with our custom allocator
 	, m_InputMap(m_Input)
+	, m_VehicleInputMap(m_Input)
 	, m_Platform(m_Input)
 	, m_ResourceLoader(options.ResourceFolder)
 {
@@ -50,6 +60,13 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 	m_InputMap.MapBool(MoveCameraOrientation, mouseId, gainput::MouseButtonLeft);
 	m_InputMap.MapFloat(MouseX, mouseId, gainput::MouseAxisX);
 	m_InputMap.MapFloat(MouseY, mouseId, gainput::MouseAxisY);
+
+
+	m_VehicleInputMap.MapBool(Accelerate, keyboardId, gainput::KeyUp);
+	m_VehicleInputMap.MapBool(Brake, keyboardId, gainput::KeyDown);
+	m_VehicleInputMap.MapBool(Handbrake, keyboardId, gainput::KeySpace);
+	m_VehicleInputMap.MapBool(SteerLeft, keyboardId, gainput::KeyLeft);
+	m_VehicleInputMap.MapBool(SteerRight, keyboardId, gainput::KeyRight);
 }
 
 EngineCore::~EngineCore()
@@ -222,6 +239,14 @@ void EngineCore::UpdateInput()
 		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
 		m_Camera.Up = glm::normalize(glm::cross(cameraRight, m_Camera.Forward));
 	}
+
+
+	// Vehicle
+	m_Physics.VehicleInputData.setDigitalAccel(m_VehicleInputMap.GetBool(Accelerate));
+	m_Physics.VehicleInputData.setDigitalBrake(m_VehicleInputMap.GetBool(Brake));
+	m_Physics.VehicleInputData.setDigitalHandbrake(m_VehicleInputMap.GetBool(Handbrake));
+	m_Physics.VehicleInputData.setDigitalSteerLeft(m_VehicleInputMap.GetBool(SteerLeft));
+	m_Physics.VehicleInputData.setDigitalSteerRight(m_VehicleInputMap.GetBool(SteerRight));
 }
 
 void EngineCore::InitializeWindow()

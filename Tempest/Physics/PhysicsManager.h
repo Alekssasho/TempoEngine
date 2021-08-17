@@ -4,6 +4,9 @@
 #include <foundation/PxAllocatorCallback.h>
 #include <pvd/PxPvd.h>
 
+// TODO: remove
+#include <vehicle/PxVehicleUtilControl.h>
+
 namespace physx
 {
 class PxFoundation;
@@ -65,5 +68,9 @@ private:
 	PhysXPtr<physx::PxPvd> m_VisualDebugger;
 	PhysXPtr<physx::PxPhysics> m_PhysicsEngine;
 	PhysXPtr<physx::PxScene> m_Scene;
+
+public:
+	// TODO: remove
+	physx::PxVehicleDrive4WRawInputData VehicleInputData;
 };
 }

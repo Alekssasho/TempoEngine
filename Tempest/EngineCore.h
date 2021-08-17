@@ -84,6 +84,8 @@ private:
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
 
+	gainput::InputMap m_VehicleInputMap;
+
 
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);

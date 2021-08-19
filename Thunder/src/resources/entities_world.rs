@@ -85,7 +85,10 @@ impl Resource for EntitiesWorldResource {
                 node_to_entity_map.insert(node_index, entity_id);
             } else if let Some(light_data) = gltf.light(node_index) {
                 if let gltf::khr_lights_punctual::Kind::Directional = light_data.kind() {
-                    let trs = TRS::new(world_transform);
+                    // GLTF specify that lights shines upon -Z direction. Tempest is using +Z for that
+                    // So prepend a single mirror matrix for the Z direction
+                    let changed_shine_direction_world_transform = *world_transform * math::Mat4::from_scale(math::vec3(1.0, 1.0, -1.0));
+                    let trs = TRS::new(&changed_shine_direction_world_transform);
                     let transform = Components::Transform(Tempest_Components_Transform {
                         Position: trs.translate,
                         Scale: trs.scale,

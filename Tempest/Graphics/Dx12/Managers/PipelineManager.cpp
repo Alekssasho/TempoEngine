@@ -89,7 +89,7 @@ void PipelineManager::PrepareDefaultPipelineStateDesc(PipelineStreamBuilder& bui
 	D3D12_RASTERIZER_DESC rasterizerState = {0};
 	rasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
 	rasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-	rasterizerState.FrontCounterClockwise = TRUE;
+	rasterizerState.FrontCounterClockwise = FALSE;
 	rasterizerState.DepthClipEnable = TRUE;
 	rasterizerState.MultisampleEnable = FALSE;
 	rasterizerState.AntialiasedLineEnable = FALSE;

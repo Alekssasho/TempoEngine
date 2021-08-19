@@ -198,7 +198,7 @@ void PhysicsManager::LoadFromData(void* data, uint32_t size)
 	registry->release();
 }
 
-physx::PxVehicleDrive4W* gVehicle4W;
+physx::PxVehicleDrive4W* gVehicle4W = nullptr;
 physx::PxVehicleDrivableSurfaceToTireFrictionPairs* gFrictionPairs;
 
 void PhysicsManager::PatchWorldComponents(World& world)
@@ -240,6 +240,11 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		// TODO: WIP code
 		EntityQuery queryCar;
 		queryCar.Init<Components::CarPhysicsPart>(world);
+
+		if(queryCar.GetMatchedArchetypesCount() == 0)
+		{
+			return;
+		}
 
 		physx::PxRigidDynamic* wheelActors[numWheels];
 		physx::PxRigidDynamic* chassisActor = nullptr;
@@ -362,8 +367,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 		physx::PxVehicleWheelsSimData* wheelsSimData = physx::PxVehicleWheelsSimData::allocate(numWheels);
 		physx::PxVec3 wheelCenterActorOffsets[numWheels];
-		const physx::PxF32 frontZ = -chassisDims.z * 0.3f;
-		const physx::PxF32 rearZ = chassisDims.z * 0.3f;
+		const physx::PxF32 frontZ = chassisDims.z * 0.3f;
+		const physx::PxF32 rearZ = -chassisDims.z * 0.3f;
 		const physx::PxF32 wheelWidth = 0.2f;
 		const physx::PxF32 wheelRadius = 1.0f / 2.0f;
 		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ);
@@ -505,8 +510,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			physx::PxVehicleAckermannGeometryData ackermann;
 			ackermann.mAccuracy = 1.0f;
 			ackermann.mAxleSeparation =
-				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT).z -
-				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z;
+				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).z -
+				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT).z;
 			ackermann.mFrontWidth =
 				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT).x -
 				wheelsSimData->getWheelCentreOffset(physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT).x;
@@ -589,19 +594,22 @@ bool					gIsVehicleInAir = true;
 
 void PhysicsManager::Update(float deltaTime)
 {
-	PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, VehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
+	if(gVehicle4W)
+	{
+		PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, VehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
 
-	//Raycasts.
-	physx::PxVehicleWheels* vehicles[1] = { gVehicle4W };
-	PxVehicleSuspensionRaycasts(gBatchQuery, 1, vehicles, numWheels, suspensionQueryResults);
+		//Raycasts.
+		physx::PxVehicleWheels* vehicles[1] = { gVehicle4W };
+		PxVehicleSuspensionRaycasts(gBatchQuery, 1, vehicles, numWheels, suspensionQueryResults);
 
-	//Vehicle update.
-	const physx::PxVec3 grav = m_Scene->getGravity();
-	physx::PxWheelQueryResult wheelQueryResults[PX_MAX_NB_WHEELS];
-	physx::PxVehicleWheelQueryResult vehicleQueryResults[1] = { {wheelQueryResults, gVehicle4W->mWheelsSimData.getNbWheels()} };
-	PxVehicleUpdates(deltaTime, grav, *gFrictionPairs, 1, vehicles, vehicleQueryResults);
+		//Vehicle update.
+		const physx::PxVec3 grav = m_Scene->getGravity();
+		physx::PxWheelQueryResult wheelQueryResults[PX_MAX_NB_WHEELS];
+		physx::PxVehicleWheelQueryResult vehicleQueryResults[1] = { {wheelQueryResults, gVehicle4W->mWheelsSimData.getNbWheels()} };
+		PxVehicleUpdates(deltaTime, grav, *gFrictionPairs, 1, vehicles, vehicleQueryResults);
 
-	gIsVehicleInAir = gVehicle4W->getRigidDynamicActor()->isSleeping() ? false : physx::PxVehicleIsInAir(vehicleQueryResults[0]);
+		gIsVehicleInAir = gVehicle4W->getRigidDynamicActor()->isSleeping() ? false : physx::PxVehicleIsInAir(vehicleQueryResults[0]);
+	}
 	// TODO: Add scratch memory
 	m_Scene->simulate(deltaTime);
 

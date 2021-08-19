@@ -158,7 +158,7 @@ impl PhysicsHandler {
 
         desc.obj.triangles = triangles_data;
 
-        //desc.obj.flags.mBits = eFLIPNORMALS as u16;
+        //desc.obj.flags.mBits = physx_sys::PxMeshFlag::eFLIPNORMALS as u16;
 
         if let TriangleMeshCookingResult::Success(mesh) = self
             .physx_cooking

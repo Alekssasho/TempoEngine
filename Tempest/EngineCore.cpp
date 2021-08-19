@@ -205,7 +205,7 @@ void EngineCore::UpdateInput()
 {
 	// Update camera stuff
 	auto cameraForward = glm::normalize(m_Camera.Forward);
-	auto cameraRight = glm::normalize(glm::cross(cameraForward, m_Camera.Up));
+	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
 	auto speed = 2.0f;
 
 	// Speed bump
@@ -237,7 +237,7 @@ void EngineCore::UpdateInput()
 	{
 		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseX) * 5.0f, m_Camera.Up);
 		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
-		m_Camera.Up = glm::normalize(glm::cross(cameraRight, m_Camera.Forward));
+		m_Camera.Up = glm::normalize(glm::cross(m_Camera.Forward, cameraRight));
 	}
 
 

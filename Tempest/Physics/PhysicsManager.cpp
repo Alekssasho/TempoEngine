@@ -239,7 +239,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 	{
 		// TODO: WIP code
 		EntityQuery queryCar;
-		queryCar.Init<Components::CarPhysicsPart>(world);
+		queryCar.Init<Components::CarPhysicsPart, Components::Transform>(world);
 
 		if(queryCar.GetMatchedArchetypesCount() == 0)
 		{
@@ -248,6 +248,9 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 		physx::PxRigidDynamic* wheelActors[numWheels];
 		physx::PxRigidDynamic* chassisActor = nullptr;
+		glm::vec3 chassisPosition;
+		glm::quat chassisRotation;
+		glm::vec3 wheelPosition[numWheels];
 
 		// Create new actor which is the car
 		physx::PxRigidDynamic* carActor = m_PhysicsEngine->createRigidDynamic(physx::PxTransform(physx::PxIdentity));
@@ -258,6 +261,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			auto [_, iter] = queryCar.GetIterForAchetype(i);
 			assert(iter.count == 5);
 			Components::CarPhysicsPart* dynamicActor = ecs_column(&iter, Components::CarPhysicsPart, 1);
+			Components::Transform* transforms = ecs_column(&iter, Components::Transform, 2);
 			for(int row = 0; row < iter.count; ++row)
 			{
 				ecs_entity_t entity = iter.entities[row];
@@ -277,6 +281,9 @@ void PhysicsManager::PatchWorldComponents(World& world)
 				{
 					chassisActor = rigidBody;
 					dynamicActor[row].ShapeIndex = numWheels;
+					chassisPosition = transforms[row].Position;
+					chassisRotation = transforms[row].Rotation;
+					assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
 				} else
 				{
 					int indexToPut = 0;
@@ -298,6 +305,13 @@ void PhysicsManager::PatchWorldComponents(World& world)
 					}
 					wheelActors[indexToPut] = rigidBody;
 					dynamicActor[row].ShapeIndex = indexToPut;
+
+					wheelPosition[indexToPut] = transforms[row].Position;
+					assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
+					//assert(transforms[row].Rotation.w == 1.0f);
+					//assert(abs(transforms[row].Rotation.x) == 0.0f);
+					//assert(abs(transforms[row].Rotation.y) == 0.0f);
+					//assert(abs(transforms[row].Rotation.z) == 0.0f);
 				}
 
 				dynamicActor[row].CarActor = carActor;
@@ -371,10 +385,15 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		const physx::PxF32 rearZ = -chassisDims.z * 0.3f;
 		const physx::PxF32 wheelWidth = 0.2f;
 		const physx::PxF32 wheelRadius = 1.0f / 2.0f;
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ );
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
-		wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
+		for(int i = 0; i < numWheels; ++i)
+		{
+			const glm::vec3 wheelOffsetFromChassis = wheelPosition[i] - chassisPosition;
+			wheelCenterActorOffsets[i] = physx::PxVec3(wheelOffsetFromChassis.x, wheelOffsetFromChassis.y, wheelOffsetFromChassis.z);
+		}
+		//wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ);
+		//wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eREAR_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), rearZ );
+		//wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_LEFT] = physx::PxVec3((-chassisDims.x + wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
+		//wheelCenterActorOffsets[physx::PxVehicleDrive4WWheelOrder::eFRONT_RIGHT] = physx::PxVec3((+chassisDims.x - wheelWidth) * 0.5f, -(chassisDims.y / 2 + wheelRadius), frontZ);
 
 		const physx::PxF32 wheelMass = 20.0f;
 		const physx::PxF32 wheelMOI = 0.5f * wheelMass * wheelRadius * wheelRadius;
@@ -524,7 +543,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		physx::PxVehicleDrive4W* vehDrive4W = physx::PxVehicleDrive4W::allocate(numWheels);
 		vehDrive4W->setup(m_PhysicsEngine.get(), carActor, *wheelsSimData, driveSimData, 0);
 
-		physx::PxTransform startTransform(physx::PxVec3(0, (chassisDims.y * 0.5f + wheelRadius + 1.0f), 0), physx::PxQuat(physx::PxIdentity));
+		physx::PxTransform startTransform(physx::PxVec3(chassisPosition.x, chassisPosition.y, chassisPosition.z), physx::PxQuat(chassisRotation.x, chassisRotation.y, chassisRotation.z, chassisRotation.w));
 		vehDrive4W->getRigidDynamicActor()->setGlobalPose(startTransform);
 
 		wheelsSimData->free();

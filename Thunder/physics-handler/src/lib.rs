@@ -2,8 +2,13 @@ use physx::{
     cooking::{ConvexMeshCookingResult, PxCooking, PxCookingParams, TriangleMeshCookingResult},
     foundation::DefaultAllocator,
     prelude::*,
-    traits::Class,
 };
+
+pub use physx::geometry::PxConvexMeshGeometry;
+pub use physx::rigid_actor::RigidActor;
+pub use physx::rigid_body::RigidBody;
+pub use physx::traits::Class;
+pub use physx_sys;
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
 use physx_sys::{
@@ -81,6 +86,7 @@ struct RawPtrHolder {
 impl Drop for RawPtrHolder {
     fn drop(&mut self) {
         unsafe {
+            physx_sys::phys_PxCloseVehicleSDK(self.physx_serialize_registry);
             physx_sys::PxCollection_release_mut(self.physx_collection);
             physx_sys::PxSerializationRegistry_release_mut(self.physx_serialize_registry);
         }
@@ -121,6 +127,8 @@ impl PhysicsHandler {
                 physics.physics_mut().as_mut_ptr(),
             )
         };
+
+        unsafe { physx_sys::phys_PxInitVehicleSDK(physics.physics_mut().as_mut_ptr(), registry) };
 
         PhysicsHandler {
             physx_foundation: physics,
@@ -185,14 +193,27 @@ impl PhysicsHandler {
         let mut desc = physx::cooking::PxConvexMeshDesc::new();
         desc.obj.points = points_data;
         desc.obj.flags.mBits = PxConvexFlag::eCOMPUTE_CONVEX as u16;
-        desc.obj.vertexLimit = 64;
+        desc.obj.vertexLimit = 256;
 
-        if let ConvexMeshCookingResult::Success(mesh) = self
+        let result = self
             .physx_cooking
-            .create_convex_mesh(self.physx_foundation.physics_mut(), &desc)
-        {
+            .create_convex_mesh(self.physx_foundation.physics_mut(), &desc);
+        if let ConvexMeshCookingResult::Success(mesh) = result {
             Some(mesh)
         } else {
+            match result {
+                ConvexMeshCookingResult::ZeroAreaTestFailed => {
+                    println!("Error creating convex mesh: ZeroAreaTestFailed")
+                }
+                ConvexMeshCookingResult::PolygonsLimitReached => {
+                    println!("Error creating convex mesh: PolygonsLimitReached")
+                }
+                ConvexMeshCookingResult::Failure => println!("Error creating convex mesh: Failure"),
+                ConvexMeshCookingResult::InvalidDescriptor => {
+                    println!("Error creating convex mesh: InvalidDescriptor")
+                }
+                _ => {}
+            }
             None
         }
     }
@@ -211,7 +232,7 @@ impl PhysicsHandler {
         &self,
         scale: PxVec3,
         mesh: &mut Owner<physx::convex_mesh::ConvexMesh>,
-    ) -> impl Geometry {
+    ) -> PxConvexMeshGeometry {
         let sys_vec: physx_sys::PxVec3 = scale.into();
         let mesh_scale = unsafe { PxMeshScale_new_2(&sys_vec as *const physx_sys::PxVec3) };
         PxConvexMeshGeometry::new(
@@ -225,12 +246,50 @@ impl PhysicsHandler {
         PxSphereGeometry::new(radius)
     }
 
+    pub fn create_actor(&mut self) -> Owner<PxRigidDynamic> {
+        self.physx_foundation
+            .create_dynamic(&PxTransform::default(), ())
+            .unwrap()
+    }
+
+    pub fn create_shape(
+        &mut self,
+        geometry: &impl Geometry,
+        shape_filter_data: u32,
+    ) -> Owner<PxShape> {
+        let mut shape = self
+            .physx_foundation
+            .create_shape(
+                geometry,
+                &mut [self.default_material.as_mut()],
+                false,
+                ShapeFlag::Visualization | ShapeFlag::SceneQueryShape | ShapeFlag::SimulationShape,
+                (),
+            )
+            .unwrap();
+
+        let mut data = unsafe { physx_sys::PxFilterData_new_1() };
+        unsafe {
+            physx_sys::PxFilterData_setToDefault_mut(&mut data);
+        }
+        data.word3 = shape_filter_data;
+
+        unsafe {
+            physx_sys::PxShape_setQueryFilterData_mut(
+                shape.as_mut_ptr(),
+                &data as *const physx_sys::PxFilterData,
+            )
+        }
+        shape
+    }
+
     pub fn add_actor(
         &mut self,
         is_dynamic: bool,
         transform: PxTransform,
         geometry: &impl Geometry,
         id: u64,
+        static_shape_filter_data: u32,
     ) {
         if is_dynamic {
             let mut actor = self
@@ -271,6 +330,22 @@ impl PhysicsHandler {
                     (),
                 )
                 .unwrap();
+
+            let mut shapes = actor.get_shapes_mut();
+            assert!(shapes.len() == 1);
+
+            let mut data = unsafe { physx_sys::PxFilterData_new_1() };
+            unsafe {
+                physx_sys::PxFilterData_setToDefault_mut(&mut data);
+            }
+            data.word3 = static_shape_filter_data;
+
+            unsafe {
+                physx_sys::PxShape_setQueryFilterData_mut(
+                    shapes[0].as_mut_ptr(),
+                    &data as *const physx_sys::PxFilterData,
+                )
+            }
 
             unsafe {
                 physx_sys::PxCollection_add_mut(

@@ -17,6 +17,7 @@ pub struct Scene {
     pub root_nodes: Vec<usize>,
     pub meshes: Vec<usize>,
     pub materials: Vec<usize>,
+    pub car_node_indices: Vec<usize>,
 }
 
 // Constructor
@@ -32,7 +33,8 @@ impl Scene {
                 // TODO: Support only a single scene inside the document
                 let root_nodes = gltf.gather_root_node_indices(0);
                 let camera = Scene::extract_camera_from_scene(&gltf, &root_nodes);
-                let (meshes, materials) = gltf.gather_mesh_and_materials_indices(&root_nodes);
+                let (meshes, materials, car_node_indices) =
+                    gltf.gather_mesh_and_materials_and_car_indices(&root_nodes);
 
                 Scene {
                     gltf,
@@ -40,8 +42,9 @@ impl Scene {
                     root_nodes,
                     meshes,
                     materials,
+                    car_node_indices,
                 }
-            },
+            }
             Err(error) => {
                 panic!("Error loading file: {}", error);
             }
@@ -60,12 +63,13 @@ impl GltfData {
             .collect()
     }
 
-    pub fn gather_mesh_and_materials_indices(
+    pub fn gather_mesh_and_materials_and_car_indices(
         &self,
         root_nodes: &[usize],
-    ) -> (Vec<usize>, Vec<usize>) {
+    ) -> (Vec<usize>, Vec<usize>, Vec<usize>) {
         let mut meshes = HashSet::new();
         let mut materials = HashSet::new();
+        let mut car_nodes = HashSet::new();
         let mut node_stack = Vec::new();
 
         node_stack.extend_from_slice(root_nodes);
@@ -84,6 +88,11 @@ impl GltfData {
                         }
                     }
                 }
+                if let Some(tempest_extension) = node.tempest_extension() {
+                    if tempest_extension.is_car.unwrap_or(false) {
+                        car_nodes.insert(node.index());
+                    }
+                }
             }
             node_stack.remove(0);
         }
@@ -91,10 +100,11 @@ impl GltfData {
         (
             meshes.drain().collect(),
             materials.drain().sorted().collect(),
+            car_nodes.drain().collect(),
         )
     }
 
-    fn node_transform(&self, index: usize) -> math::Mat4 {
+    pub fn node_transform(&self, index: usize) -> math::Mat4 {
         let mat = self
             .document
             .nodes()
@@ -118,6 +128,19 @@ impl GltfData {
             .name()
             .map_or(Some("Unnamed node"), |str| Some(str))
             .unwrap()
+    }
+
+    pub fn node_children(&self, index: usize) -> Vec<usize> {
+        self.node(index)
+            .children()
+            .map(|child| child.index())
+            .collect()
+    }
+
+    pub fn is_car(&self, index: usize) -> bool {
+        self.node(index)
+            .tempest_extension()
+            .map_or(false, |extension| extension.is_car.unwrap_or(false))
     }
 
     // TODO: This is not efficient as it does a copy
@@ -221,7 +244,7 @@ impl GltfData {
 
 // Static methods for scene walking
 impl Scene {
-    fn walk_nodes<T, F>(
+    pub fn walk_nodes<T, F>(
         gltf: &GltfData,
         node_index: usize,
         parent_transform: &math::Mat4,

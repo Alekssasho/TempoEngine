@@ -27,11 +27,6 @@ class TempestNodeProperties(bpy.types.PropertyGroup):
         description='Is this object a car',
         default=False
         )
-    is_car_wheel: bpy.props.BoolProperty(
-        name="Is Car Wheel",
-        description='Is this object a wheel of a car',
-        default=False
-        )
 
 def register_panel():
     # Register the panel on demand, we need to be sure to only register it once
@@ -68,7 +63,6 @@ class TempestNodePropertiesPanel(bpy.types.Panel):
         box = layout.box()
         active_systems = box.column(heading="Active Systems")
         active_systems.prop(obj.tempest_props, "is_car", toggle=False)
-        active_systems.prop(obj.tempest_props, "is_car_wheel", toggle=False)
 
 
 class glTF2ExportUserExtension:
@@ -80,15 +74,17 @@ class glTF2ExportUserExtension:
         self.Extension = Extension
 
     def gather_node_hook(self, gltf2_object, blender_object, export_settings):
+        extension_data = {}
+        set_extension = False
+
+        if blender_object.tempest_props.is_car:
+            extension_data["is_car"] = blender_object.tempest_props.is_car
+            set_extension = True
+
         if gltf2_object.mesh is not None:
-            if gltf2_object.extensions is None:
-                gltf2_object.extensions = {}
-            extension_data = {
-                "is_car": blender_object.tempest_props.is_car,
-                "is_car_wheel": blender_object.tempest_props.is_car_wheel
-            }
             # Handle Physics
             if blender_object.rigid_body is not None:
+                set_extension = True
                 if blender_object.rigid_body.collision_shape == 'MESH':
                     rigid_body_data = {
                         "dynamic": False, # Meshes are always static
@@ -114,6 +110,10 @@ class glTF2ExportUserExtension:
                         }
                     }
                     extension_data["physics_body"] = rigid_body_data
+
+        if set_extension:
+            if gltf2_object.extensions is None:
+                gltf2_object.extensions = {}
 
             gltf2_object.extensions[glTF_extension_name] = self.Extension(
                 name=glTF_extension_name,

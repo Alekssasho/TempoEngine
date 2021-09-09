@@ -23,6 +23,54 @@ pub mod common {
         extern crate flatbuffers;
         use self::flatbuffers::EndianScalar;
 
+        #[allow(non_camel_case_types)]
+        #[repr(u32)]
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+        pub enum PhysicsShapeFilter {
+            NonDrivableSurface = 65535,
+            DrivableSurface = 4294901760,
+        }
+
+        pub const ENUM_MIN_PHYSICS_SHAPE_FILTER: u32 = 65535;
+        pub const ENUM_MAX_PHYSICS_SHAPE_FILTER: u32 = 4294901760;
+
+        impl<'a> flatbuffers::Follow<'a> for PhysicsShapeFilter {
+            type Inner = Self;
+            #[inline]
+            fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+                flatbuffers::read_scalar_at::<Self>(buf, loc)
+            }
+        }
+
+        impl flatbuffers::EndianScalar for PhysicsShapeFilter {
+            #[inline]
+            fn to_little_endian(self) -> Self {
+                let n = u32::to_le(self as u32);
+                let p = &n as *const u32 as *const PhysicsShapeFilter;
+                unsafe { *p }
+            }
+            #[inline]
+            fn from_little_endian(self) -> Self {
+                let n = u32::from_le(self as u32);
+                let p = &n as *const u32 as *const PhysicsShapeFilter;
+                unsafe { *p }
+            }
+        }
+
+        impl flatbuffers::Push for PhysicsShapeFilter {
+            type Output = PhysicsShapeFilter;
+            #[inline]
+            fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+                flatbuffers::emplace_scalar::<PhysicsShapeFilter>(dst, *self);
+            }
+        }
+
+        #[allow(non_camel_case_types)]
+        pub const ENUM_VALUES_PHYSICS_SHAPE_FILTER: [PhysicsShapeFilter; 2] = [
+            PhysicsShapeFilter::NonDrivableSurface,
+            PhysicsShapeFilter::DrivableSurface,
+        ];
+
         // struct Vec3, aligned to 4
         #[repr(C, align(4))]
         #[derive(Clone, Copy, Debug, PartialEq)]

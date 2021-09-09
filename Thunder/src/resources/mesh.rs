@@ -17,9 +17,9 @@ impl MeshResource {
 }
 #[derive(Debug, Copy, Clone, Default)]
 pub struct VertexLayout {
-    position: math::Vec3,
-    normal: math::Vec3,
-    uv: math::Vec2,
+    pub position: math::Vec3,
+    pub normal: math::Vec3,
+    pub uv: math::Vec2,
 }
 
 #[derive(Debug)]
@@ -28,6 +28,7 @@ pub struct PrimitiveMeshData {
     pub vertices: Vec<VertexLayout>,
     pub meshlet_indices: Vec<u8>,
     pub whole_mesh_indices: Vec<u32>,
+    pub simplyfied_mesh_indices: Vec<u32>,
     pub material_index: usize,
 }
 
@@ -70,7 +71,7 @@ impl Resource for MeshResource {
             // Tempest is LH system and GLTF is RH, so we need to change the winding of the triangles
             // to use the proper positive rotation
             assert!(indices.len() % 3 == 0);
-            for i in 0..(indices.len()/3) {
+            for i in 0..(indices.len() / 3) {
                 let index = indices[i * 3 + 1];
                 indices[i * 3 + 1] = indices[i * 3 + 2];
                 indices[i * 3 + 2] = index;
@@ -145,11 +146,25 @@ impl Resource for MeshResource {
                 }
                 indices
             };
+
+            let vertex_adapter = meshopt::VertexDataAdapter::new(
+                unsafe { vertices.as_slice().align_to::<u8>().1 },
+                std::mem::size_of::<VertexLayout>(),
+                0,
+            )
+            .unwrap();
+            let simplyfied_mesh_indices = meshopt::simplify_sloppy(
+                whole_mesh_indices.as_slice(),
+                &vertex_adapter,
+                256.min(whole_mesh_indices.len()),
+                1.0,
+            );
             primitive_meshes.push(PrimitiveMeshData {
                 meshlets,
                 vertices,
                 meshlet_indices,
                 whole_mesh_indices,
+                simplyfied_mesh_indices,
                 material_index: scene
                     .gltf
                     .mesh_material_index(self.mesh_index, prim)

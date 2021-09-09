@@ -283,7 +283,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 					dynamicActor[row].ShapeIndex = numWheels;
 					chassisPosition = transforms[row].Position;
 					chassisRotation = transforms[row].Rotation;
-					assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
+					//assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
 				} else
 				{
 					int indexToPut = 0;
@@ -307,7 +307,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 					dynamicActor[row].ShapeIndex = indexToPut;
 
 					wheelPosition[indexToPut] = transforms[row].Position;
-					assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
+					//assert(transforms[row].Scale == glm::vec3(1.0f, 1.0f, 1.0f));
 					//assert(transforms[row].Rotation.w == 1.0f);
 					//assert(abs(transforms[row].Rotation.x) == 0.0f);
 					//assert(abs(transforms[row].Rotation.y) == 0.0f);
@@ -340,6 +340,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			// TODO: Add simulation filtering to shapes and not actors
 		}
 
+		float wheelRadius = 0.0f;
+		float wheelWidth = 0.0f;
 		for (const auto& actor : wheelActors)
 		{
 			physx::PxShape* wheelShape;
@@ -353,6 +355,16 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			wheelShape->setQueryFilterData(filterData);
 			wheelShape->setLocalPose(physx::PxTransform(physx::PxIdentity));
 			carActor->attachShape(*wheelShape);
+
+			physx::PxConvexMeshGeometry geometry;
+			wheelShape->getConvexMeshGeometry(geometry);
+			auto localBounds = geometry.convexMesh->getLocalBounds();
+			//assert(wheelWidth == 0.0f || wheelWidth == localBounds.getDimensions().x);
+			wheelWidth = localBounds.getDimensions().x;
+			//assert(wheelRadius == 0.0f || wheelRadius == localBounds.getExtents().y);
+			wheelRadius = localBounds.getExtents().y;
+			//assert(localBounds.getExtents().y == localBounds.getExtents().z);
+
 			wheelShape->release();
 		}
 		physx::PxShape* chassisShape;
@@ -366,25 +378,29 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		chassisShape->setQueryFilterData(filterData);
 		chassisShape->setLocalPose(physx::PxTransform(physx::PxIdentity));
 		carActor->attachShape(*chassisShape);
-		chassisShape->release();
 
-		const physx::PxF32 chassisMass = 1500.0f;
-		const physx::PxVec3 chassisDims(3.0f, 2.0f, 5.0f);
-		const physx::PxVec3 chassisMOI
-		((chassisDims.y * chassisDims.y + chassisDims.z * chassisDims.z) * chassisMass / 12.0f,
-			(chassisDims.x * chassisDims.x + chassisDims.z * chassisDims.z) * 0.8f * chassisMass / 12.0f,
-			(chassisDims.x * chassisDims.x + chassisDims.y * chassisDims.y) * chassisMass / 12.0f);
-		const physx::PxVec3 chassisCMOffset(0.0f, -chassisDims.y * 0.5f + 0.65f, 0.25f);
-		carActor->setMass(chassisMass);
-		carActor->setMassSpaceInertiaTensor(chassisMOI);
-		carActor->setCMassLocalPose(physx::PxTransform(chassisCMOffset, physx::PxQuat(physx::PxIdentity)));
+		auto massProperties = physx::PxRigidBodyExt::computeMassPropertiesFromShapes(&chassisShape, 1);
+		massProperties = massProperties * 50.0f;
+
+		chassisShape->release();
+		//const physx::PxF32 chassisMass = 1500.0f;
+		//const physx::PxVec3 chassisDims(3.0f, 2.0f, 5.0f);
+		//const physx::PxVec3 chassisMOI
+		//((chassisDims.y * chassisDims.y + chassisDims.z * chassisDims.z) * chassisMass / 12.0f,
+		//	(chassisDims.x * chassisDims.x + chassisDims.z * chassisDims.z) * 0.8f * chassisMass / 12.0f,
+		//	(chassisDims.x * chassisDims.x + chassisDims.y * chassisDims.y) * chassisMass / 12.0f);
+		//const physx::PxVec3 chassisCMOffset(0.0f, -chassisDims.y * 0.5f + 0.65f, 0.25f);
+		carActor->setMass(massProperties.mass);
+		auto orient = physx::PxQuat(physx::PxIdentity);
+		carActor->setMassSpaceInertiaTensor(physx::PxDiagonalize(massProperties.inertiaTensor, orient));
+		carActor->setCMassLocalPose(physx::PxTransform(massProperties.centerOfMass, physx::PxQuat(physx::PxIdentity)));
 
 		physx::PxVehicleWheelsSimData* wheelsSimData = physx::PxVehicleWheelsSimData::allocate(numWheels);
 		physx::PxVec3 wheelCenterActorOffsets[numWheels];
-		const physx::PxF32 frontZ = chassisDims.z * 0.3f;
-		const physx::PxF32 rearZ = -chassisDims.z * 0.3f;
-		const physx::PxF32 wheelWidth = 0.2f;
-		const physx::PxF32 wheelRadius = 1.0f / 2.0f;
+		//const physx::PxF32 frontZ = chassisDims.z * 0.3f;
+		//const physx::PxF32 rearZ = -chassisDims.z * 0.3f;
+		//const physx::PxF32 wheelWidth = 0.2f;
+		//const physx::PxF32 wheelRadius = 1.0f / 2.0f;
 		for(int i = 0; i < numWheels; ++i)
 		{
 			const glm::vec3 wheelOffsetFromChassis = wheelPosition[i] - chassisPosition;
@@ -422,7 +438,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 			physx::PxF32 suspSprungMasses[numWheels];
 			PxVehicleComputeSprungMasses
 			(numWheels, wheelCenterActorOffsets,
-				chassisCMOffset, chassisMass, 1, suspSprungMasses);
+				massProperties.centerOfMass, massProperties.mass, 1, suspSprungMasses);
 
 			//Set the suspension data.
 			for (physx::PxU32 i = 0; i < numWheels; i++)
@@ -462,7 +478,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 				//Wheel center offset is offset from rigid body center of mass.
 				wheelCentreCMOffsets[i] =
-					wheelCenterActorOffsets[i] - chassisCMOffset;
+					wheelCenterActorOffsets[i] - massProperties.centerOfMass;
 
 				//Suspension force application point 0.3 metres below 
 				//rigid body center of mass.

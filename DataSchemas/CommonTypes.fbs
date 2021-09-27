@@ -12,3 +12,8 @@ struct Color {
     b: float;
     a: float;
 }
+
+enum PhysicsShapeFilter : uint {
+    DrivableSurface = 0xffff0000,
+    NonDrivableSurface = 0x0000ffff,
+}

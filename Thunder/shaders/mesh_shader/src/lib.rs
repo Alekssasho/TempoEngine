@@ -7,7 +7,7 @@
 #![deny(warnings)]
 
 use core::f32::consts::PI;
-use glam::{Mat4, Vec3, Vec2, Vec3Swizzles, vec3};
+use glam::{vec3, Mat4, Vec2, Vec3, Vec3Swizzles};
 
 //use spirv_std::arch::{ddx_vector, ddy_vector};
 // Note: This cfg is incorrect on its surface, it really should be "are we compiling with std", but
@@ -90,7 +90,7 @@ pub fn main_fs(
     in_normal_world: Vec3,
     in_uv: Vec2,
     #[spirv(push_constant)] constants: &ShaderConstants,
-    output: &mut Vec4
+    output: &mut Vec4,
 ) {
     match constants.render_mode {
         RenderMode::Gray => {
@@ -105,13 +105,13 @@ pub fn main_fs(
             let color = vec4(1.0, 1.0, 1.0, 1.0);
 
             *output = color * diffuse_factor + (color * ambient_factor);
-        },
+        }
         RenderMode::Normal => {
             let normal_screen_encoded = in_normal_world / 2.0 + vec3(0.5, 0.5, 0.5);
             *output = normal_screen_encoded.xyzz();
-        },
+        }
         RenderMode::UVs => {
             *output = vec4(in_uv.x, in_uv.y, 0.0, 1.0);
-        },
+        }
     }
 }

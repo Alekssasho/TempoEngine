@@ -51,7 +51,8 @@ World::World()
 	//m_Systems.emplace_back(new Systems::BoidsSystem);
 
 	// This should be the last system in this bucket
-	m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
+	// TODO: Mirror To Physics is needed only for kinematics objects as they are driven by animation, everything else should be physics driven
+	//m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
 
 	// This should be the first system in this bucket
 	m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);

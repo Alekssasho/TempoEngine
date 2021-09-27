@@ -8,6 +8,7 @@ pub use glam::mat4;
 pub use glam::quat;
 pub use glam::vec2;
 pub use glam::vec3;
+pub use glam::vec4;
 
 pub struct TRS {
     pub translate: Vec3,
@@ -17,18 +18,13 @@ pub struct TRS {
 
 impl TRS {
     pub fn new(mat: &Mat4) -> TRS {
-        // Tempest has LH and gltf uses RH, so we need to invert Z here.
-        // let to_tempest = nalgebra_glm::scale(
-        //     &nalgebra_glm::identity(),
-        //     &nalgebra_glm::vec3(1.0, 1.0, -1.0),
-        // );
-        // let mat = to_tempest * mat;
-
         let (scale, rotate, translate) = mat.to_scale_rotation_translation();
-
+        // Tempest has LH and gltf uses RH, so we need to invert Z here.
+        // First negate rotation angle, then negate z axis. as Quaternion stores in xyz sin(theta), sin(-theta) = - sin(theta). So we need to invert
+        // xy and z, however we need to invert z once more, so it becomes positive again. in W we store cos(theta). cos(-theta) = cos(theta) so no need to change that
         TRS {
-            translate,
-            rotate,
+            translate: vec3(-translate.x, translate.y, translate.z),
+            rotate: quat(rotate.x, -rotate.y, -rotate.z, rotate.w),
             scale,
         }
     }

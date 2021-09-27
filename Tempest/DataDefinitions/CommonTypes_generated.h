@@ -13,6 +13,29 @@ struct Vec3;
 
 struct Color;
 
+enum PhysicsShapeFilter {
+  PhysicsShapeFilter_NonDrivableSurface = 65535,
+  PhysicsShapeFilter_DrivableSurface = 4294901760,
+  PhysicsShapeFilter_MIN = PhysicsShapeFilter_NonDrivableSurface,
+  PhysicsShapeFilter_MAX = PhysicsShapeFilter_DrivableSurface
+};
+
+inline const PhysicsShapeFilter (&EnumValuesPhysicsShapeFilter())[2] {
+  static const PhysicsShapeFilter values[] = {
+    PhysicsShapeFilter_NonDrivableSurface,
+    PhysicsShapeFilter_DrivableSurface
+  };
+  return values;
+}
+
+inline const char *EnumNamePhysicsShapeFilter(PhysicsShapeFilter e) {
+  switch (e) {
+    case PhysicsShapeFilter_NonDrivableSurface: return "NonDrivableSurface";
+    case PhysicsShapeFilter_DrivableSurface: return "DrivableSurface";
+    default: return "";
+  }
+}
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
  private:
   float x_;

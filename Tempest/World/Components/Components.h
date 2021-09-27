@@ -50,6 +50,14 @@ struct LightColorInfo
 
 	static constexpr const char* Name = "LightColorInfo";
 };
+
+struct CarPhysicsPart
+{
+	physx::PxRigidBody* CarActor;
+	uint32_t ShapeIndex;
+
+	static constexpr const char* Name = "CarPhysicsPart";
+};
 }
 
 namespace Tags

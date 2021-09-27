@@ -22,9 +22,9 @@ glTF_extension_name = "TEMPEST_extension"
 extension_is_required = False
 
 class TempestNodeProperties(bpy.types.PropertyGroup):
-    boids_enabled: bpy.props.BoolProperty(
-        name="Boids",
-        description='Should this object be parts of the boids system',
+    is_car: bpy.props.BoolProperty(
+        name="Is Car",
+        description='Is this object a car',
         default=False
         )
 
@@ -62,7 +62,7 @@ class TempestNodePropertiesPanel(bpy.types.Panel):
 
         box = layout.box()
         active_systems = box.column(heading="Active Systems")
-        active_systems.prop(obj.tempest_props, "boids_enabled", toggle=True)
+        active_systems.prop(obj.tempest_props, "is_car", toggle=False)
 
 
 class glTF2ExportUserExtension:
@@ -74,14 +74,17 @@ class glTF2ExportUserExtension:
         self.Extension = Extension
 
     def gather_node_hook(self, gltf2_object, blender_object, export_settings):
+        extension_data = {}
+        set_extension = False
+
+        if blender_object.tempest_props.is_car:
+            extension_data["is_car"] = blender_object.tempest_props.is_car
+            set_extension = True
+
         if gltf2_object.mesh is not None:
-            if gltf2_object.extensions is None:
-                gltf2_object.extensions = {}
-            extension_data = {
-                "boids_enabled": blender_object.tempest_props.boids_enabled
-            }
             # Handle Physics
             if blender_object.rigid_body is not None:
+                set_extension = True
                 if blender_object.rigid_body.collision_shape == 'MESH':
                     rigid_body_data = {
                         "dynamic": False, # Meshes are always static
@@ -99,6 +102,18 @@ class glTF2ExportUserExtension:
                         }
                     }
                     extension_data["physics_body"] = rigid_body_data
+                elif blender_object.rigid_body.collision_shape == 'CONVEX_HULL':
+                    rigid_body_data = {
+                        "dynamic": blender_object.rigid_body.type == 'ACTIVE',
+                        "collision_shape" : {
+                            "type" : "convex"
+                        }
+                    }
+                    extension_data["physics_body"] = rigid_body_data
+
+        if set_extension:
+            if gltf2_object.extensions is None:
+                gltf2_object.extensions = {}
 
             gltf2_object.extensions[glTF_extension_name] = self.Extension(
                 name=glTF_extension_name,

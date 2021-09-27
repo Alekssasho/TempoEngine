@@ -84,7 +84,7 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
 	StructuredBuffer<Material> materials = ResourceDescriptorHeap[3];
 
-	float3 normal = input.NormalWorld;
+	float3 normal = normalize(input.NormalWorld);
 
 	float diffuseFactor = saturate(dot(normal, -g_Scene.LightDirection.xyz));
 

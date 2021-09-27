@@ -9,6 +9,8 @@ pub use physx::rigid_actor::RigidActor;
 pub use physx::rigid_body::RigidBody;
 pub use physx::traits::Class;
 pub use physx_sys;
+pub use physx::owner::Owner;
+pub use physx::convex_mesh::ConvexMesh;
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
 use physx_sys::{
@@ -40,7 +42,7 @@ type PxScene = physx::scene::PxScene<
 
 /// Next up, the simulation event callbacks need to be defined, and possibly an
 /// allocator callback as well.
-struct OnCollision;
+pub struct OnCollision;
 impl CollisionCallback for OnCollision {
     fn on_collision(
         &mut self,
@@ -49,16 +51,16 @@ impl CollisionCallback for OnCollision {
     ) {
     }
 }
-struct OnTrigger;
+pub struct OnTrigger;
 impl TriggerCallback for OnTrigger {
     fn on_trigger(&mut self, _pairs: &[physx_sys::PxTriggerPair]) {}
 }
 
-struct OnConstraintBreak;
+pub struct OnConstraintBreak;
 impl ConstraintBreakCallback for OnConstraintBreak {
     fn on_constraint_break(&mut self, _constraints: &[physx_sys::PxConstraintInfo]) {}
 }
-struct OnWakeSleep;
+pub struct OnWakeSleep;
 impl WakeSleepCallback<PxArticulationLink, PxRigidStatic, PxRigidDynamic> for OnWakeSleep {
     fn on_wake_sleep(
         &mut self,
@@ -68,7 +70,7 @@ impl WakeSleepCallback<PxArticulationLink, PxRigidStatic, PxRigidDynamic> for On
     }
 }
 
-struct OnAdvance;
+pub struct OnAdvance;
 impl AdvanceCallback<PxArticulationLink, PxRigidDynamic> for OnAdvance {
     fn on_advance(
         &self,
@@ -78,9 +80,9 @@ impl AdvanceCallback<PxArticulationLink, PxRigidDynamic> for OnAdvance {
     }
 }
 
-struct RawPtrHolder {
-    physx_collection: *mut PxCollection,
-    physx_serialize_registry: *mut PxSerializationRegistry,
+pub struct RawPtrHolder {
+    pub physx_collection: *mut PxCollection,
+    pub physx_serialize_registry: *mut PxSerializationRegistry,
 }
 
 impl Drop for RawPtrHolder {
@@ -97,10 +99,10 @@ impl Drop for RawPtrHolder {
 // top to bottom as opposed as in C++ where it is bottom to top
 pub struct PhysicsHandler {
     default_material: Owner<PxMaterial>,
-    physx_scene: Owner<PxScene>,
+    pub physx_scene: Owner<PxScene>,
     physx_cooking: Owner<PxCooking>,
-    raw_ptr_holder: RawPtrHolder,
-    physx_foundation: PhysicsFoundation<DefaultAllocator, PxShape>,
+    pub raw_ptr_holder: RawPtrHolder,
+    pub physx_foundation: PhysicsFoundation<DefaultAllocator, PxShape>,
 }
 
 impl PhysicsHandler {
@@ -262,7 +264,7 @@ impl PhysicsHandler {
             .create_shape(
                 geometry,
                 &mut [self.default_material.as_mut()],
-                false,
+                true,
                 ShapeFlag::Visualization | ShapeFlag::SceneQueryShape | ShapeFlag::SimulationShape,
                 (),
             )

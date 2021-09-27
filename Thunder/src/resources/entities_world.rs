@@ -46,7 +46,7 @@ impl EntitiesWorldResource {
             components.push(Components::CarPhysicsPart(
                 // This will be patched on loading time
                 Tempest_Components_CarPhysicsPart {
-                    CarActor: std::ptr::null_mut(),
+                    CarActor: 9999 as *mut _,
                     ShapeIndex: has_car_physics.unwrap(),
                 },
             ))
@@ -85,7 +85,7 @@ impl Resource for EntitiesWorldResource {
                         .iter()
                         .position(|possible_name| possible_name == child_node_name)
                         .unwrap();
-                    let mesh_index = gltf.node_mesh_index(node_index).unwrap();
+                    let mesh_index = gltf.node_mesh_index(child).unwrap();
                     let tags = Vec::new();
                     let entity_id = EntitiesWorldResource::create_mesh_entity(
                         &flecs_state,

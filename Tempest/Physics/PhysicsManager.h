@@ -67,6 +67,7 @@ private:
 	PhysXPtr<physx::PxPvdTransport> m_Transport;
 	PhysXPtr<physx::PxPvd> m_VisualDebugger;
 	PhysXPtr<physx::PxPhysics> m_PhysicsEngine;
+	PhysXPtr<physx::PxSerializationRegistry> m_SerializationRegistry;
 	PhysXPtr<physx::PxScene> m_Scene;
 
 public:

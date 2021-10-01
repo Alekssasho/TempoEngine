@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Graphics/RendererTypes.h>
+#include <World/Camera.h>
 
 namespace physx
 {
@@ -57,6 +58,22 @@ struct CarPhysicsPart
 	uint32_t ShapeIndex;
 
 	static constexpr const char* Name = "CarPhysicsPart";
+};
+
+struct CameraController
+{
+	Camera CameraData;
+	int InputMapIndex;
+
+	static constexpr const char* Name = "CameraController";
+};
+
+struct VehicleController
+{
+	// TODO: add input stuff
+	int InputMapIndex;
+
+	static constexpr const char* Name = "VehicleController";
 };
 }
 

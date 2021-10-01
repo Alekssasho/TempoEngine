@@ -123,6 +123,7 @@
     <ClInclude Include="Graphics\Renderer.h" />
     <ClInclude Include="Graphics\RendererTypes.h" />
     <ClInclude Include="Graphics\RenderFeature.h" />
+    <ClInclude Include="InputManager.h" />
     <ClInclude Include="Job\JobSystem.h" />
     <ClInclude Include="Job\Queue.h" />
     <ClInclude Include="Logging.h" />
@@ -138,6 +139,7 @@
     <ClInclude Include="World\EntityQueryImpl.h" />
     <ClInclude Include="World\System.h" />
     <ClInclude Include="World\Systems\BoidsSystem.h" />
+    <ClInclude Include="World\Systems\InputControllerSystem.h" />
     <ClInclude Include="World\Systems\MoveSystem.h" />
     <ClInclude Include="World\Systems\PhysicsSystem.h" />
     <ClInclude Include="World\TaskGraph\TaskGraph.h" />
@@ -193,6 +195,7 @@
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp" />
     <ClCompile Include="Graphics\Managers\MeshManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
+    <ClCompile Include="InputManager.cpp" />
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Physics\PhysicsManager.cpp" />

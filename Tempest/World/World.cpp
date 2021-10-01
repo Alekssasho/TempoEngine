@@ -8,6 +8,7 @@
 #include <World/Systems/MoveSystem.h>
 #include <World/Systems/BoidsSystem.h>
 #include <World/Systems/PhysicsSystem.h>
+#include <World/Systems/InputControllerSystem.h>
 
 // As we are loading the entity world form a file, we don't need to
 // explicitly register components, as they would have already been registered.
@@ -53,6 +54,8 @@ World::World()
 	// This should be the last system in this bucket
 	// TODO: Mirror To Physics is needed only for kinematics objects as they are driven by animation, everything else should be physics driven
 	//m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
+	m_BeforePhysicsSystems.emplace_back(new Systems::CameraControllerSystem);
+	m_BeforePhysicsSystems.emplace_back(new Systems::VehicleControllerSystem);
 
 	// This should be the first system in this bucket
 	m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);

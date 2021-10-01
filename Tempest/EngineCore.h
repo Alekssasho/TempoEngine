@@ -9,10 +9,7 @@
 #include <Resources/ResourceLoader.h>
 #include <Audio/AudioManager.h>
 #include <Physics/PhysicsManager.h>
-
-#pragma warning(push, 0)
-#include <gainput/gainput.h>
-#pragma warning(pop)
+#include <InputManager.h>
 
 namespace Tempest
 {
@@ -68,14 +65,18 @@ public:
 	{
 		return m_JobSystem;
 	}
+
+	InputManager& GetInput()
+	{
+		return m_Input;
+	}
 private:
 	// Data members
 	EngineCoreOptions m_Options;
 
 	Logger m_Logger;
 	Job::JobSystem m_JobSystem;
-	gainput::InputManager m_Input;
-	gainput::InputMap m_InputMap;
+	InputManager m_Input;
 	WindowsPlatform m_Platform;
 	ResourceLoader m_ResourceLoader;
 	World m_World;
@@ -84,15 +85,11 @@ private:
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
 
-	gainput::InputMap m_VehicleInputMap;
-
-
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);
 	void InitializeWindow();
 
 	static void DoFrameJob(uint32_t, void*);
-	void UpdateInput();
 	void DoFrame();
 
 	static void LoadLevel(const char* levelToLoad);

@@ -14,59 +14,15 @@ namespace Tempest
 {
 EngineCore* gEngine = nullptr;
 
-enum CameraMovement
-{
-	MoveForward,
-	MoveBackward,
-	MoveLeft,
-	MoveRight,
-	FasterSpeed,
-	MoveCameraOrientation,
-	MouseX,
-	MouseY,
-};
-
-enum VehicleMovement
-{
-	Accelerate,
-	Brake,
-	Handbrake,
-	SteerLeft,
-	SteerRight,
-};
-
 EngineCore::EngineCore(const EngineCoreOptions& options)
 	: m_Options(options)
 	, m_Logger()
 	, m_JobSystem(options.NumWorkerThreads, 64, 2 * 1024 * 1024)
-	// TODO: Initialize m_input without system time and with our custom allocator
-	, m_InputMap(m_Input)
-	, m_VehicleInputMap(m_Input)
-	, m_Platform(m_Input)
+	, m_Input(options.Width, options.Height)
+	, m_Platform(m_Input.m_Input)
 	, m_ResourceLoader(options.ResourceFolder)
 {
 	gEngine = this;
-
-	m_Input.SetDisplaySize(options.Width, options.Height);
-	const gainput::DeviceId keyboardId = m_Input.CreateDevice<gainput::InputDeviceKeyboard>();
-	const gainput::DeviceId mouseId = m_Input.CreateDevice<gainput::InputDeviceMouse>();
-
-	m_InputMap.MapBool(MoveForward, keyboardId, gainput::KeyW);
-	m_InputMap.MapBool(MoveBackward, keyboardId, gainput::KeyS);
-	m_InputMap.MapBool(MoveLeft, keyboardId, gainput::KeyA);
-	m_InputMap.MapBool(MoveRight, keyboardId, gainput::KeyD);
-	m_InputMap.MapBool(FasterSpeed, keyboardId, gainput::KeyShiftL);
-
-	m_InputMap.MapBool(MoveCameraOrientation, mouseId, gainput::MouseButtonLeft);
-	m_InputMap.MapFloat(MouseX, mouseId, gainput::MouseAxisX);
-	m_InputMap.MapFloat(MouseY, mouseId, gainput::MouseAxisY);
-
-
-	m_VehicleInputMap.MapBool(Accelerate, keyboardId, gainput::KeyUp);
-	m_VehicleInputMap.MapBool(Brake, keyboardId, gainput::KeyDown);
-	m_VehicleInputMap.MapBool(Handbrake, keyboardId, gainput::KeySpace);
-	m_VehicleInputMap.MapBool(SteerLeft, keyboardId, gainput::KeyLeft);
-	m_VehicleInputMap.MapBool(SteerRight, keyboardId, gainput::KeyRight);
 }
 
 EngineCore::~EngineCore()
@@ -201,54 +157,6 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_JobSystem.WaitForCounter(&audioDatabaseCounter, 0);
 }
 
-void EngineCore::UpdateInput()
-{
-	// Update camera stuff
-	auto cameraForward = glm::normalize(m_Camera.Forward);
-	auto cameraRight = glm::normalize(glm::cross(m_Camera.Up, cameraForward));
-	auto speed = 2.0f;
-
-	// Speed bump
-	if(m_InputMap.GetBool(FasterSpeed))
-	{
-		speed *= 4.0f;
-	}
-
-	// Change position of camera
-	if(m_InputMap.GetBool(MoveForward))
-	{
-		m_Camera.Position += cameraForward * speed;
-	}
-	if(m_InputMap.GetBool(MoveBackward))
-	{
-		m_Camera.Position += -cameraForward * speed;
-	}
-	if (m_InputMap.GetBool(MoveLeft))
-	{
-		m_Camera.Position += -cameraRight * speed;
-	}
-	if (m_InputMap.GetBool(MoveRight))
-	{
-		m_Camera.Position += cameraRight * speed;
-	}
-
-	// Change target
-	if(m_InputMap.GetBool(MoveCameraOrientation))
-	{
-		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseX) * 5.0f, m_Camera.Up);
-		m_Camera.Forward = glm::rotate(m_Camera.Forward, -m_InputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
-		m_Camera.Up = glm::normalize(glm::cross(m_Camera.Forward, cameraRight));
-	}
-
-
-	// Vehicle
-	m_Physics.VehicleInputData.setDigitalAccel(m_VehicleInputMap.GetBool(Accelerate));
-	m_Physics.VehicleInputData.setDigitalBrake(m_VehicleInputMap.GetBool(Brake));
-	m_Physics.VehicleInputData.setDigitalHandbrake(m_VehicleInputMap.GetBool(Handbrake));
-	m_Physics.VehicleInputData.setDigitalSteerLeft(m_VehicleInputMap.GetBool(SteerLeft));
-	m_Physics.VehicleInputData.setDigitalSteerRight(m_VehicleInputMap.GetBool(SteerRight));
-}
-
 void EngineCore::InitializeWindow()
 {
 	m_Platform.SpawnWindow(m_Options.Width, m_Options.Height, "Tempest Engine", this);
@@ -258,7 +166,7 @@ void EngineCore::InitializeWindow()
 void EngineCore::DoFrame()
 {
 	// TODO: pass delta time
-	m_Input.Update();
+	m_Input.Update(0.0f);
 
 	// Message pumping should be done on the Windows Thread
 	m_JobSystem.WaitSingleJob("Pump Messages", Job::ThreadTag::Windows, m_Platform, [](WindowsPlatform& platform) {
@@ -279,8 +187,6 @@ void EngineCore::DoFrame()
 	//ImGui::DragFloat("Znear", &m_Camera.znear);
 	//ImGui::End();
 
-	// Input Handling
-	UpdateInput();
 
 	// TODO: add real delta time
 	m_World.Update(1.0f / 60.0f, m_JobSystem);

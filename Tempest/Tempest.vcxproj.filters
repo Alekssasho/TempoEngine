@@ -156,6 +156,10 @@
     <ClInclude Include="DataDefinitions\TextureDatabase_generated.h">
       <Filter>DataDefinitions</Filter>
     </ClInclude>
+    <ClInclude Include="World\Systems\InputControllerSystem.h">
+      <Filter>World\Systems</Filter>
+    </ClInclude>
+    <ClInclude Include="InputManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -248,6 +252,7 @@
     <ClCompile Include="Graphics\Dx12\Managers\ConstantBufferDataManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
+    <ClCompile Include="InputManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">

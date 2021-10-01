@@ -61,6 +61,8 @@ pub enum Components {
     DynamicPhysicsActor(Tempest_Components_DynamicPhysicsActor),
     LightColorInfo(Tempest_Components_LightColorInfo),
     CarPhysicsPart(Tempest_Components_CarPhysicsPart),
+    CameraController(Tempest_Components_CameraController),
+    VehicleController(Tempest_Components_VehicleController),
 }
 
 #[derive(Tags)]

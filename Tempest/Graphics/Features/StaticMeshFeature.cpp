@@ -34,8 +34,8 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 	for (int i = 0; i < archetypeCount; ++i)
 	{
 		auto [_, iter] = m_Query.GetIterForAchetype(i);
-		Components::Transform* transforms = ecs_column(&iter, Components::Transform, 1);
-		Components::StaticMesh* staticMeshes = ecs_column(&iter, Components::StaticMesh, 2);
+		Components::Transform* transforms = ecs_term(&iter, Components::Transform, 1);
+		Components::StaticMesh* staticMeshes = ecs_term(&iter, Components::StaticMesh, 2);
 		for (int row = 0; row < iter.count; ++row)
 		{
 			const glm::mat4x4 scale = glm::scale(transforms[row].Scale);

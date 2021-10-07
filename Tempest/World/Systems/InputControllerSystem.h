@@ -24,7 +24,7 @@ struct CameraControllerSystem : public System
 			"CameraControllerSystem::ParallelEach",
 			&m_Query,
 			[deltaTime](uint32_t, ecs_iter_t* iter) {
-			Components::CameraController* cameraControllers = ecs_column(iter, Components::CameraController, 1);
+			Components::CameraController* cameraControllers = ecs_term(iter, Components::CameraController, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
 				auto& inputMap = *gEngine->GetInput().m_InputMaps[cameraControllers[i].InputMapIndex].get();
@@ -33,7 +33,7 @@ struct CameraControllerSystem : public System
 				// Update camera stuff
 				auto cameraForward = glm::normalize(camera.Forward);
 				auto cameraRight = glm::normalize(glm::cross(camera.Up, cameraForward));
-				auto speed = 2.0f;
+				auto speed = 0.5f;
 
 				// Speed bump
 				if (inputMap.GetBool(FasterSpeed))
@@ -85,7 +85,7 @@ struct VehicleControllerSystem : public System
 			"VehicleControllerSystem::ParallelEach",
 			&m_Query,
 			[deltaTime](uint32_t, ecs_iter_t* iter) {
-			Components::VehicleController* vehicleControllers = ecs_column(iter, Components::VehicleController, 1);
+			Components::VehicleController* vehicleControllers = ecs_term(iter, Components::VehicleController, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
 				auto& inputMap = *gEngine->GetInput().m_InputMaps[vehicleControllers[i].InputMapIndex].get();

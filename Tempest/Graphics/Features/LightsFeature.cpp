@@ -23,8 +23,8 @@ void Lights::GatherData(const World& world, FrameData& frameData)
 	for (int i = 0; i < archetypeCount; ++i)
 	{
 		auto [_, iter] = m_DirectionalLightQuery.GetIterForAchetype(i);
-		Components::Transform* transforms = ecs_column(&iter, Components::Transform, 1);
-		Components::LightColorInfo* lightColorInfos = ecs_column(&iter, Components::LightColorInfo, 2);
+		Components::Transform* transforms = ecs_term(&iter, Components::Transform, 1);
+		Components::LightColorInfo* lightColorInfos = ecs_term(&iter, Components::LightColorInfo, 2);
 		for (int row = 0; row < iter.count; ++row)
 		{
 			const glm::vec3 lightDirection = glm::normalize(transforms[row].Rotation * sForwardDirection);

@@ -67,7 +67,7 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 		"BoidsSystem::InitializeData",
 		&m_Query,
 		[cellAlignment, cellSeparation, cellCount, hashMap, settings](uint32_t index, ecs_iter_t* iter) {
-			Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
+			Components::Transform* transform = ecs_term(iter, Components::Transform, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
 				const glm::quat rotation = transform[i].Rotation;
@@ -113,7 +113,7 @@ void BoidsSystem::Update(float deltaTime, TaskGraph::TaskGraph& graph)
 		"BoidsSystem::Steer",
 		&m_Query,
 		[cellAlignment, cellSeparation, cellCount, cellIndices, cellTargetPositionIndex, settings, deltaTime](uint32_t index, ecs_iter_t* iter) {
-			Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
+			Components::Transform* transform = ecs_term(iter, Components::Transform, 1);
 			for (int i = 0; i < iter->count; ++i)
 			{
 				// temporarily storing the values for code readability

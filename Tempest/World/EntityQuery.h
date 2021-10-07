@@ -5,12 +5,14 @@
 
 struct ecs_query_t;
 struct ecs_iter_t;
+struct ecs_world_t;
 
 namespace Tempest
 {
 struct EntityQuery
 {
 	struct ecs_query_t* Query = nullptr;
+	struct ecs_world_t* m_World = nullptr;
 
 	~EntityQuery();
 

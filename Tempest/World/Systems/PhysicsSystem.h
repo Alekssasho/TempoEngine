@@ -26,8 +26,8 @@ struct MirrorToPhysics : public System
 			"MirrorToPhysics::ParallelEach",
 			&m_Query,
 			[deltaTime](uint32_t, ecs_iter_t* iter) {
-				Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
-				Components::DynamicPhysicsActor* physicsActors = ecs_column(iter, Components::DynamicPhysicsActor, 2);
+				Components::Transform* transform = ecs_term(iter, Components::Transform, 1);
+				Components::DynamicPhysicsActor* physicsActors = ecs_term(iter, Components::DynamicPhysicsActor, 2);
 				for (int i = 0; i < iter->count; ++i)
 				{
 					physx::PxTransform pxTransform;
@@ -61,8 +61,8 @@ struct MirrorFromPhysics : public System
 			"MirrorFromPhysics::DynamicActors::ParallelEach",
 			&m_Query,
 			[deltaTime](uint32_t, ecs_iter_t* iter) {
-				Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
-				Components::DynamicPhysicsActor* physicsActors = ecs_column(iter, Components::DynamicPhysicsActor, 2);
+				Components::Transform* transform = ecs_term(iter, Components::Transform, 1);
+				Components::DynamicPhysicsActor* physicsActors = ecs_term(iter, Components::DynamicPhysicsActor, 2);
 				for (int i = 0; i < iter->count; ++i)
 				{
 					physx::PxTransform pxTransform = physicsActors[i].Actor->getGlobalPose();
@@ -80,8 +80,8 @@ struct MirrorFromPhysics : public System
 			"MirrorFromPhysics::CarPhysicsParts::ParallelEach",
 			&m_CarQuery,
 			[deltaTime](uint32_t, ecs_iter_t* iter) {
-				Components::Transform* transform = ecs_column(iter, Components::Transform, 1);
-				Components::CarPhysicsPart* carPhysics = ecs_column(iter, Components::CarPhysicsPart, 2);
+				Components::Transform* transform = ecs_term(iter, Components::Transform, 1);
+				Components::CarPhysicsPart* carPhysics = ecs_term(iter, Components::CarPhysicsPart, 2);
 				for (int i = 0; i < iter->count; ++i)
 				{
 					physx::PxShape* wantedShape = nullptr;

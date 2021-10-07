@@ -1,7 +1,7 @@
 #pragma once
 
 // TODO: check if we can remove this from this header
-#define FLECS_NO_CPP
+//#define FLECS_NO_CPP
 #include <flecs.h>
 
 #include <World/System.h>

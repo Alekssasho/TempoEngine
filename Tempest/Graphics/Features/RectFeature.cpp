@@ -28,8 +28,8 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 	for (int i = 0; i < archetypeCount; ++i)
 	{
 		auto [_, iter] = m_Query.GetIterForAchetype(i);
-		Components::Transform* transforms = ecs_column(&iter, Components::Transform, 1);
-		Components::Rect* rects = ecs_column(&iter, Components::Rect, 2);
+		Components::Transform* transforms = ecs_term(&iter, Components::Transform, 1);
+		Components::Rect* rects = ecs_term(&iter, Components::Rect, 2);
 		for (int row = 0; row < iter.count; ++row)
 		{
 			frameData.Rects.push_back(RectData{

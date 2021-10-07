@@ -10,6 +10,8 @@
 
 #include <DataDefinitions/Level_generated.h>
 
+#include <World/Components/Components.h>
+
 namespace Tempest
 {
 EngineCore* gEngine = nullptr;
@@ -141,7 +143,23 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_Camera.Forward = glm::normalize(glm::vec3(camera->forward().x(), camera->forward().y(), camera->forward().z()));
 	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
 	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
-	gEngine->m_Renderer.RegisterView(&gEngine->m_Camera);
+
+	auto cameraControllerId = ecs_new_id(gEngine->GetWorld().m_EntityWorld);
+	auto cameraControllerComponentId = ecs_lookup(gEngine->GetWorld().m_EntityWorld, Components::CameraController::Name);
+	auto vehicleControllerComponentId = ecs_lookup(gEngine->GetWorld().m_EntityWorld, Components::VehicleController::Name);
+	Components::CameraController data = {
+		gEngine->m_Camera,
+		0
+	};
+
+	Components::VehicleController vehicleData = {
+		1
+	};
+	ecs_set_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, cameraControllerComponentId, sizeof(Components::CameraController), &data);
+	ecs_set_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, vehicleControllerComponentId, sizeof(Components::VehicleController), &vehicleData);
+
+	auto setData = reinterpret_cast<Components::CameraController *>(ecs_get_mut_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, cameraControllerComponentId, nullptr));
+	gEngine->m_Renderer.RegisterView(&setData->CameraData);
 
 	// Wait for physics as well
 	gEngine->m_JobSystem.WaitForCounter(&physicsWorldCounter, 0);

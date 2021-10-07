@@ -45,9 +45,9 @@ fn generate_components_get_component_data_function(
 ) -> proc_macro2::TokenStream {
     let variant_names = components.iter().map(|comp| &comp.name);
     quote! {
-        fn get_pointer(&self) -> *const c_void {
+        fn get_pointer(&self) -> (*const c_void, usize) {
             match self {
-                #(#name::#variant_names(d) => d as *const _ as *const c_void,)*
+                #(#name::#variant_names(d) => (d as *const _ as *const c_void, std::mem::size_of_val(d)),)*
             }
         }
     }
@@ -85,6 +85,21 @@ fn generate_components_register_components_function(
     }
 }
 
+fn generate_components_get_name_function(
+    name: &syn::Ident,
+    components: &Vec<Component>,
+) -> proc_macro2::TokenStream {
+    let variant_names = components.iter().map(|comp| &comp.name);
+    let component_name_ident = components.iter().map(|comp| comp.get_data_name_string());
+    quote! {
+        fn get_name(&self) -> &str {
+            match self {
+                #(#name::#variant_names(_) => std::str::from_utf8(#component_name_ident).unwrap().trim_end_matches(char::from(0)),)*
+            }
+        }
+    }
+}
+
 #[proc_macro_derive(Components)]
 pub fn derive_components(input: TokenStream) -> TokenStream {
     let parsed_input: syn::DeriveInput = syn::parse(input).unwrap();
@@ -94,12 +109,15 @@ pub fn derive_components(input: TokenStream) -> TokenStream {
         generate_components_get_component_data_function(&components_enum_name, &components);
     let get_index_function =
         generate_components_get_index_function(&components_enum_name, &components);
+    let get_name_function =
+        generate_components_get_name_function(&components_enum_name, &components);
     let register_components_function =
         generate_components_register_components_function(&components);
     let result = quote! {
         impl #components_enum_name {
             #get_component_data_function
             #get_index_function
+            #get_name_function
             #register_components_function
         }
     };
@@ -133,6 +151,20 @@ fn generate_tags_get_index_function(
     }
 }
 
+fn generate_tags_get_name_function(
+    name: &syn::Ident,
+    tags: &Vec<syn::Ident>,
+) -> proc_macro2::TokenStream {
+    let tags_name_ident = tags.iter().map(|name| get_tag_name_ident(name));
+    quote! {
+        fn get_name(&self) -> &str {
+            match self {
+                #(#name::#tags => std::str::from_utf8(#tags_name_ident).unwrap().trim_end_matches(char::from(0)),)*
+            }
+        }
+    }
+}
+
 fn get_tag_name_ident(tag_name: &syn::Ident) -> syn::Ident {
     format_ident!("Tempest_Tags_{}_Name", tag_name)
 }
@@ -157,10 +189,12 @@ pub fn derive_tags(input: TokenStream) -> TokenStream {
     let tags_enum_name = parsed_input.ident.clone();
     let tags = gather_tags(&parsed_input);
     let get_index_function = generate_tags_get_index_function(&tags_enum_name, &tags);
+    let get_name_function = generate_tags_get_name_function(&tags_enum_name, &tags);
     let register_tags_function = generate_tags_register_components_function(&tags);
     let result = quote! {
         impl #tags_enum_name {
             #get_index_function
+            #get_name_function
             #register_tags_function
         }
     };

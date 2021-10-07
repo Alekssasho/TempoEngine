@@ -22,6 +22,9 @@ void EntityQuery::Init(const World& world)
 {
 	// TODO: Remove the const cast
 	eastl::string querySignature = buildSignature<Components...>();
-	Query = ecs_query_new(const_cast<World&>(world).m_EntityWorld, querySignature.c_str());
+	ecs_query_desc_t desc = {};
+	desc.filter.expr = querySignature.c_str();
+	Query = ecs_query_init(const_cast<World&>(world).m_EntityWorld, &desc);
+	m_World = const_cast<World&>(world).m_EntityWorld;
 }
 }

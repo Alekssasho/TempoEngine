@@ -2,7 +2,7 @@
 
 #include <World/EntityQuery.h>
 
-#define FLECS_NO_CPP
+//#define FLECS_NO_CPP
 #include <flecs.h>
 
 namespace Tempest
@@ -11,7 +11,8 @@ EntityQuery::~EntityQuery()
 {
 	if (Query)
 	{
-		ecs_query_free(Query);
+		//ecs_query_free(Query);
+		ecs_query_fini(Query);
 	}
 }
 
@@ -21,7 +22,7 @@ int EntityQuery::GetMatchedArchetypesCount()
 	{
 		return 0;
 	}
-	ecs_iter_t iter = ecs_query_iter(Query);
+	ecs_iter_t iter = ecs_query_iter(m_World, Query);
 	return iter.table_count;
 }
 
@@ -32,7 +33,7 @@ int EntityQuery::GetMatchedEntitiesCount()
 		return 0;
 	}
 
-	ecs_iter_t iter = ecs_query_iter(Query);
+	ecs_iter_t iter = ecs_query_iter(m_World, Query);
 	int result = 0;
 	while (ecs_query_next(&iter)) {
 		result += iter.count;
@@ -47,7 +48,7 @@ eastl::pair<uint32_t, ecs_iter_t> EntityQuery::GetIterForAchetype(uint32_t index
 		return { 0, {} };
 	}
 
-	ecs_iter_t iter = ecs_query_iter(Query);
+	ecs_iter_t iter = ecs_query_iter(m_World, Query);
 	ecs_query_next(&iter); // Go to the first archetype
 	uint32_t entityCount = 0;
 	while (index--)

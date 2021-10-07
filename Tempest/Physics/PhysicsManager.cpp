@@ -260,7 +260,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 	for (int i = 0; i < archetypeCount; ++i)
 	{
 		auto [_, iter] = query.GetIterForAchetype(i);
-		Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
+		Components::DynamicPhysicsActor* dynamicActor = ecs_term(&iter, Components::DynamicPhysicsActor, 1);
 		for (int row = 0; row < iter.count; ++row)
 		{
 			ecs_entity_t id = iter.entities[row];
@@ -287,7 +287,7 @@ void PhysicsManager::PatchWorldComponents(World& world)
 		{
 			auto [_, iter] = queryCar.GetIterForAchetype(i);
 			assert(iter.count % 5 == 0);
-			Components::CarPhysicsPart* dynamicActor = ecs_column(&iter, Components::CarPhysicsPart, 1);
+			Components::CarPhysicsPart* dynamicActor = ecs_term(&iter, Components::CarPhysicsPart, 1);
 			for(int row = 0; row < iter.count; ++row)
 			{
 				// Find the id in userData in physics actors

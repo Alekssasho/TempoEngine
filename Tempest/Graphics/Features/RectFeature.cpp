@@ -16,7 +16,7 @@ namespace GraphicsFeature
 
 void Rects::Initialize(const World& world, Renderer& renderer)
 {
-	m_Query.Init<Components::Transform, Components::Rect>(world);
+	m_Query.Init(world);
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
 		"Rects"
 	});

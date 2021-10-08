@@ -194,12 +194,12 @@ void Renderer::RenderFrame(const FrameData& data)
 	m_Backend->RenderFrame(commandList);
 }
 
-void Renderer::RegisterView(Camera* camera)
+void Renderer::RegisterView(const Camera* camera)
 {
 	m_Views.emplace_back(camera);
 }
 
-void Renderer::UnregisterView(Camera* camera)
+void Renderer::UnregisterView(const Camera* camera)
 {
 	m_Views.erase(eastl::remove(m_Views.begin(), m_Views.end(), camera), m_Views.end());
 }

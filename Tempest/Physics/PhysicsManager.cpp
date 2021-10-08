@@ -253,8 +253,9 @@ void PhysicsManager::PatchWorldComponents(World& world)
 	// TODO: this is very inefficient, but currently we cannot set
 	// a component to a entity directly due to missing components id
 	// Consider changing this to something better
-	EntityQuery query;
-	query.Init<Components::DynamicPhysicsActor>(world);
+	// TODO: Change to filter instead of query
+	EntityQuery<Components::DynamicPhysicsActor> query;
+	query.Init(world);
 
 	int archetypeCount = query.GetMatchedArchetypesCount();
 	for (int i = 0; i < archetypeCount; ++i)
@@ -280,8 +281,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 
 	// Setup car components
 	{
-		EntityQuery queryCar;
-		queryCar.Init<Components::CarPhysicsPart>(world);
+		EntityQuery<Components::CarPhysicsPart> queryCar;
+		queryCar.Init(world);
 
 		for(int i = 0; i < queryCar.GetMatchedArchetypesCount(); ++i)
 		{

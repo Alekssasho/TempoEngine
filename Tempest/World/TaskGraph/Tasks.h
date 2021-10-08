@@ -1,6 +1,7 @@
 #pragma once
 
 #include <World/TaskGraph/TaskGraph.h>
+#include <World/EntityQuery.h>
 #include <Job/JobSystem.h>
 #include <EASTL/hash_map.h>
 
@@ -18,11 +19,12 @@ struct ParallelFor : TaskGraph::Task
 	}
 };
 
+template<typename... Components>
 struct ParallelQueryEach : TaskGraph::Task
 {
 	using Function = eastl::function<void(uint32_t, ecs_iter_t*)>;
 
-	ParallelQueryEach(EntityQuery* query, Function function)
+	ParallelQueryEach(EntityQuery<Components...>* query, Function function)
 		: Query(query)
 		, Func(function)
 	{}
@@ -51,7 +53,7 @@ struct ParallelQueryEach : TaskGraph::Task
 		task->Func(count, &ecsIter);
 	}
 
-	EntityQuery* Query;
+	EntityQuery<Components...>* Query;
 	Function Func;
 };
 

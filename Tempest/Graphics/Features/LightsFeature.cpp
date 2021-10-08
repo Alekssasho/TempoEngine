@@ -4,7 +4,6 @@
 #include <Graphics/Renderer.h>
 #include <Graphics/FrameData.h>
 #include <World/World.h>
-#include <World/Components/Components.h>
 #include <World/EntityQueryImpl.h>
 
 namespace Tempest
@@ -14,7 +13,7 @@ namespace GraphicsFeature
 
 void Lights::Initialize(const World& world, Renderer& renderer)
 {
-	m_DirectionalLightQuery.Init<Components::Transform, Components::LightColorInfo, Tags::DirectionalLight>(world);
+	m_DirectionalLightQuery.Init(world);
 }
 
 void Lights::GatherData(const World& world, FrameData& frameData)

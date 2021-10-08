@@ -41,14 +41,20 @@ public:
 	// recreation every frame if nothing is changed.
 	//void Compile();
 
-	template<typename TaskType, typename... Args>
-	TaskHandle CreateTask(const char* Name, Args&&... args)
+	template<typename TaskType>
+	TaskHandle AddTask(const char* Name, TaskType* task)
 	{
 		TaskHandle handle = TaskHandle(m_Tasks.size());
-		m_Tasks.emplace_back(new TaskType{ eastl::forward<Args>(args)... });
+		m_Tasks.emplace_back(task);
 		m_Tasks.back()->Graph = this;
 		m_Tasks.back()->Name = Name;
 		return handle;
+	}
+
+	template<typename TaskType, typename... Args>
+	TaskHandle CreateTask(const char* Name, Args&&... args)
+	{
+		return AddTask(Name, new TaskType{ eastl::forward<Args>(args)... });
 	}
 
 	void WaitFor(TaskHandle waitingTask, TaskHandle waitForTask);

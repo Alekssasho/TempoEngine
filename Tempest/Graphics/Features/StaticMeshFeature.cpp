@@ -5,7 +5,6 @@
 #include <Graphics/Renderer.h>
 #include <Graphics/FrameData.h>
 #include <World/World.h>
-#include <World/Components/Components.h>
 #include <World/EntityQueryImpl.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 
@@ -16,7 +15,7 @@ namespace GraphicsFeature
 
 void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
-	m_Query.Init<Components::Transform, Components::StaticMesh>(world);
+	m_Query.Init(world);
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
 		"StaticMesh",
 		RenderPhase::Main

@@ -2,6 +2,7 @@
 
 #include <Graphics/RenderFeature.h>
 #include <World/EntityQuery.h>
+#include <World/Components/Components.h>
 
 namespace Tempest
 {
@@ -17,7 +18,7 @@ struct Lights : RenderFeature
 	virtual void GatherData(const World&, FrameData&) override;
 	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase) override {};
 private:
-	EntityQuery m_DirectionalLightQuery;
+	EntityQuery<Components::Transform, Components::LightColorInfo, Tags::DirectionalLight> m_DirectionalLightQuery;
 };
 }
 }

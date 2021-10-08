@@ -144,22 +144,12 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
 	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
 
-	auto cameraControllerId = ecs_new_id(gEngine->GetWorld().m_EntityWorld);
-	auto cameraControllerComponentId = ecs_lookup(gEngine->GetWorld().m_EntityWorld, Components::CameraController::Name);
-	auto vehicleControllerComponentId = ecs_lookup(gEngine->GetWorld().m_EntityWorld, Components::VehicleController::Name);
-	Components::CameraController data = {
-		gEngine->m_Camera,
-		0
-	};
+	auto cameraController = gEngine->GetWorld().m_EntityWorld.entity("CameraController")
+		.set<Components::CameraController>({ gEngine->m_Camera, 0 })
+		.set<Components::VehicleController>({ 1 });
 
-	Components::VehicleController vehicleData = {
-		1
-	};
-	ecs_set_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, cameraControllerComponentId, sizeof(Components::CameraController), &data);
-	ecs_set_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, vehicleControllerComponentId, sizeof(Components::VehicleController), &vehicleData);
-
-	auto setData = reinterpret_cast<Components::CameraController *>(ecs_get_mut_id(gEngine->GetWorld().m_EntityWorld, cameraControllerId, cameraControllerComponentId, nullptr));
-	gEngine->m_Renderer.RegisterView(&setData->CameraData);
+	const Components::CameraController* controller = cameraController.get<Components::CameraController>();
+	gEngine->m_Renderer.RegisterView(&controller->CameraData);
 
 	// Wait for physics as well
 	gEngine->m_JobSystem.WaitForCounter(&physicsWorldCounter, 0);

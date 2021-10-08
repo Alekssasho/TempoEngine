@@ -10,46 +10,28 @@
 #include <World/Systems/PhysicsSystem.h>
 #include <World/Systems/InputControllerSystem.h>
 
-// As we are loading the entity world form a file, we don't need to
-// explicitly register components, as they would have already been registered.
 template<typename ComponentType>
-void RegisterComponent(ecs_world_t* world)
+void RegisterComponent(flecs::world& world)
 {
-	//flecs::component<ComponentType>(world, ComponentType::Name);
-	//ECS_COMPONENT(world, Type);
-	ecs_component_desc_t desc = {};
-	desc.entity.entity = 0;
-	desc.entity.name = ComponentType::Name;
-	desc.entity.symbol = ComponentType::Name;
-	desc.size = sizeof(ComponentType);
-	desc.alignment = alignof(ComponentType);;
-	ecs_entity_t entity = ecs_component_init(world, &desc);
+	flecs::component<ComponentType>(world, ComponentType::Name);
 }
 
 template<typename TagType>
-void RegisterTag(ecs_world_t* world)
+void RegisterTag(flecs::world& world)
 {
-	//flecs::component<ComponentType>(world, ComponentType::Name);
-	//ECS_COMPONENT(world, Type);
-//	ECS_TAG(world, Type);
-	ecs_entity_desc_t desc = {};
-	desc.entity = 0;
-	desc.name = TagType::Name;
-	desc.symbol = TagType::Name;
-	ecs_entity_t entity = ecs_entity_init(world, &desc);
+	flecs::component<TagType>(world, TagType::Name);
 }
 
 namespace Tempest
 {
 World::World()
 {
-	m_EntityWorld = ecs_init();
 	//ecs_os_api_t api;
 	//ecs_os_set_api(&api);
 
 	// Enable for debug
 	//ecs_tracing_enable(3);
-	ecs_set_target_fps(m_EntityWorld, 60);
+	m_EntityWorld.set_target_fps(60);
 
 	// This is not needed when we are loading the world from serialized data
 	// Register all components
@@ -65,17 +47,7 @@ World::World()
 	RegisterTag<Tags::Boids>(m_EntityWorld);
 	RegisterTag<Tags::DirectionalLight>(m_EntityWorld);
 
-	// Test Code
-	//flecs::entity rect1 = flecs::entity(m_EntityWorld)
-	//	.set<Components::Transform>({ glm::vec3(-0.75f, -0.75f, 0.0f) })
-	//	.set<Components::Rect>({ 0.5f, 0.5f, glm::vec4{0.0f, 1.0f, 0.0f, 1.0f} });
-
-	//flecs::entity rect2 = flecs::entity(m_EntityWorld)
-	//	.set<Components::Transform>({ glm::vec3(0.5f, 0.5f, 0.0f) })
-	//	.set<Components::Rect>({ 0.1f, 0.1f, glm::vec4{0.0f, 0.0f, 1.0f, 1.0f} });
-
 	// Register all systems
-	//RegisterSystem<Components::Transform>(Systems::MoveSystem::Run);
 	//m_Systems.emplace_back(new Systems::MoveSystem);
 	//m_Systems.emplace_back(new Systems::BoidsSystem);
 
@@ -93,8 +65,6 @@ World::~World()
 {
 	m_BeforePhysicsSystems.clear();
 	m_AfterPhysicsSystems.clear();
-	ecs_fini(m_EntityWorld);
-	m_EntityWorld = nullptr;
 }
 
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
@@ -253,23 +223,6 @@ void World::LoadFromLevel(const char* data, size_t size)
 		ecs_bulk_init(m_EntityWorld, &desc);
 		//break;
 	}
-
-
-	//auto writer = ecs_writer_init(m_EntityWorld);
-	//ecs_writer_write(data, ecs_size_t(size), &writer);
-
-#ifdef _DEBUG
-	//int i = 0;
-	//while(true)
-	//{
-	//	auto table = ecs_dbg_get_table(m_EntityWorld.c_ptr(), i++);
-	//	if (!table)
-	//		break;
-	//	ecs_dbg_table_t dbg_out;
-	//	ecs_dbg_table(m_EntityWorld.c_ptr(), table, &dbg_out);
-	//	FORMAT_LOG(Info, World, "New table with signature %s and %d num entities", ecs_type_str(m_EntityWorld.c_ptr(), dbg_out.type), dbg_out.entities_count);
-	//}
-#endif
 
 	for (const auto& system : m_BeforePhysicsSystems)
 	{

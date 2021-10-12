@@ -1,3 +1,5 @@
+#include <Windows.h>
+
 #ifndef FLECS_IMPL
 #include "flecs.h"
 #endif
@@ -4655,7 +4657,8 @@ void ecs_table_lock(
     ecs_table_t *table)
 {
     if (ecs_poly_is(world, ecs_world_t) && !world->is_readonly) {
-        table->lock ++;
+        //table->lock ++;
+        InterlockedIncrement(&table->lock);
     }
 }
 
@@ -4664,7 +4667,8 @@ void ecs_table_unlock(
     ecs_table_t *table)
 {
     if (ecs_poly_is(world, ecs_world_t) && !world->is_readonly) {
-        table->lock --;
+        //table->lock --;
+        InterlockedDecrement(&table->lock);
         ecs_assert(table->lock >= 0, ECS_INVALID_OPERATION, NULL);
     }
 }

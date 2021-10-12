@@ -4,13 +4,13 @@ use physx::{
     prelude::*,
 };
 
+pub use physx::convex_mesh::ConvexMesh;
 pub use physx::geometry::PxConvexMeshGeometry;
+pub use physx::owner::Owner;
 pub use physx::rigid_actor::RigidActor;
 pub use physx::rigid_body::RigidBody;
 pub use physx::traits::Class;
 pub use physx_sys;
-pub use physx::owner::Owner;
-pub use physx::convex_mesh::ConvexMesh;
 
 pub use physx::math::{PxQuat, PxTransform, PxVec3};
 use physx_sys::{

@@ -2,24 +2,49 @@
 
 #include <Defines.h>
 #include <EASTL/utility.h>
-
-struct ecs_query_t;
-struct ecs_iter_t;
+#include <World/World.h>
 
 namespace Tempest
 {
+template<typename... Components>
 struct EntityQuery
 {
-	struct ecs_query_t* Query = nullptr;
+	flecs::query<Components...> Query;
 
-	~EntityQuery();
+	~EntityQuery()
+	{
+		Query.destruct();
+	}
 
-	template<typename... Components>
-	void Init(const class World& world);
+	void Init(const World& world)
+	{
+		Query = world.m_EntityWorld.query<Components...>();
+	}
 
-	int GetMatchedEntitiesCount();
-	int GetMatchedArchetypesCount();
-	// Returns the number of entities before this one
-	eastl::pair<uint32_t, ecs_iter_t> GetIterForAchetype(uint32_t index);
+	template<typename Func>
+	void ForEach(Func&& func)
+	{
+		assert(Query.c_ptr());
+		Query.each(std::forward<Func>(func));
+	}
+
+	template<typename Func>
+	void ForEachWorker(uint32_t current, uint32_t count, Func&& func)
+	{
+		assert(Query.c_ptr());
+		Query.each_worker(current, count, std::forward<Func>(func));
+	}
+
+	int GetMatchedEntitiesCount()
+	{
+		assert(Query.c_ptr());
+
+		int result = 0;
+		Query.iter([&result](flecs::iter it, Components*...) {
+			result += int(it.count());
+		});
+
+		return result;
+	}
 };
 }

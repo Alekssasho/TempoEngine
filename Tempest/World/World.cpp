@@ -10,44 +10,38 @@
 #include <World/Systems/PhysicsSystem.h>
 #include <World/Systems/InputControllerSystem.h>
 
-// As we are loading the entity world form a file, we don't need to
-// explicitly register components, as they would have already been registered.
-//template<typename ComponentType>
-//void RegisterComponent(flecs::world& world)
-//{
-//	flecs::component<ComponentType>(world, ComponentType::Name);
-//}
+template<typename ComponentType>
+void RegisterComponent(flecs::world& world)
+{
+	flecs::component<ComponentType>(world, ComponentType::Name);
+}
 
 namespace Tempest
 {
 World::World()
 {
-	m_EntityWorld = ecs_init();
 	//ecs_os_api_t api;
 	//ecs_os_set_api(&api);
 
 	// Enable for debug
 	//ecs_tracing_enable(3);
-	ecs_set_target_fps(m_EntityWorld, 60);
+	m_EntityWorld.set_target_fps(60);
 
 	// This is not needed when we are loading the world from serialized data
 	// Register all components
-	//RegisterComponent<Components::Transform>(m_EntityWorld);
-	//RegisterComponent<Components::Rect>(m_EntityWorld);
-	//RegisterComponent<Components::StaticMesh>(m_EntityWorld);
-	//RegisterComponent<Components::Boids>(m_EntityWorld);
+	RegisterComponent<Components::Transform>(m_EntityWorld);
+	RegisterComponent<Components::Rect>(m_EntityWorld);
+	RegisterComponent<Components::StaticMesh>(m_EntityWorld);
+	RegisterComponent<Components::CameraController>(m_EntityWorld);
+	RegisterComponent<Components::CarPhysicsPart>(m_EntityWorld);
+	RegisterComponent<Components::DynamicPhysicsActor>(m_EntityWorld);
+	RegisterComponent<Components::LightColorInfo>(m_EntityWorld);
+	RegisterComponent<Components::VehicleController>(m_EntityWorld);
 
-	// Test Code
-	//flecs::entity rect1 = flecs::entity(m_EntityWorld)
-	//	.set<Components::Transform>({ glm::vec3(-0.75f, -0.75f, 0.0f) })
-	//	.set<Components::Rect>({ 0.5f, 0.5f, glm::vec4{0.0f, 1.0f, 0.0f, 1.0f} });
-
-	//flecs::entity rect2 = flecs::entity(m_EntityWorld)
-	//	.set<Components::Transform>({ glm::vec3(0.5f, 0.5f, 0.0f) })
-	//	.set<Components::Rect>({ 0.1f, 0.1f, glm::vec4{0.0f, 0.0f, 1.0f, 1.0f} });
+	RegisterComponent<Tags::Boids>(m_EntityWorld);
+	RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
 
 	// Register all systems
-	//RegisterSystem<Components::Transform>(Systems::MoveSystem::Run);
 	//m_Systems.emplace_back(new Systems::MoveSystem);
 	//m_Systems.emplace_back(new Systems::BoidsSystem);
 
@@ -65,8 +59,6 @@ World::~World()
 {
 	m_BeforePhysicsSystems.clear();
 	m_AfterPhysicsSystems.clear();
-	ecs_fini(m_EntityWorld);
-	m_EntityWorld = nullptr;
 }
 
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
@@ -96,23 +88,88 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 	}
 }
 
+class MemoryInputStream
+{
+public:
+	MemoryInputStream(const uint8_t* buffer, uint64_t bufferSize)
+		: m_ReaderPosition(0)
+		, m_BufferSize(bufferSize)
+		, m_Buffer(buffer)
+	{}
+
+	const uint8_t* Jump(uint64_t bytesToJump)
+	{
+		assert(m_ReaderPosition + bytesToJump <= m_BufferSize);
+		auto result = m_Buffer + m_ReaderPosition;
+		m_ReaderPosition += bytesToJump;
+		return result;
+	}
+
+	void Read(uint8_t* bufferToFill, uint64_t bytesToRead)
+	{
+		assert(m_ReaderPosition + bytesToRead <= m_BufferSize);
+		std::memcpy(bufferToFill, m_Buffer + m_ReaderPosition, bytesToRead);
+		m_ReaderPosition += bytesToRead;
+	}
+
+	template<typename T>
+	void Read(T& value)
+	{
+		value = *reinterpret_cast<const T*>(m_Buffer + m_ReaderPosition);
+		m_ReaderPosition += sizeof(T);
+	}
+private:
+	uint64_t m_ReaderPosition;
+	uint64_t m_BufferSize;
+	const uint8_t* m_Buffer;
+};
+
 void World::LoadFromLevel(const char* data, size_t size)
 {
-	auto writer = ecs_writer_init(m_EntityWorld);
-	ecs_writer_write(data, ecs_size_t(size), &writer);
+	MemoryInputStream stream(reinterpret_cast<const uint8_t*>(data), size);
 
-#ifdef _DEBUG
-	//int i = 0;
-	//while(true)
-	//{
-	//	auto table = ecs_dbg_get_table(m_EntityWorld.c_ptr(), i++);
-	//	if (!table)
-	//		break;
-	//	ecs_dbg_table_t dbg_out;
-	//	ecs_dbg_table(m_EntityWorld.c_ptr(), table, &dbg_out);
-	//	FORMAT_LOG(Info, World, "New table with signature %s and %d num entities", ecs_type_str(m_EntityWorld.c_ptr(), dbg_out.type), dbg_out.entities_count);
-	//}
-#endif
+	uint32_t numArchetypes;
+	stream.Read(numArchetypes);
+
+	for (uint32_t i = 0; i < numArchetypes; ++i) {
+		uint32_t numEntities;
+		stream.Read(numEntities);
+
+		// Read the number of components
+		uint32_t numComponents;
+		stream.Read(numComponents);
+
+		// TODO: Temp memory
+		eastl::vector<uint32_t> componentSizes;
+		componentSizes.resize(numComponents);
+		stream.Read(reinterpret_cast<uint8_t*>(componentSizes.data()), numComponents * sizeof(uint32_t));
+
+		uint32_t nameLen;
+		stream.Read(nameLen);
+
+		auto archetypeName = reinterpret_cast<const char*>(stream.Jump(nameLen));
+
+		eastl::vector<const void*> componentArrayPointers;
+		componentArrayPointers.reserve(numComponents);
+
+		for (auto size : componentSizes) {
+			// This is a tag, so we just push a nullptr
+			if (size == 0) {
+				componentArrayPointers.push_back(nullptr);
+			}
+			else
+			{
+				componentArrayPointers.push_back(stream.Jump(numEntities * size));
+			}
+		}
+
+		ecs_bulk_desc_t desc = {};
+		desc.count = numEntities;
+		desc.data = const_cast<void**>(componentArrayPointers.data());
+		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
+
+		ecs_bulk_init(m_EntityWorld, &desc);
+	}
 
 	for (const auto& system : m_BeforePhysicsSystems)
 	{

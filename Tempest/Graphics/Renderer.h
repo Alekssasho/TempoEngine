@@ -32,8 +32,8 @@ public:
 	FrameData GatherWorldData(const World& world);
 	void RenderFrame(const FrameData& data);
 
-	void RegisterView(Camera* camera);
-	void UnregisterView(Camera* camera);
+	void RegisterView(const Camera* camera);
+	void UnregisterView(const Camera* camera);
 
 	// TODO: potentially this could be moved someplace else
 	PipelineStateHandle RequestPipelineState(const PipelineStateDescription& description);
@@ -49,7 +49,7 @@ public:
 private:
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
-	eastl::vector<Camera*> m_Views;
+	eastl::vector<const Camera*> m_Views;
 
 	const Definition::ShaderLibrary* m_ShaderLibrary;
 

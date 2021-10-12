@@ -12,7 +12,6 @@
 
 
 #include <World/EntityQuery.h>
-#include <World/EntityQueryImpl.h>
 #include <World/Components/Components.h>
 #include <World/World.h>
 #include <DataDefinitions/CommonTypes_generated.h>
@@ -253,57 +252,46 @@ void PhysicsManager::PatchWorldComponents(World& world)
 	// TODO: this is very inefficient, but currently we cannot set
 	// a component to a entity directly due to missing components id
 	// Consider changing this to something better
-	EntityQuery query;
-	query.Init<Components::DynamicPhysicsActor>(world);
+	// TODO: Change to filter instead of query
+	// TODO: Rework with direct entity setting of component
+	EntityQuery<Components::DynamicPhysicsActor> query;
+	query.Init(world);
 
-	int archetypeCount = query.GetMatchedArchetypesCount();
-	for (int i = 0; i < archetypeCount; ++i)
-	{
-		auto [_, iter] = query.GetIterForAchetype(i);
-		Components::DynamicPhysicsActor* dynamicActor = ecs_column(&iter, Components::DynamicPhysicsActor, 1);
-		for (int row = 0; row < iter.count; ++row)
+	query.ForEach([&actors](flecs::entity entity, Components::DynamicPhysicsActor& dynamicActor) {
+		ecs_entity_t id = entity.id();
+		// Find the id in userData in physics actors
+		auto findItr = eastl::find_if(actors.begin(), actors.end(), [id](physx::PxActor* actor)
 		{
-			ecs_entity_t id = iter.entities[row];
-			// Find the id in userData in physics actors
-			auto findItr = eastl::find_if(actors.begin(), actors.end(), [id](physx::PxActor* actor)
-			{
-				return ecs_entity_t(actor->userData) == id;
-			});
+			return ecs_entity_t(actor->userData) == id;
+		});
 
-			assert(findItr != actors.end());
-			auto rigidBody = (*findItr)->is<physx::PxRigidBody>();
-			assert(rigidBody);
+		assert(findItr != actors.end());
+		auto rigidBody = (*findItr)->is<physx::PxRigidBody>();
+		assert(rigidBody);
 
-			dynamicActor[row].Actor = rigidBody;
-		}
-	}
+		dynamicActor.Actor = rigidBody;
+	});
 
 	// Setup car components
 	{
-		EntityQuery queryCar;
-		queryCar.Init<Components::CarPhysicsPart>(world);
+		EntityQuery<Components::CarPhysicsPart> queryCar;
+		queryCar.Init(world);
 
-		for(int i = 0; i < queryCar.GetMatchedArchetypesCount(); ++i)
-		{
-			auto [_, iter] = queryCar.GetIterForAchetype(i);
-			assert(iter.count % 5 == 0);
-			Components::CarPhysicsPart* dynamicActor = ecs_column(&iter, Components::CarPhysicsPart, 1);
-			for(int row = 0; row < iter.count; ++row)
+		// TODO: assert(iter.count % 5 == 0);
+		queryCar.ForEach([&actors](flecs::entity, Components::CarPhysicsPart& dynamicActor) {
+			// Find the id in userData in physics actors
+			auto findItr = eastl::find_if(actors.begin(), actors.end(), [dynamicActor](physx::PxActor* actor)
 			{
-				// Find the id in userData in physics actors
-				auto findItr = eastl::find_if(actors.begin(), actors.end(), [dynamicActor, row](physx::PxActor* actor)
-				{
-					return size_t(actor->userData) == size_t(dynamicActor[row].CarActor);
-				});
+				return size_t(actor->userData) == size_t(dynamicActor.CarActor);
+			});
 
-				assert(findItr != actors.end());
-				auto rigidBody = (*findItr)->is<physx::PxRigidDynamic>();
-				assert(rigidBody);
-				dynamicActor[row].CarActor = rigidBody;
-				// TODO: remove me
-				physx::PxSetGroup(*rigidBody, groupWheel);
-			}
-		}
+			assert(findItr != actors.end());
+			auto rigidBody = (*findItr)->is<physx::PxRigidDynamic>();
+			assert(rigidBody);
+			dynamicActor.CarActor = rigidBody;
+			// TODO: remove me
+			physx::PxSetGroup(*rigidBody, groupWheel);
+		});
 
 		// Setup drivable planes
 		physx::PxActorTypeFlags selectionFlagsStatic = physx::PxActorTypeFlag::eRIGID_STATIC;

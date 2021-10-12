@@ -7,50 +7,17 @@ include!(concat!(env!("OUT_DIR"), "/flecs-binding.rs"));
 extern crate flecs_rs_derive;
 
 use components::*;
-use std::ffi::{c_void, CStr, CString};
+use std::collections::HashMap;
 
-fn cstr(input: &str) -> CString {
-    CString::new(input).expect("CString::new failed")
+struct Archetype {
+    num_components: usize,
+    components_arrays: Vec<Vec<Components>>,
 }
 
 pub struct FlecsState {
-    world: *mut ecs_world_t,
-    component_entities: Vec<(ecs_entity_t, u64)>,
-    tag_entities: Vec<ecs_entity_t>,
-}
-
-impl Drop for FlecsState {
-    fn drop(&mut self) {
-        unsafe {
-            ecs_fini(self.world);
-        }
-    }
-}
-
-fn register_tag(world: *mut ecs_world_t, name: &[u8]) -> ecs_entity_t {
-    unsafe {
-        ecs_new_entity(
-            world,
-            0,
-            CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
-            std::ptr::null(),
-        )
-    }
-}
-
-fn register_component<T>(world: *mut ecs_world_t, name: &[u8]) -> (ecs_entity_t, u64) {
-    unsafe {
-        (
-            ecs_new_component(
-                world,
-                0,
-                CStr::from_bytes_with_nul(name).unwrap().as_ptr(),
-                std::mem::size_of::<T>() as u64,
-                std::mem::align_of::<T>() as u64,
-            ),
-            std::mem::size_of::<T>() as u64,
-        )
-    }
+    // Bulk API
+    next_entity_id: u64,
+    archetypes: HashMap<String, Archetype>,
 }
 
 #[derive(Components)]
@@ -72,84 +39,106 @@ pub enum Tags {
 }
 
 impl FlecsState {
-    fn get_component_entity(&self, component: &Components) -> (ecs_entity_t, u64) {
-        self.component_entities[component.get_index()]
-    }
-
-    fn get_tag_entity(&self, tag: &Tags) -> ecs_entity_t {
-        self.tag_entities[tag.get_index()]
-    }
-
     pub fn new() -> Self {
-        unsafe {
-            let world = ecs_init();
-            // Register all components / tags
-            let component_entities = Components::register_components(world);
-            let tag_entities = Tags::register_tags(world);
-
-            FlecsState {
-                world,
-                component_entities,
-                tag_entities,
-            }
+        FlecsState {
+            next_entity_id: 0,
+            archetypes: Default::default(),
         }
     }
 
     pub fn create_entity(
-        &self,
-        name: &str,
-        components: &[Components],
+        &mut self,
+        _name: &str, // TODO: Find a way to add names
+        components: Vec<Components>,
         tags: &[Tags],
     ) -> ecs_entity_t {
-        unsafe {
-            let name = cstr(name);
-            let sep = cstr(".");
-            let entity = ecs_new_w_type(self.world, std::ptr::null());
+        // TODO: for now we rely on the order of the components to be the same
+        // Construct Type
+        let archetype_name = components
+            .iter()
+            .map(|comp| comp.get_name())
+            .chain(tags.iter().map(|tag| tag.get_name()))
+            .collect::<Vec<&str>>()
+            .join(",");
 
-            // Set name
-            ecs_add_path_w_sep(
-                self.world,
-                entity,
-                0,
-                name.as_ptr(),
-                sep.as_ptr(),
-                std::ptr::null(),
+        if !self.archetypes.contains_key(&archetype_name) {
+            let mut components_arrays = vec![];
+            components_arrays.resize_with(components.len(), || vec![]);
+            self.archetypes.insert(
+                archetype_name.clone(),
+                Archetype {
+                    num_components: components.len() + tags.len(),
+                    components_arrays,
+                },
             );
-
-            for component in components {
-                let (component_entity, size) = self.get_component_entity(&component);
-                ecs_set_ptr_w_entity(
-                    self.world,
-                    entity,
-                    component_entity,
-                    size,
-                    component.get_pointer(),
-                );
-            }
-
-            for tag in tags {
-                ecs_add_entity(self.world, entity, self.get_tag_entity(&tag));
-            }
-
-            entity
         }
+
+        let archetype = self.archetypes.get_mut(&archetype_name).unwrap();
+        for (component_data, component_array) in components
+            .into_iter()
+            .zip(archetype.components_arrays.iter_mut())
+        {
+            component_array.push(component_data);
+        }
+
+        let result = self.next_entity_id;
+        self.next_entity_id = self.next_entity_id + 1;
+        result
     }
 
     pub fn write_to_buffer<W: std::io::Write>(&self, writer: &mut W) {
-        unsafe {
-            let mut reader = ecs_reader_init(self.world);
-            const buffer_size: i32 = 256;
-            let mut buff = [0u8; buffer_size as usize];
-            let mut read = 1;
-            while read > 0 {
-                read = ecs_reader_read(
-                    &mut buff as *mut _ as *mut ::std::os::raw::c_char,
-                    buffer_size,
-                    &mut reader,
-                );
-                writer.write_all(&buff).expect("Cannot write into writer");
+        // Write number of archetypes
+        writer
+            .write_all(&u32::to_ne_bytes(self.archetypes.len() as u32))
+            .unwrap();
+
+        // Each archetype
+        for (name, archetype) in self.archetypes.iter() {
+            // Num entities
+            writer
+                .write_all(&u32::to_ne_bytes(archetype.components_arrays.first().unwrap().len() as u32))
+                .unwrap();
+            // Number of components
+            writer
+                .write_all(&u32::to_ne_bytes(archetype.num_components as u32))
+                .unwrap();
+
+            // Now all the sizes of the components
+            let mut component_sizes = archetype
+                .components_arrays
+                .iter()
+                .map(|component_array| component_array.first().unwrap().get_pointer_and_size().1)
+                .collect::<Vec<usize>>();
+            // Fill with zeros for tags
+            if component_sizes.len() < archetype.num_components {
+                component_sizes.resize(archetype.num_components, 0);
             }
-            writer.flush().expect("Cannot flush");
+            // Write the component sizes
+            for size in component_sizes {
+                writer.write_all(&u32::to_ne_bytes(size as u32)).unwrap();
+            }
+
+            // Now follow up with name of the archetype and all the component arrays
+            // In order to not read the name from C++ we can write its size before the string
+            // and the use that to skip to the arrays
+            writer
+                .write_all(&u32::to_ne_bytes(
+                    (name.len() + 1) as u32, // +1 for the terminating zero
+                ))
+                .unwrap();
+            write!(writer, "{}\0", name).unwrap();
+            for array in archetype.components_arrays.iter() {
+                for component in array {
+                    let (ptr, size) = component.get_pointer_and_size();
+                    unsafe {
+                        writer
+                            .write_all(std::slice::from_raw_parts(ptr, size))
+                            .unwrap();
+                    }
+                }
+            }
         }
+
+        writer.flush().expect("Cannot flush");
     }
 }

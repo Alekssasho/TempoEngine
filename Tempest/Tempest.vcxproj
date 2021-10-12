@@ -136,7 +136,6 @@
     <ClInclude Include="World\Camera.h" />
     <ClInclude Include="World\Components\Components.h" />
     <ClInclude Include="World\EntityQuery.h" />
-    <ClInclude Include="World\EntityQueryImpl.h" />
     <ClInclude Include="World\System.h" />
     <ClInclude Include="World\Systems\BoidsSystem.h" />
     <ClInclude Include="World\Systems\InputControllerSystem.h" />
@@ -202,7 +201,6 @@
     <ClCompile Include="Platform\WindowsPlatform.cpp" />
     <ClCompile Include="Resources\ResourceLoader.cpp" />
     <ClCompile Include="World\Camera.cpp" />
-    <ClCompile Include="World\EntityQuery.cpp" />
     <ClCompile Include="World\Systems\BoidsSystem.cpp" />
     <ClCompile Include="World\TaskGraph\TaskGraph.cpp" />
     <ClCompile Include="World\World.cpp" />

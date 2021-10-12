@@ -101,9 +101,6 @@
     <ClInclude Include="World\EntityQuery.h">
       <Filter>World</Filter>
     </ClInclude>
-    <ClInclude Include="World\EntityQueryImpl.h">
-      <Filter>World</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Features\StaticMeshFeature.h">
       <Filter>Graphics\Features</Filter>
     </ClInclude>
@@ -214,9 +211,6 @@
     </ClCompile>
     <ClCompile Include="World\TaskGraph\TaskGraph.cpp">
       <Filter>World\TaskGraph</Filter>
-    </ClCompile>
-    <ClCompile Include="World\EntityQuery.cpp">
-      <Filter>World</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\Features\StaticMeshFeature.cpp">
       <Filter>Graphics\Features</Filter>

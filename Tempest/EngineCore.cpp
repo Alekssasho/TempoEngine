@@ -10,6 +10,8 @@
 
 #include <DataDefinitions/Level_generated.h>
 
+#include <World/Components/Components.h>
+
 namespace Tempest
 {
 EngineCore* gEngine = nullptr;
@@ -141,7 +143,13 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_Camera.Forward = glm::normalize(glm::vec3(camera->forward().x(), camera->forward().y(), camera->forward().z()));
 	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
 	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
-	gEngine->m_Renderer.RegisterView(&gEngine->m_Camera);
+
+	auto cameraController = gEngine->GetWorld().m_EntityWorld.entity("CameraController")
+		.set<Components::CameraController>({ gEngine->m_Camera, 0 })
+		.set<Components::VehicleController>({ 1 });
+
+	const Components::CameraController* controller = cameraController.get<Components::CameraController>();
+	gEngine->m_Renderer.RegisterView(&controller->CameraData);
 
 	// Wait for physics as well
 	gEngine->m_JobSystem.WaitForCounter(&physicsWorldCounter, 0);

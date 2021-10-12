@@ -2,6 +2,7 @@
 
 #include <Graphics/RenderFeature.h>
 #include <World/EntityQuery.h>
+#include <World/Components/Components.h>
 
 namespace Tempest
 {
@@ -17,7 +18,7 @@ struct Rects : RenderFeature
 	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase) override;
 
 private:
-	EntityQuery m_Query;
+	EntityQuery<Components::Transform, Components::Rect> m_Query;
 	PipelineStateHandle m_Handle;
 };
 }

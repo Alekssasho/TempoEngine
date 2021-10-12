@@ -18,7 +18,7 @@ impl EntitiesWorldResource {
     }
 
     fn create_mesh_entity(
-        state: &FlecsState,
+        state: &mut FlecsState,
         name: &str,
         trs: TRS,
         mesh_index: u32,
@@ -54,7 +54,7 @@ impl EntitiesWorldResource {
             println!("Not a Car: {}", name);
         }
 
-        state.create_entity(name, &components, &tags)
+        state.create_entity(name, components, &tags)
     }
 }
 
@@ -65,7 +65,7 @@ impl Resource for EntitiesWorldResource {
 
     #[instrument]
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
-        let flecs_state = FlecsState::new();
+        let mut flecs_state = FlecsState::new();
 
         let scene = self.scene.upgrade().unwrap();
         let mut node_to_entity_map = HashMap::new();
@@ -88,7 +88,7 @@ impl Resource for EntitiesWorldResource {
                     let mesh_index = gltf.node_mesh_index(child).unwrap();
                     let tags = Vec::new();
                     let entity_id = EntitiesWorldResource::create_mesh_entity(
-                        &flecs_state,
+                        &mut flecs_state,
                         &child_node_name,
                         TRS::new(&(*world_transform * gltf.node_transform(child))),
                         mesh_index as u32,
@@ -103,7 +103,7 @@ impl Resource for EntitiesWorldResource {
                 let tempest_extension = gltf.tempest_extension(node_index);
                 let tags = Vec::new();
                 let entity_id = EntitiesWorldResource::create_mesh_entity(
-                    &flecs_state,
+                    &mut flecs_state,
                     &gltf.node_name(node_index),
                     TRS::new(world_transform),
                     mesh_index as u32,
@@ -135,7 +135,7 @@ impl Resource for EntitiesWorldResource {
 
                     let entity_id = flecs_state.create_entity(
                         gltf.node_name(node_index),
-                        &[transform, light_color_info],
+                        vec![transform, light_color_info],
                         &[Tags::DirectionalLight],
                     );
                     node_to_entity_map.insert(node_index, entity_id);
@@ -143,6 +143,12 @@ impl Resource for EntitiesWorldResource {
             }
             None
         });
+
+        // // Add camera controller
+        // flecs_state.create_entity("MainCamera", &[Components::CameraController(Tempest_Components_CameraController{
+        //     CameraData: scene.camera,
+        //     InputMapIndex: 0,
+        // })], &[]);
 
         let mut binary_data = Vec::<u8>::new();
         flecs_state.write_to_buffer(&mut binary_data);

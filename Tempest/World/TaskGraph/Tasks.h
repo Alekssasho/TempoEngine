@@ -1,6 +1,7 @@
 #pragma once
 
 #include <World/TaskGraph/TaskGraph.h>
+#include <World/EntityQuery.h>
 #include <Job/JobSystem.h>
 #include <EASTL/hash_map.h>
 
@@ -18,41 +19,41 @@ struct ParallelFor : TaskGraph::Task
 	}
 };
 
+template<typename FunctionType, typename... Components>
 struct ParallelQueryEach : TaskGraph::Task
 {
-	using Function = eastl::function<void(uint32_t, ecs_iter_t*)>;
-
-	ParallelQueryEach(EntityQuery* query, Function function)
+	ParallelQueryEach(EntityQuery<Components...>* query, FunctionType&& function)
 		: Query(query)
 		, Func(function)
+		, NumJobs(std::thread::hardware_concurrency())
 	{}
 
 	virtual void Execute(Job::JobSystem& jobSystem) override
 	{
 		assert(Query);
-		int jobCount = Query->GetMatchedArchetypesCount();
 		// TODO: This should be temporary memory
-		eastl::vector<Job::JobDecl> jobs(jobCount);
-		for (int i = 0; i < jobCount; ++i)
+		eastl::vector<Job::JobDecl> jobs(NumJobs);
+		for (uint32_t i = 0; i < NumJobs; ++i)
 		{
 			jobs[i].Data = (void*)this;
 			jobs[i].EntryPoint = ParallelQueryEach::ExecuteJob;
 		}
 
 		Job::Counter counter;
-		jobSystem.RunJobs(Name.c_str(), jobs.data(), jobCount, &counter);
+		jobSystem.RunJobs(Name.c_str(), jobs.data(), NumJobs, &counter);
 		jobSystem.WaitForCounter(&counter, 0);
 	}
 
 	static void ExecuteJob(uint32_t index, void* data)
 	{
 		ParallelQueryEach* task = (ParallelQueryEach*)data;
-		auto [count, ecsIter] = task->Query->GetIterForAchetype(index);
-		task->Func(count, &ecsIter);
+		task->Query->ForEachWorker(index, task->NumJobs, std::forward<FunctionType&&>(task->Func));
 	}
 
-	EntityQuery* Query;
-	Function Func;
+	EntityQuery<Components...>* Query;
+	FunctionType Func;
+	//TODO: Possible this could be part of the Job system as input argument
+	uint32_t NumJobs;
 };
 
 template<typename Key, typename Value>

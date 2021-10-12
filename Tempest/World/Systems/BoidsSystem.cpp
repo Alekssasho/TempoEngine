@@ -3,7 +3,6 @@
 #include <World/Systems/BoidsSystem.h>
 
 #include <World/TaskGraph/Tasks.h>
-#include <World/EntityQueryImpl.h>
 
 namespace Tempest
 {

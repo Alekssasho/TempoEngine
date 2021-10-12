@@ -5,7 +5,6 @@
 #include <Graphics/Renderer.h>
 #include <Graphics/FrameData.h>
 #include <World/World.h>
-#include <World/EntityQueryImpl.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 
 namespace Tempest

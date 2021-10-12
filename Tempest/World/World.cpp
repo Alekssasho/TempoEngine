@@ -16,12 +16,6 @@ void RegisterComponent(flecs::world& world)
 	flecs::component<ComponentType>(world, ComponentType::Name);
 }
 
-template<typename TagType>
-void RegisterTag(flecs::world& world)
-{
-	flecs::component<TagType>(world, TagType::Name);
-}
-
 namespace Tempest
 {
 World::World()
@@ -44,8 +38,8 @@ World::World()
 	RegisterComponent<Components::LightColorInfo>(m_EntityWorld);
 	RegisterComponent<Components::VehicleController>(m_EntityWorld);
 
-	RegisterTag<Tags::Boids>(m_EntityWorld);
-	RegisterTag<Tags::DirectionalLight>(m_EntityWorld);
+	RegisterComponent<Tags::Boids>(m_EntityWorld);
+	RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
 
 	// Register all systems
 	//m_Systems.emplace_back(new Systems::MoveSystem);
@@ -97,11 +91,19 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 class MemoryInputStream
 {
 public:
-	MemoryInputStream(const char* buffer, uint64_t bufferSize)
+	MemoryInputStream(const uint8_t* buffer, uint64_t bufferSize)
 		: m_ReaderPosition(0)
 		, m_BufferSize(bufferSize)
 		, m_Buffer(buffer)
 	{}
+
+	const uint8_t* Jump(uint64_t bytesToJump)
+	{
+		assert(m_ReaderPosition + bytesToJump <= m_BufferSize);
+		auto result = m_Buffer + m_ReaderPosition;
+		m_ReaderPosition += bytesToJump;
+		return result;
+	}
 
 	void Read(uint8_t* bufferToFill, uint64_t bytesToRead)
 	{
@@ -110,118 +112,63 @@ public:
 		m_ReaderPosition += bytesToRead;
 	}
 
-	bool IsEOF() const
-	{
-		return m_ReaderPosition >= m_BufferSize;
-	}
-
 	template<typename T>
-	friend typename std::enable_if<std::is_integral<T>::value, MemoryInputStream&>::type
-		operator>>(MemoryInputStream& stream, T& value)
+	void Read(T& value)
 	{
-		value = *reinterpret_cast<const T*>(stream.m_Buffer + stream.m_ReaderPosition);
-		stream.m_ReaderPosition += sizeof(T);
-		return stream;
-	}
-	friend MemoryInputStream& operator>>(MemoryInputStream& stream, eastl::string& value)
-	{
-		const char* stringPtr = reinterpret_cast<const char*>(stream.m_Buffer + stream.m_ReaderPosition);
-		uint64_t stringLength = std::strlen(stringPtr);
-		value.assign(stringPtr, stringLength);
-		stream.m_ReaderPosition += stringLength + 1;
-		return stream;
+		value = *reinterpret_cast<const T*>(m_Buffer + m_ReaderPosition);
+		m_ReaderPosition += sizeof(T);
 	}
 private:
 	uint64_t m_ReaderPosition;
 	uint64_t m_BufferSize;
-	const char* m_Buffer;
+	const uint8_t* m_Buffer;
 };
 
 void World::LoadFromLevel(const char* data, size_t size)
 {
-	MemoryInputStream stream(data, size);
+	MemoryInputStream stream(reinterpret_cast<const uint8_t*>(data), size);
 
 	uint32_t numArchetypes;
-	stream >> numArchetypes;
+	stream.Read(numArchetypes);
 
-	//for (uint32_t i = 0; i < numArchetypes; ++i) 
-	{
-		eastl::string archetypeName;
-		stream >> archetypeName;
-
+	for (uint32_t i = 0; i < numArchetypes; ++i) {
 		uint32_t numEntities;
-		stream >> numEntities;
+		stream.Read(numEntities);
 
-		eastl::vector<Components::Transform> transforms;
-		transforms.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(transforms.data()), numEntities * sizeof(Components::Transform));
+		// Read the number of components
+		uint32_t numComponents;
+		stream.Read(numComponents);
 
-		eastl::vector<Components::StaticMesh> mesh;
-		mesh.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(mesh.data()), numEntities * sizeof(Components::StaticMesh));
+		// TODO: Temp memory
+		eastl::vector<uint32_t> componentSizes;
+		componentSizes.resize(numComponents);
+		stream.Read(reinterpret_cast<uint8_t*>(componentSizes.data()), numComponents * sizeof(uint32_t));
 
-		eastl::vector<Components::CarPhysicsPart> car;
-		car.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(car.data()), numEntities * sizeof(Components::CarPhysicsPart));
+		uint32_t nameLen;
+		stream.Read(nameLen);
 
-		void* pointers[] = { transforms.data(), mesh.data(), car.data() };
+		auto archetypeName = reinterpret_cast<const char*>(stream.Jump(nameLen));
+
+		eastl::vector<const void*> componentArrayPointers;
+		componentArrayPointers.reserve(numComponents);
+
+		for (auto size : componentSizes) {
+			// This is a tag, so we just push a nullptr
+			if (size == 0) {
+				componentArrayPointers.push_back(nullptr);
+			}
+			else
+			{
+				componentArrayPointers.push_back(stream.Jump(numEntities * size));
+			}
+		}
+
 		ecs_bulk_desc_t desc = {};
 		desc.count = numEntities;
-		desc.data = pointers;
-		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName.c_str());
+		desc.data = const_cast<void**>(componentArrayPointers.data());
+		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
 
 		ecs_bulk_init(m_EntityWorld, &desc);
-		//break;
-	}
-
-	{
-		eastl::string archetypeName;
-		stream >> archetypeName;
-
-		uint32_t numEntities;
-		stream >> numEntities;
-
-		eastl::vector<Components::Transform> transforms;
-		transforms.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(transforms.data()), numEntities * sizeof(Components::Transform));
-
-		eastl::vector<Components::LightColorInfo> lightColor;
-		lightColor.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(lightColor.data()), numEntities * sizeof(Components::LightColorInfo));
-
-		void* pointers[] = { transforms.data(), lightColor.data(), nullptr };
-		ecs_bulk_desc_t desc = {};
-		desc.count = numEntities;
-		desc.data = pointers;
-		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName.c_str());
-
-		ecs_bulk_init(m_EntityWorld, &desc);
-		//break;
-	}
-
-	{
-		eastl::string archetypeName;
-		stream >> archetypeName;
-
-		uint32_t numEntities;
-		stream >> numEntities;
-
-		eastl::vector<Components::Transform> transforms;
-		transforms.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(transforms.data()), numEntities * sizeof(Components::Transform));
-
-		eastl::vector<Components::StaticMesh> mesh;
-		mesh.resize(numEntities);
-		stream.Read(reinterpret_cast<uint8_t*>(mesh.data()), numEntities * sizeof(Components::StaticMesh));
-
-		void* pointers[] = { transforms.data(), mesh.data() };
-		ecs_bulk_desc_t desc = {};
-		desc.count = numEntities;
-		desc.data = pointers;
-		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName.c_str());
-
-		ecs_bulk_init(m_EntityWorld, &desc);
-		//break;
 	}
 
 	for (const auto& system : m_BeforePhysicsSystems)

@@ -2,7 +2,6 @@
 
 #include <EngineCore.h>
 #include <World/System.h>
-#include <World/EntityQueryImpl.h> // For Query Init which is templated
 #include <World/TaskGraph/Tasks.h>
 #include <World/Components/Components.h>
 

@@ -5,7 +5,6 @@
 #include <World/Components/Components.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/FrameData.h>
-#include <World/EntityQueryImpl.h>
 #include <Graphics/Renderer.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 

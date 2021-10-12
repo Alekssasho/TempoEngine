@@ -12,7 +12,6 @@
 
 
 #include <World/EntityQuery.h>
-#include <World/EntityQueryImpl.h>
 #include <World/Components/Components.h>
 #include <World/World.h>
 #include <DataDefinitions/CommonTypes_generated.h>

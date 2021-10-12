@@ -9,10 +9,15 @@ extern crate flecs_rs_derive;
 use components::*;
 use std::collections::HashMap;
 
+struct Archetype {
+    num_components: usize,
+    components_arrays: Vec<Vec<Components>>,
+}
+
 pub struct FlecsState {
     // Bulk API
     next_entity_id: u64,
-    archetypes: HashMap<String, Vec<Vec<Components>>>,
+    archetypes: HashMap<String, Archetype>,
 }
 
 #[derive(Components)]
@@ -59,13 +64,19 @@ impl FlecsState {
         if !self.archetypes.contains_key(&archetype_name) {
             let mut components_arrays = vec![];
             components_arrays.resize_with(components.len(), || vec![]);
-            self.archetypes
-                .insert(archetype_name.clone(), components_arrays);
+            self.archetypes.insert(
+                archetype_name.clone(),
+                Archetype {
+                    num_components: components.len() + tags.len(),
+                    components_arrays,
+                },
+            );
         }
 
-        let components_arrays = self.archetypes.get_mut(&archetype_name).unwrap();
-        for (component_data, component_array) in
-            components.into_iter().zip(components_arrays.iter_mut())
+        let archetype = self.archetypes.get_mut(&archetype_name).unwrap();
+        for (component_data, component_array) in components
+            .into_iter()
+            .zip(archetype.components_arrays.iter_mut())
         {
             component_array.push(component_data);
         }
@@ -81,15 +92,42 @@ impl FlecsState {
             .write_all(&u32::to_ne_bytes(self.archetypes.len() as u32))
             .unwrap();
 
-        for (name, components_array) in self.archetypes.iter() {
-            write!(writer, "{}\0", name).unwrap();
+        // Each archetype
+        for (name, archetype) in self.archetypes.iter() {
+            // Num entities
+            writer
+                .write_all(&u32::to_ne_bytes(archetype.components_arrays.first().unwrap().len() as u32))
+                .unwrap();
             // Number of components
             writer
+                .write_all(&u32::to_ne_bytes(archetype.num_components as u32))
+                .unwrap();
+
+            // Now all the sizes of the components
+            let mut component_sizes = archetype
+                .components_arrays
+                .iter()
+                .map(|component_array| component_array.first().unwrap().get_pointer_and_size().1)
+                .collect::<Vec<usize>>();
+            // Fill with zeros for tags
+            if component_sizes.len() < archetype.num_components {
+                component_sizes.resize(archetype.num_components, 0);
+            }
+            // Write the component sizes
+            for size in component_sizes {
+                writer.write_all(&u32::to_ne_bytes(size as u32)).unwrap();
+            }
+
+            // Now follow up with name of the archetype and all the component arrays
+            // In order to not read the name from C++ we can write its size before the string
+            // and the use that to skip to the arrays
+            writer
                 .write_all(&u32::to_ne_bytes(
-                    components_array.first().unwrap().len() as u32
+                    (name.len() + 1) as u32, // +1 for the terminating zero
                 ))
                 .unwrap();
-            for array in components_array {
+            write!(writer, "{}\0", name).unwrap();
+            for array in archetype.components_arrays.iter() {
                 for component in array {
                     let (ptr, size) = component.get_pointer_and_size();
                     unsafe {

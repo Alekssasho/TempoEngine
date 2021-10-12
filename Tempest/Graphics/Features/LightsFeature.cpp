@@ -4,7 +4,6 @@
 #include <Graphics/Renderer.h>
 #include <Graphics/FrameData.h>
 #include <World/World.h>
-#include <World/EntityQueryImpl.h>
 
 namespace Tempest
 {

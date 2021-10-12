@@ -29,24 +29,16 @@ void StaticMesh::Initialize(const World& world, Renderer& renderer)
 
 void StaticMesh::GatherData(const World& world, FrameData& frameData)
 {
-	int archetypeCount = m_Query.GetMatchedArchetypesCount();
-	for (int i = 0; i < archetypeCount; ++i)
-	{
-		auto [_, iter] = m_Query.GetIterForAchetype(i);
-		Components::Transform* transforms = ecs_term(&iter, Components::Transform, 1);
-		Components::StaticMesh* staticMeshes = ecs_term(&iter, Components::StaticMesh, 2);
-		for (int row = 0; row < iter.count; ++row)
-		{
-			const glm::mat4x4 scale = glm::scale(transforms[row].Scale);
-			const glm::mat4x4 rotate = glm::toMat4(transforms[row].Rotation);
-			const glm::mat4x4 translate = glm::translate(transforms[row].Position);
+	m_Query.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::StaticMesh& staticMesh) {
+		const glm::mat4x4 scale = glm::scale(transform.Scale);
+		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
+		const glm::mat4x4 translate = glm::translate(transform.Position);
 
-			frameData.StaticMeshes.push_back(FrameData::StaticMeshData{
-				staticMeshes[row].Mesh,
-				translate * rotate * scale
-			});
-		}
-	}
+		frameData.StaticMeshes.push_back(FrameData::StaticMeshData{
+			staticMesh.Mesh,
+			translate * rotate * scale
+		});
+	});
 }
 
 void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase)

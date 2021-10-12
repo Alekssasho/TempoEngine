@@ -24,23 +24,15 @@ void Rects::Initialize(const World& world, Renderer& renderer)
 
 void Rects::GatherData(const World& world, FrameData& frameData)
 {
-	int archetypeCount = m_Query.GetMatchedArchetypesCount();
-	for (int i = 0; i < archetypeCount; ++i)
-	{
-		auto [_, iter] = m_Query.GetIterForAchetype(i);
-		Components::Transform* transforms = ecs_term(&iter, Components::Transform, 1);
-		Components::Rect* rects = ecs_term(&iter, Components::Rect, 2);
-		for (int row = 0; row < iter.count; ++row)
-		{
-			frameData.Rects.push_back(RectData{
-				transforms[row].Position.x,
-				transforms[row].Position.y,
-				rects[row].width,
-				rects[row].height,
-				rects[row].color,
-			});
-		}
-	}
+	m_Query.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::Rect& rect) {
+		frameData.Rects.push_back(RectData{
+			transform.Position.x,
+			transform.Position.y,
+			rect.width,
+			rect.height,
+			rect.color,
+		});
+	});
 }
 
 void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase)

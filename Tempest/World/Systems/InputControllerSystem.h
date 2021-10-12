@@ -26,12 +26,9 @@ struct CameraControllerSystem : public System
 			"CameraControllerSystem::ParallelEach",
 			new Task::ParallelQueryEach(
 				&m_Query,
-				[deltaTime](uint32_t, ecs_iter_t* iter) {
-				Components::CameraController* cameraControllers = ecs_term(iter, Components::CameraController, 1);
-				for (int i = 0; i < iter->count; ++i)
-				{
-					auto& inputMap = *gEngine->GetInput().m_InputMaps[cameraControllers[i].InputMapIndex].get();
-					auto& camera = cameraControllers[i].CameraData;
+				[deltaTime](flecs::entity, Components::CameraController& cameraController) {
+					auto& inputMap = *gEngine->GetInput().m_InputMaps[cameraController.InputMapIndex].get();
+					auto& camera = cameraController.CameraData;
 
 					// Update camera stuff
 					auto cameraForward = glm::normalize(camera.Forward);
@@ -69,7 +66,6 @@ struct CameraControllerSystem : public System
 						camera.Forward = glm::rotate(camera.Forward, -inputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
 						camera.Up = glm::normalize(glm::cross(camera.Forward, cameraRight));
 					}
-				}
 		}));
 	}
 };
@@ -90,11 +86,8 @@ struct VehicleControllerSystem : public System
 			"VehicleControllerSystem::ParallelEach",
 			new Task::ParallelQueryEach(
 				&m_Query,
-				[deltaTime](uint32_t, ecs_iter_t* iter) {
-				Components::VehicleController* vehicleControllers = ecs_term(iter, Components::VehicleController, 1);
-				for (int i = 0; i < iter->count; ++i)
-				{
-					auto& inputMap = *gEngine->GetInput().m_InputMaps[vehicleControllers[i].InputMapIndex].get();
+				[deltaTime](flecs::entity, Components::VehicleController& vehicleController) {
+					auto& inputMap = *gEngine->GetInput().m_InputMaps[vehicleController.InputMapIndex].get();
 					auto& physics = gEngine->GetPhysics();
 
 					// Vehicle
@@ -103,7 +96,6 @@ struct VehicleControllerSystem : public System
 					physics.VehicleInputData.setDigitalHandbrake(inputMap.GetBool(Handbrake));
 					physics.VehicleInputData.setDigitalSteerLeft(inputMap.GetBool(SteerLeft));
 					physics.VehicleInputData.setDigitalSteerRight(inputMap.GetBool(SteerRight));
-				}
 		}));
 	}
 };

@@ -135,7 +135,7 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	}
 
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
-	gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
+	const eastl::vector<flecs::entity_t>& newlyCreatedEntities = gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
 
 	auto camera = level->camera();
 
@@ -155,7 +155,7 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_JobSystem.WaitForCounter(&physicsWorldCounter, 0);
 
 	// Patch the world with the loaded physics
-	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld());
+	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
 
 	// Wait for the loading of the rendering databases before initializing it
 	gEngine->m_JobSystem.WaitForCounter(&renderingDatabasesCounter, 0);

@@ -124,8 +124,10 @@ private:
 	const uint8_t* m_Buffer;
 };
 
-void World::LoadFromLevel(const char* data, size_t size)
+eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t size)
 {
+	eastl::vector<flecs::entity_t> newlyCreatedEntityIds;
+
 	MemoryInputStream stream(reinterpret_cast<const uint8_t*>(data), size);
 
 	uint32_t numArchetypes;
@@ -163,12 +165,16 @@ void World::LoadFromLevel(const char* data, size_t size)
 			}
 		}
 
+		const uint32_t beforeSize = uint32_t(newlyCreatedEntityIds.size());
+		newlyCreatedEntityIds.resize(beforeSize + numEntities);
+
 		ecs_bulk_desc_t desc = {};
 		desc.count = numEntities;
 		desc.data = const_cast<void**>(componentArrayPointers.data());
 		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
 
-		ecs_bulk_init(m_EntityWorld, &desc);
+		const ecs_entity_t* newlyCreatedIds = ecs_bulk_init(m_EntityWorld, &desc);
+		memcpy(newlyCreatedEntityIds.data() + beforeSize, newlyCreatedIds, numEntities * sizeof(ecs_entity_t));
 	}
 
 	for (const auto& system : m_BeforePhysicsSystems)
@@ -180,5 +186,7 @@ void World::LoadFromLevel(const char* data, size_t size)
 	{
 		system->PrepareQueries(*this);
 	}
+
+	return newlyCreatedEntityIds;
 }
 }

@@ -17,7 +17,7 @@ public:
 
 	void Update(float deltaTime, Job::JobSystem& jobSystem);
 
-	void LoadFromLevel(const char* data, size_t size);
+	eastl::vector<flecs::entity_t> LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better
 //private:
 	flecs::world m_EntityWorld;

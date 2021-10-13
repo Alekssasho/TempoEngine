@@ -12,14 +12,14 @@ use super::{mesh::MeshData, Resource};
 pub struct PhysicsWorldResource {
     scene: Weak<Scene>,
     meshes: Arc<Vec<MeshData>>,
-    node_to_entity_map: HashMap<usize, u64>,
+    node_to_entity_map: HashMap<usize, usize>,
 }
 
 impl PhysicsWorldResource {
     pub fn new(
         scene: Weak<Scene>,
         meshes: Arc<Vec<MeshData>>,
-        node_to_entity_map: HashMap<usize, u64>,
+        node_to_entity_map: HashMap<usize, usize>,
     ) -> Self {
         Self {
             scene,
@@ -311,7 +311,6 @@ impl Resource for PhysicsWorldResource {
                     ackermann.mRearWidth =
                         (*physics_handler::physx_sys::PxVehicleWheelsSimData_getWheelCentreOffset(wheels_simulation_data, physics_handler::physx_sys::PxVehicleDrive4WWheelOrder::eREAR_RIGHT)).x -
                         (*physics_handler::physx_sys::PxVehicleWheelsSimData_getWheelCentreOffset(wheels_simulation_data, physics_handler::physx_sys::PxVehicleDrive4WWheelOrder::eREAR_LEFT)).x;
-                    println!("axple separation: {}, front widht: {}, rear width: {}", ackermann.mAxleSeparation, ackermann.mFrontWidth, ackermann.mRearWidth);
                     physics_handler::physx_sys::PxVehicleDriveSimData4W_setAckermannGeometryData_mut(&mut drive_sim_data, &ackermann);
                 }
 

@@ -290,7 +290,7 @@ impl PhysicsHandler {
         is_dynamic: bool,
         transform: PxTransform,
         geometry: &impl Geometry,
-        id: u64,
+        id: usize,
         static_shape_filter_data: u32,
     ) {
         if is_dynamic {
@@ -310,7 +310,7 @@ impl PhysicsHandler {
                 physx_sys::PxCollection_add_mut(
                     self.raw_ptr_holder.physx_collection,
                     actor.as_mut_ptr(),
-                    id as usize,
+                    id,
                 );
                 physx_sys::PxSerialization_complete_mut(
                     self.raw_ptr_holder.physx_collection,
@@ -353,7 +353,7 @@ impl PhysicsHandler {
                 physx_sys::PxCollection_add_mut(
                     self.raw_ptr_holder.physx_collection,
                     actor.as_mut_ptr(),
-                    id as usize,
+                    id,
                 );
                 physx_sys::PxSerialization_complete_mut(
                     self.raw_ptr_holder.physx_collection,

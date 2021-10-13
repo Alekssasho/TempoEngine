@@ -57,7 +57,7 @@ public:
 	~PhysicsManager();
 
 	void LoadFromData(void* data, uint32_t size);
-	void PatchWorldComponents(World& world);
+	void PatchWorldComponents(World& world, const eastl::vector<flecs::entity_t>& newlyCreatedEntities);
 	void Update(float deltaTime);
 private:
 	eastl::unique_ptr<void, AllignedDeleter> m_AllignedAlloc;

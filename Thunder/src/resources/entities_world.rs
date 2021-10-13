@@ -25,7 +25,7 @@ impl EntitiesWorldResource {
         tags: Vec<Tags>,
         has_dynamic_physics: bool,
         has_car_physics: Option<u32>,
-    ) -> ecs_entity_t {
+    ) -> TemporaryEntityId {
         let transform = Components::Transform(Tempest_Components_Transform {
             Position: trs.translate,
             Scale: trs.scale,
@@ -50,8 +50,6 @@ impl EntitiesWorldResource {
                     ShapeIndex: has_car_physics.unwrap(),
                 },
             ))
-        } else {
-            println!("Not a Car: {}", name);
         }
 
         state.create_entity(name, components, &tags)
@@ -61,14 +59,14 @@ impl EntitiesWorldResource {
 #[async_trait]
 impl Resource for EntitiesWorldResource {
     // First is the compiled ecs state, the second is map from node_index to entity_id
-    type ReturnValue = (Vec<u8>, HashMap<usize, u64>);
+    type ReturnValue = (Vec<u8>, HashMap<usize, usize>);
 
     #[instrument]
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
         let mut flecs_state = FlecsState::new();
 
         let scene = self.scene.upgrade().unwrap();
-        let mut node_to_entity_map = HashMap::new();
+        let mut node_to_temporary_entity_map = HashMap::new();
         scene.walk_root_nodes(|gltf, node_index, world_transform| -> Option<()> {
             if gltf.is_car(node_index) {
                 let node_name = gltf.node_name(node_index);
@@ -96,7 +94,7 @@ impl Resource for EntitiesWorldResource {
                         false,
                         Some(index_of_car_component as u32),
                     );
-                    node_to_entity_map.insert(child, entity_id);
+                    node_to_temporary_entity_map.insert(child, entity_id);
                 }
                 return Some(()); // This will break the recursion as we have already handled all the needed children
             } else if let Some(mesh_index) = gltf.node_mesh_index(node_index) {
@@ -113,7 +111,7 @@ impl Resource for EntitiesWorldResource {
                         .map_or(false, |physics_body| physics_body.dynamic),
                     None,
                 );
-                node_to_entity_map.insert(node_index, entity_id);
+                node_to_temporary_entity_map.insert(node_index, entity_id);
             } else if let Some(light_data) = gltf.light(node_index) {
                 if let gltf::khr_lights_punctual::Kind::Directional = light_data.kind() {
                     // GLTF specify that lights shines upon -Z direction. Tempest is using +Z for that
@@ -138,7 +136,7 @@ impl Resource for EntitiesWorldResource {
                         vec![transform, light_color_info],
                         &[Tags::DirectionalLight],
                     );
-                    node_to_entity_map.insert(node_index, entity_id);
+                    node_to_temporary_entity_map.insert(node_index, entity_id);
                 }
             }
             None
@@ -149,6 +147,17 @@ impl Resource for EntitiesWorldResource {
         //     CameraData: scene.camera,
         //     InputMapIndex: 0,
         // })], &[]);
+
+        flecs_state.finish_adding_entities();
+
+        let mut node_to_entity_map = HashMap::new();
+        node_to_entity_map.extend(
+            node_to_temporary_entity_map
+                .into_iter()
+                .map(|(key, value)| {
+                    (key, flecs_state.create_stable_entity_ids(value))
+                }),
+        );
 
         let mut binary_data = Vec::<u8>::new();
         flecs_state.write_to_buffer(&mut binary_data);

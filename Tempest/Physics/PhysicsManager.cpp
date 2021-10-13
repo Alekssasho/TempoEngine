@@ -242,35 +242,22 @@ void PhysicsManager::LoadFromData(void* data, uint32_t size)
 	collection->release();
 }
 
-void PhysicsManager::PatchWorldComponents(World& world)
+void PhysicsManager::PatchWorldComponents(World& world, const eastl::vector<flecs::entity_t>& newlyCreatedEntities)
 {
 	physx::PxActorTypeFlags selectionFlags = physx::PxActorTypeFlag::eRIGID_DYNAMIC;
 	// TODO: Temp memory
 	eastl::vector<physx::PxActor*> actors(m_Scene->getNbActors(selectionFlags));
 	m_Scene->getActors(selectionFlags, actors.data(), physx::PxU32(actors.size()));
 
-	// TODO: this is very inefficient, but currently we cannot set
-	// a component to a entity directly due to missing components id
-	// Consider changing this to something better
-	// TODO: Change to filter instead of query
-	// TODO: Rework with direct entity setting of component
-	EntityQuery<Components::DynamicPhysicsActor> query;
-	query.Init(world);
-
-	query.ForEach([&actors](flecs::entity entity, Components::DynamicPhysicsActor& dynamicActor) {
-		ecs_entity_t id = entity.id();
-		// Find the id in userData in physics actors
-		auto findItr = eastl::find_if(actors.begin(), actors.end(), [id](physx::PxActor* actor)
-		{
-			return ecs_entity_t(actor->userData) == id;
-		});
-
-		assert(findItr != actors.end());
-		auto rigidBody = (*findItr)->is<physx::PxRigidBody>();
-		assert(rigidBody);
-
-		dynamicActor.Actor = rigidBody;
-	});
+	for (physx::PxActor* actor : actors)
+	{
+		flecs::entity_t id = newlyCreatedEntities[uint64_t(actor->userData)];
+		flecs::entity entity(world.m_EntityWorld, id);
+		assert(entity.has<Components::DynamicPhysicsActor>());
+		Components::DynamicPhysicsActor* dynamicActorComponent = entity.get_mut<Components::DynamicPhysicsActor>();
+		dynamicActorComponent->Actor = actor->is<physx::PxRigidBody>();
+		assert(dynamicActorComponent->Actor);
+	}
 
 	// Setup car components
 	{

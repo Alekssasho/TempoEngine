@@ -251,12 +251,17 @@ void PhysicsManager::PatchWorldComponents(World& world, const eastl::vector<flec
 
 	for (physx::PxActor* actor : actors)
 	{
+		physx::PxRigidBody* rigidBody = actor->is<physx::PxRigidBody>();
+		assert(rigidBody);
+		if (rigidBody->getNbShapes() > 1) {
+			// this is probably a car, so we handle it afterwards
+			continue;
+		}
 		flecs::entity_t id = newlyCreatedEntities[uint64_t(actor->userData)];
 		flecs::entity entity(world.m_EntityWorld, id);
 		assert(entity.has<Components::DynamicPhysicsActor>());
 		Components::DynamicPhysicsActor* dynamicActorComponent = entity.get_mut<Components::DynamicPhysicsActor>();
-		dynamicActorComponent->Actor = actor->is<physx::PxRigidBody>();
-		assert(dynamicActorComponent->Actor);
+		dynamicActorComponent->Actor = rigidBody;
 	}
 
 	// Setup car components

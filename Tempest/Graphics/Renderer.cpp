@@ -5,6 +5,7 @@
 
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/FrameData.h>
+#include <Graphics/RenderGraph.h>
 
 // TODO: Find a better way than just to include them
 #include <Graphics/Features/RectFeature.h>
@@ -38,16 +39,16 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 		feature->Initialize(world, *this);
 	}
 
-	m_ShadowTexture = m_Backend->Managers.Texture.CreateTexture(Dx12::TextureDescription{
-			Dx12::TextureType::Texture2D,
-			DXGI_FORMAT_D32_FLOAT,
-			2048,
-			2048,
-			0,
-			nullptr
-		},
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		nullptr);
+	//m_ShadowTexture = m_Backend->Managers.Texture.CreateTexture(Dx12::TextureDescription{
+	//		Dx12::TextureType::Texture2D,
+	//		DXGI_FORMAT_D32_FLOAT,
+	//		2048,
+	//		2048,
+	//		0,
+	//		nullptr
+	//	},
+	//	D3D12_RESOURCE_STATE_DEPTH_WRITE,
+	//	nullptr);
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -96,100 +97,139 @@ void Renderer::RenderFrame(const FrameData& data)
 {
 	OPTICK_EVENT();
 
-	RendererCommandList commandList;
+	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager());
 
 	glm::mat4 shadowMatrix;
-	// Shadow Rendering Pass
-	{
-		auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
-		auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
-		shadowMatrix = projectionMatrix * viewMatrix;
-		SceneConstantData sceneData{
-			shadowMatrix,
-			shadowMatrix,
-			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-			glm::vec4(data.DirectionalLights[0].Color, 1.0f),
-			0,
+	auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
+	auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+	shadowMatrix = projectionMatrix * viewMatrix;
+
+	auto shadowTextureId = graph.AllocateTexture(Dx12::TextureDescription{
+		Dx12::TextureType::Texture2D,
+		DXGI_FORMAT_D32_FLOAT,
+		2048,
+		2048,
+		0,
+		nullptr
+	});
+
+	graph.AddPass("Shadow Directional Light", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
+		builder.UseDepthStencil(shadowTextureId, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
+
+		return [&shadowMatrix](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
+			const FrameData& data = blackboard.GetFrameData();
+			SceneConstantData sceneData {
+				shadowMatrix,
+				shadowMatrix,
+				glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+				glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+				0,
+			};
+
+			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
+			blackboard.SetRenderPhase(RenderPhase::Shadow);
+
+			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
+			{
+				feature->GenerateCommands(data, commandList, blackboard);
+			}
 		};
-		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
+	});
 
-		RendererCommandBeginRenderPass beginRenderPassCommand;
-		beginRenderPassCommand.ColorTarget = {
-			sInvalidHandle, TextureTargetLoadAction::DoNotCare, TextureTargetStoreAction::DoNotCare
+	graph.AddPass("Main Pass", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
+		builder.UseRenderTarget(sBackbufferRenderTargetRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
+		builder.UseDepthStencil(sBackbufferDepthStencilRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare);
+		builder.ReadTexture(shadowTextureId);
+
+		return [&shadowMatrix, shadowTextureId](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
+			const FrameData& data = blackboard.GetFrameData();
+			SceneConstantData sceneData{
+				blackboard.GetRenderer().m_Views[0]->GetViewProjection(),
+				shadowMatrix,
+				glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+				glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+				blackboard.GetTextureSlot(shadowTextureId)
+			};
+			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
+			blackboard.SetRenderPhase(RenderPhase::Main);
+
+			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
+			{
+				feature->GenerateCommands(data, commandList, blackboard);
+			}
 		};
-		beginRenderPassCommand.DepthStencilTarget = {
-			m_ShadowTexture, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
-		};
-		commandList.AddCommand(beginRenderPassCommand);
-		for (const auto& feature : m_RenderFeatures)
-		{
-			feature->GenerateCommands(data, commandList, *this, RenderPhase::Shadow);
-		}
-		RendererCommandEndRenderPass endRenderPassCommand;
-		commandList.AddCommand(endRenderPassCommand);
+	});
 
-		RendererCommandBarrier transitionToDepthRead;
-		transitionToDepthRead.TextureHandle = m_ShadowTexture;
-		transitionToDepthRead.BeforeState = ResourceState::DepthWrite;
-		transitionToDepthRead.AfterState = ResourceState::PixelShaderRead;
-		commandList.AddCommand(transitionToDepthRead);
-	}
+	//// Shadow Rendering Pass
+	//{
+	//	
 
-	// Main Pass
-	{
-		// Prepare constant buffer data
-		uint32_t shadowTextureSlot = m_Backend->GetDevice()->m_MainDescriptorHeap.AllocateDynamicResource();
+	//	RendererCommandBeginRenderPass beginRenderPassCommand;
+	//	beginRenderPassCommand.ColorTarget = {
+	//		sInvalidHandle, TextureTargetLoadAction::DoNotCare, TextureTargetStoreAction::DoNotCare
+	//	};
+	//	beginRenderPassCommand.DepthStencilTarget = {
+	//		m_ShadowTexture, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
+	//	};
+	//	commandList.AddCommand(beginRenderPassCommand);
+	//	
+	//	RendererCommandEndRenderPass endRenderPassCommand;
+	//	commandList.AddCommand(endRenderPassCommand);
 
-		D3D12_CPU_DESCRIPTOR_HANDLE handle(m_Backend->GetDevice()->m_MainDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
-		handle.ptr += shadowTextureSlot * m_Backend->GetDevice()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	//	RendererCommandBarrier transitionToDepthRead;
+	//	transitionToDepthRead.TextureHandle = m_ShadowTexture;
+	//	transitionToDepthRead.BeforeState = ResourceState::DepthWrite;
+	//	transitionToDepthRead.AfterState = ResourceState::PixelShaderRead;
+	//	commandList.AddCommand(transitionToDepthRead);
+	//}
 
-		D3D12_SHADER_RESOURCE_VIEW_DESC desc;
-		::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
-		desc.Format = DXGI_FORMAT_R32_FLOAT;
-		desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-		desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-		desc.Texture2D.MostDetailedMip = 0;
-		desc.Texture2D.MipLevels = 1;
-		desc.Texture2D.PlaneSlice = 0;
-		desc.Texture2D.ResourceMinLODClamp = 0.0f;
+	//// Main Pass
+	//{
+	//	// Prepare constant buffer data
+	//	uint32_t shadowTextureSlot = m_Backend->GetDevice()->m_MainDescriptorHeap.AllocateDynamicResource();
 
-		m_Backend->GetDevice()->GetDevice()->CreateShaderResourceView(
-			m_Backend->Managers.Texture.GetTexture(m_ShadowTexture),
-			&desc,
-			handle
-		);
-		assert(data.DirectionalLights.size() == 1);
-		SceneConstantData sceneData{
-			m_Views[0]->GetViewProjection(),
-			shadowMatrix,
-			glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-			glm::vec4(data.DirectionalLights[0].Color, 1.0f),
-			shadowTextureSlot
-		};
-		m_CurrentSceneConstantDataOffset = m_Backend->GetDevice()->GetConstantDataManager().AddData(sceneData);
+	//	D3D12_CPU_DESCRIPTOR_HANDLE handle(m_Backend->GetDevice()->m_MainDescriptorHeap.Heap->GetCPUDescriptorHandleForHeapStart());
+	//	handle.ptr += shadowTextureSlot * m_Backend->GetDevice()->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		RendererCommandBeginRenderPass beginRenderPassCommand;
-		// TODO: Use special constant for backbuffer
-		beginRenderPassCommand.ColorTarget = {
-			TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
-		};
-		beginRenderPassCommand.DepthStencilTarget = {
-			TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare
-		};
-		commandList.AddCommand(beginRenderPassCommand);
-		for (const auto& feature : m_RenderFeatures)
-		{
-			feature->GenerateCommands(data, commandList, *this, RenderPhase::Main);
-		}
-		RendererCommandEndRenderPass endRenderPassCommand;
-		commandList.AddCommand(endRenderPassCommand);
+	//	D3D12_SHADER_RESOURCE_VIEW_DESC desc;
+	//	::ZeroMemory(&desc, sizeof(D3D12_SHADER_RESOURCE_VIEW_DESC));
+	//	desc.Format = DXGI_FORMAT_R32_FLOAT;
+	//	desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	//	desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	//	desc.Texture2D.MostDetailedMip = 0;
+	//	desc.Texture2D.MipLevels = 1;
+	//	desc.Texture2D.PlaneSlice = 0;
+	//	desc.Texture2D.ResourceMinLODClamp = 0.0f;
 
-		RendererCommandBarrier transitionToDepthWrite;
-		transitionToDepthWrite.TextureHandle = m_ShadowTexture;
-		transitionToDepthWrite.BeforeState = ResourceState::PixelShaderRead;
-		transitionToDepthWrite.AfterState = ResourceState::DepthWrite;
-		commandList.AddCommand(transitionToDepthWrite);
-	}
+	//	m_Backend->GetDevice()->GetDevice()->CreateShaderResourceView(
+	//		m_Backend->Managers.Texture.GetTexture(m_ShadowTexture),
+	//		&desc,
+	//		handle
+	//	);
+	//	assert(data.DirectionalLights.size() == 1);
+	//	
+
+	//	RendererCommandBeginRenderPass beginRenderPassCommand;
+	//	// TODO: Use special constant for backbuffer
+	//	beginRenderPassCommand.ColorTarget = {
+	//		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store
+	//	};
+	//	beginRenderPassCommand.DepthStencilTarget = {
+	//		TextureHandle(-2), TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare
+	//	};
+	//	commandList.AddCommand(beginRenderPassCommand);
+	//	
+	//	RendererCommandEndRenderPass endRenderPassCommand;
+	//	commandList.AddCommand(endRenderPassCommand);
+
+	//	RendererCommandBarrier transitionToDepthWrite;
+	//	transitionToDepthWrite.TextureHandle = m_ShadowTexture;
+	//	transitionToDepthWrite.BeforeState = ResourceState::PixelShaderRead;
+	//	transitionToDepthWrite.AfterState = ResourceState::DepthWrite;
+	//	commandList.AddCommand(transitionToDepthWrite);
+	//}
+
+	auto commandList = graph.Compile();
 
 	m_Backend->RenderFrame(commandList);
 }
@@ -244,11 +284,6 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 	}
 
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
-}
-
-Dx12::ConstantBufferDataManager& Renderer::GetConstantDataManager() const
-{
-	return m_Backend->GetDevice()->GetConstantDataManager();
 }
 
 struct LoadGeometryStaticFunctionData

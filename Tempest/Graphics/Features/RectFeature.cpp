@@ -7,6 +7,7 @@
 #include <Graphics/FrameData.h>
 #include <Graphics/Renderer.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
+#include <Graphics/RenderGraph.h>
 
 namespace Tempest
 {
@@ -34,14 +35,14 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 	});
 }
 
-void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase)
+void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
 {
-	Dx12::ConstantBufferDataManager& constantDataManager = renderer.GetConstantDataManager();
+	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 	for (const auto& rect : data.Rects)
 	{
 		RendererCommandDrawInstanced command;
 		command.Pipeline = m_Handle;
-		command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = renderer.GetCurrentSceneConstantDataOffset();
+		command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
 		command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(rect);
 		command.VertexCountPerInstance = 4;
 		command.InstanceCount = 1;

@@ -124,6 +124,7 @@
     <ClInclude Include="Graphics\RendererTypes.h" />
     <ClInclude Include="Graphics\RenderFeature.h" />
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Graphics\RenderGraph.h" />
     <ClInclude Include="Job\JobSystem.h" />
     <ClInclude Include="Job\Queue.h" />
     <ClInclude Include="Logging.h" />
@@ -195,6 +196,7 @@
     <ClCompile Include="Graphics\Managers\MeshManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Graphics\RenderGraph.cpp" />
     <ClCompile Include="Job\JobSystem.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="Physics\PhysicsManager.cpp" />

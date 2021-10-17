@@ -147,6 +147,9 @@
     <ClInclude Include="Graphics\Dx12\Managers\ConstantBufferDataManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
+    <ClInclude Include="Graphics\RenderGraph.h">
+      <Filter>Graphics</Filter>
+    </ClInclude>
     <ClInclude Include="Graphics\Dx12\Managers\TwoPartRingBufferDescriptorHeapManager.h">
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClInclude>
@@ -239,6 +242,9 @@
     </ClCompile>
     <ClCompile Include="Graphics\Dx12\Managers\TextureManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="Graphics\RenderGraph.cpp">
+      <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Graphics\Dx12\Managers\TwoPartRingBufferDescriptorHeapManager.cpp">
       <Filter>Graphics\Dx12\Managers</Filter>

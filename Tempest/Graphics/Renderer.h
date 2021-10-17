@@ -40,12 +40,6 @@ public:
 
 	// Managers
 	MeshManager Meshes;
-
-	uint32_t GetCurrentSceneConstantDataOffset() const
-	{
-		return m_CurrentSceneConstantDataOffset;
-	}
-	Dx12::ConstantBufferDataManager& GetConstantDataManager() const;
 private:
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
@@ -57,11 +51,6 @@ private:
 	BufferHandle m_MeshletData;
 	BufferHandle m_MeshletIndicesData;
 	BufferHandle m_MaterialData;
-
-	uint32_t m_CurrentSceneConstantDataOffset;
-
-	// TODO: Remove me
-	TextureHandle m_ShadowTexture;
 };
 }
 

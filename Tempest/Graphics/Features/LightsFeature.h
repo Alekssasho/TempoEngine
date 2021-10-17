@@ -16,7 +16,7 @@ struct Lights : RenderFeature
 
 	virtual void Initialize(const World& world, Renderer& renderer) override;
 	virtual void GatherData(const World&, FrameData&) override;
-	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase) override {};
+	virtual void GenerateCommands(const FrameData&, RendererCommandList&, const RenderGraphBlackboard&) override {};
 private:
 	EntityQuery<Components::Transform, Components::LightColorInfo, Tags::DirectionalLight> m_DirectionalLightQuery;
 };

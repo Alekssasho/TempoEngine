@@ -6,6 +6,7 @@
 #include <Graphics/FrameData.h>
 #include <World/World.h>
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
+#include <Graphics/RenderGraph.h>
 
 namespace Tempest
 {
@@ -40,7 +41,7 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 	});
 }
 
-void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const Renderer& renderer, RenderPhase phase)
+void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
 {
 	struct GeometryConstants
 	{
@@ -48,11 +49,11 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 		uint32_t meshletOffset;
 		uint32_t materialIndex;
 	};
-	Dx12::ConstantBufferDataManager& constantDataManager = renderer.GetConstantDataManager();
+	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 
 	for (const auto& mesh : data.StaticMeshes)
 	{
-		auto primitiveMeshes = renderer.Meshes.GetMeshData(mesh.Mesh);
+		auto primitiveMeshes = blackboard.GetRenderer().Meshes.GetMeshData(mesh.Mesh);
 		for(const auto& meshData : primitiveMeshes)
 		{
 			GeometryConstants constants;
@@ -61,8 +62,8 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 			constants.materialIndex = meshData.material_index();
 
 			RendererCommandDrawMeshlet command;
-			command.Pipeline = phase == RenderPhase::Main ? m_Handle : m_ShadowHandle;
-			command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = renderer.GetCurrentSceneConstantDataOffset();
+			command.Pipeline = blackboard.GetRenderPhase() == RenderPhase::Main ? m_Handle : m_ShadowHandle;
+			command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
 			command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(constants);
 			command.MeshletCount = meshData.meshlets_count();
 			commandList.AddCommand(command);

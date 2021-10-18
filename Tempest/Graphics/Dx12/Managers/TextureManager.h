@@ -44,5 +44,24 @@ private:
 	TextureHandle m_NextHandle = 1; // TODO: for now invalid handle is 0
 	Dx12Device& m_Device;
 };
+
+// TODO: Move to seperate file
+class TemporaryTextureManager : Utils::NonCopyable
+{
+public:
+	TemporaryTextureManager(TextureManager& manager);
+
+	eastl::pair<TextureHandle, D3D12_RESOURCE_STATES> RequestTexture(const TextureDescription& desc);
+	void UpdateCurrentState(TextureHandle, D3D12_RESOURCE_STATES state);
+private:
+	TextureManager& m_TextureManager;
+	struct TextureResource
+	{
+		TextureHandle Handle;
+		TextureDescription Description;
+		D3D12_RESOURCE_STATES CurrentState;
+	};
+	eastl::vector<TextureResource> m_Textures;
+};
 }
 }

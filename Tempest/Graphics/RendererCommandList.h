@@ -83,6 +83,8 @@ struct RendererCommandEndRenderPass : RendererCommand<RendererCommandType::EndRe
 
 enum class ResourceState : uint8_t
 {
+	Common,
+	RenderTarget,
 	PixelShaderRead,
 	DepthWrite,
 	DepthRead,

@@ -125,5 +125,41 @@ DXGI_FORMAT DxFormatForViewFromTextureFormat(const Definition::TextureData& data
 		return DXGI_FORMAT_UNKNOWN;
 	}
 }
+
+TemporaryTextureManager::TemporaryTextureManager(TextureManager& manager)
+	: m_TextureManager(manager)
+{
+}
+
+eastl::pair<TextureHandle, D3D12_RESOURCE_STATES> TemporaryTextureManager::RequestTexture(const TextureDescription& desc)
+{
+	auto findItr = eastl::find_if(m_Textures.begin(), m_Textures.end(), [&desc](const TextureResource& resource) {
+		return resource.Description.Type == desc.Type &&
+			resource.Description.Format == desc.Format &&
+			resource.Description.Width == desc.Width &&
+			resource.Description.Height == desc.Height &&
+			resource.Description.Size == desc.Size &&
+			resource.Description.Data == desc.Data;
+	});
+
+	if (findItr != m_Textures.end())
+	{
+		return eastl::make_pair(findItr->Handle, findItr->CurrentState);
+	}
+
+	TextureHandle handle = m_TextureManager.CreateTexture(desc, D3D12_RESOURCE_STATE_COMMON, nullptr);
+	m_Textures.push_back({ handle, desc, D3D12_RESOURCE_STATE_COMMON });
+	return eastl::make_pair(handle, D3D12_RESOURCE_STATE_COMMON);
+}
+
+void TemporaryTextureManager::UpdateCurrentState(TextureHandle handle, D3D12_RESOURCE_STATES state)
+{
+	auto findItr = eastl::find_if(m_Textures.begin(), m_Textures.end(), [&handle](const TextureResource& resource) {
+		return resource.Handle == handle;
+	});
+
+	assert(findItr != m_Textures.end());
+	findItr->CurrentState = state;
+}
 }
 }

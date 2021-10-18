@@ -40,8 +40,9 @@ public:
 
 	// Managers
 	MeshManager Meshes;
-private:
+	// TODO: Hide this
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
+private:
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
 	eastl::vector<const Camera*> m_Views;
 

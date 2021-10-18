@@ -42,19 +42,6 @@ void Backend::Initialize(WindowHandle handle)
 	m_Device->Initialize(handle);
 }
 
-static D3D12_RESOURCE_STATES Dx12StateFromState(ResourceState state)
-{
-	switch (state)
-	{
-	case ResourceState::PixelShaderRead: return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
-	case ResourceState::DepthWrite: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
-	case ResourceState::DepthRead: return D3D12_RESOURCE_STATE_DEPTH_READ;
-	default:
-		assert(false);
-		return D3D12_RESOURCE_STATE_COMMON;
-	}
-}
-
 void Backend::RenderFrame(const RendererCommandList& commandList)
 {
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
@@ -166,6 +153,8 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 		}
 		case RendererCommandType::Barrier:
 		{
+			// TODO: This needs to be batching. For now we are going to have a resource per command
+			// So we need to batch all consecutive barrier commands together and issue them at the same time
 			const RendererCommandBarrier* command = reinterpret_cast<const RendererCommandBarrier*>(commandListIterator);
 
 			D3D12_RESOURCE_BARRIER barrier;

@@ -4,7 +4,7 @@
 #include <Graphics/Dx12/Managers/PipelineManager.h>
 #include <Graphics/Dx12/Managers/BufferManager.h>
 #include <Graphics/Dx12/Managers/TextureManager.h>
-#include <World/Camera.h>
+#include <Graphics/RendererCommandList.h>
 
 namespace Tempest
 {
@@ -13,17 +13,33 @@ struct RenderManagers;
 namespace Dx12
 {
 
+static D3D12_RESOURCE_STATES Dx12StateFromState(ResourceState state)
+{
+	switch (state)
+	{
+	case ResourceState::PixelShaderRead: return D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE;
+	case ResourceState::DepthWrite: return D3D12_RESOURCE_STATE_DEPTH_WRITE;
+	case ResourceState::DepthRead: return D3D12_RESOURCE_STATE_DEPTH_READ;
+	case ResourceState::Common: return D3D12_RESOURCE_STATE_COMMON;
+	default:
+		assert(false);
+		return D3D12_RESOURCE_STATE_COMMON;
+	}
+}
+
 struct BackendManagers
 {
 	BackendManagers(Dx12Device& device)
 		: Pipeline(device)
 		, Buffer(device)
 		, Texture(device)
+		, TemporaryTexture(Texture)
 	{}
 
 	PipelineManager Pipeline;
 	BufferManager Buffer;
 	TextureManager Texture;
+	TemporaryTextureManager TemporaryTexture;
 };
 
 struct UploadData

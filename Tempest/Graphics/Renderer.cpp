@@ -97,14 +97,14 @@ void Renderer::RenderFrame(const FrameData& data)
 {
 	OPTICK_EVENT();
 
-	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager());
+	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager(), m_Backend->Managers.TemporaryTexture);
 
 	glm::mat4 shadowMatrix;
 	auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
 	auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 	shadowMatrix = projectionMatrix * viewMatrix;
 
-	auto shadowTextureId = graph.AllocateTexture(Dx12::TextureDescription{
+	auto shadowTextureId = graph.RequestTexture(Dx12::TextureDescription{
 		Dx12::TextureType::Texture2D,
 		DXGI_FORMAT_D32_FLOAT,
 		2048,

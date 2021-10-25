@@ -1,4 +1,5 @@
 #include "Common.hlsl"
+#include "BRDF.hlsl"
 
 // TODO: Split into seperate streams
 struct VertexLayout
@@ -36,7 +37,11 @@ struct Meshlet
 struct Material
 {
 	float4 BaseColor;
-	uint TextureIndex;
+	float Metallic;
+	float Roughness;
+	uint BaseColorTextureIndex;
+	uint MetallicTextureIndex;
+	uint RoughnessTextureIndex;
 };
 
 [NumThreads(128, 1, 1)]
@@ -84,16 +89,47 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 {
 	StructuredBuffer<Material> materials = ResourceDescriptorHeap[3];
 
-	float3 normal = normalize(input.NormalWorld);
-
-	float diffuseFactor = saturate(dot(normal, -g_Scene.LightDirection.xyz));
-
 	float ambientFactor = 0.05f;
 
-	float4 color = materials[g_Geometry.materialIndex].BaseColor;
-	if(materials[g_Geometry.materialIndex].TextureIndex != -1) {
-		Texture2D baseTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].TextureIndex];
-		color = baseTexture.Sample(MaterialTextureSampler, input.UV);
+	const float3 N = normalize(input.NormalWorld);
+	const float3 V = normalize(g_Scene.CameraWorldPosition - input.PositionWorld);
+	const float3 L = normalize(-g_Scene.LightDirection.xyz);
+	const float3 H = normalize(L + V); // Halfway between light and view
+
+	ShadingSurfaceInfo shadingInfo;
+	shadingInfo.NdotH = saturate(dot(N, H));
+	shadingInfo.NdotL = saturate(dot(N, L));
+	shadingInfo.NdotV = saturate(dot(N, V));
+	shadingInfo.VdotH = saturate(dot(V, H));
+
+	PBRMaterialComponents material;
+
+	{
+		float4 color = materials[g_Geometry.materialIndex].BaseColor;
+		if(materials[g_Geometry.materialIndex].BaseColorTextureIndex != -1) {
+			Texture2D<float4> baseTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].BaseColorTextureIndex];
+			color = baseTexture.Sample(MaterialTextureSampler, input.UV);
+		}
+		material.BaseColor = color.rgb;
+	}
+
+	{
+		float metallic = materials[g_Geometry.materialIndex].Metallic;
+		if(materials[g_Geometry.materialIndex].MetallicTextureIndex != -1) {
+			Texture2D<float> metallicTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].MetallicTextureIndex];
+			metallic = metallicTexture.Sample(MaterialTextureSampler, input.UV);
+		}
+		material.Metallic = metallic;
+	}
+
+	{
+		float peceptualRoughness = materials[g_Geometry.materialIndex].Roughness;
+		if(materials[g_Geometry.materialIndex].RoughnessTextureIndex != -1) {
+			Texture2D<float> roughnessTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].RoughnessTextureIndex];
+			peceptualRoughness = roughnessTexture.Sample(MaterialTextureSampler, input.UV);
+		}
+		// Rougness in texture is perceptual, so we need to square it before calculation
+		material.Roughness = peceptualRoughness * peceptualRoughness;
 	}
 
 	// TODO: no need for perspective divide, as directional lights are using ortho projection matrix
@@ -119,6 +155,7 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 	}
 	float shadowFactor = sum / 16.0;
 
-	return (color * diffuseFactor * g_Scene.LightColor * shadowFactor)
-			+ (color * ambientFactor);
+	const float3 result = (material.BaseColor * ambientFactor) // ambient
+		+ (BRDF_PBR(shadingInfo, material) * g_Scene.LightColor.rgb * shadowFactor * shadingInfo.NdotL); // Don't forget the cos of N and L factor which is outside of the BRDF in the integral
+	return float4(result, 1.0);
 }

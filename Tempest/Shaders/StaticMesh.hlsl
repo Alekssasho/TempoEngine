@@ -123,7 +123,10 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 			peceptualRoughness *= sampledValues.g;
 		}
 		material.Metallic = metallic;
-		material.Roughness = peceptualRoughness * peceptualRoughness;
+		// TODO: remove the min value, when IBL or Area lights are added
+		// We currently support only analytical light, so we need to clamp this to avoid divisions by zero
+		// This value is taken from Filament document and it says it is taken from Frostbite engine
+		material.Roughness = max(peceptualRoughness * peceptualRoughness, 0.045);
 	}
 
 	// TODO: no need for perspective divide, as directional lights are using ortho projection matrix

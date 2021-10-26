@@ -154,9 +154,7 @@ impl Resource for EntitiesWorldResource {
         node_to_entity_map.extend(
             node_to_temporary_entity_map
                 .into_iter()
-                .map(|(key, value)| {
-                    (key, flecs_state.create_stable_entity_ids(value))
-                }),
+                .map(|(key, value)| (key, flecs_state.create_stable_entity_ids(value))),
         );
 
         let mut binary_data = Vec::<u8>::new();

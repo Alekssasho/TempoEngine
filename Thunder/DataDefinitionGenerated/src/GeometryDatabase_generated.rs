@@ -315,8 +315,11 @@ pub mod tempest {
         #[repr(C, align(4))]
         #[derive(Clone, Copy, Debug, PartialEq)]
         pub struct Material {
-            albedo_color_: super::super::common::tempest::Color,
-            albedo_color_texture_: u32,
+            albedo_color_factor_: super::super::common::tempest::Color,
+            metallic_factor_: f32,
+            roughness_factor_: f32,
+            albedo_color_texture_index_: u32,
+            metallic_roughness_texture_index_: u32,
         } // pub struct Material
         impl flatbuffers::SafeSliceAccess for Material {}
         impl<'a> flatbuffers::Follow<'a> for Material {
@@ -360,19 +363,35 @@ pub mod tempest {
 
         impl Material {
             pub fn new<'a>(
-                _albedo_color: &'a super::super::common::tempest::Color,
-                _albedo_color_texture: u32,
+                _albedo_color_factor: &'a super::super::common::tempest::Color,
+                _metallic_factor: f32,
+                _roughness_factor: f32,
+                _albedo_color_texture_index: u32,
+                _metallic_roughness_texture_index: u32,
             ) -> Self {
                 Material {
-                    albedo_color_: *_albedo_color,
-                    albedo_color_texture_: _albedo_color_texture.to_little_endian(),
+                    albedo_color_factor_: *_albedo_color_factor,
+                    metallic_factor_: _metallic_factor.to_little_endian(),
+                    roughness_factor_: _roughness_factor.to_little_endian(),
+                    albedo_color_texture_index_: _albedo_color_texture_index.to_little_endian(),
+                    metallic_roughness_texture_index_: _metallic_roughness_texture_index
+                        .to_little_endian(),
                 }
             }
-            pub fn albedo_color<'a>(&'a self) -> &'a super::super::common::tempest::Color {
-                &self.albedo_color_
+            pub fn albedo_color_factor<'a>(&'a self) -> &'a super::super::common::tempest::Color {
+                &self.albedo_color_factor_
             }
-            pub fn albedo_color_texture<'a>(&'a self) -> u32 {
-                self.albedo_color_texture_.from_little_endian()
+            pub fn metallic_factor<'a>(&'a self) -> f32 {
+                self.metallic_factor_.from_little_endian()
+            }
+            pub fn roughness_factor<'a>(&'a self) -> f32 {
+                self.roughness_factor_.from_little_endian()
+            }
+            pub fn albedo_color_texture_index<'a>(&'a self) -> u32 {
+                self.albedo_color_texture_index_.from_little_endian()
+            }
+            pub fn metallic_roughness_texture_index<'a>(&'a self) -> u32 {
+                self.metallic_roughness_texture_index_.from_little_endian()
             }
         }
 

@@ -6,18 +6,23 @@ use data_definition_generated::{ColorSpace, TextureData, TextureFormat};
 use crate::{compiler::AsyncCompiler, scene::Scene};
 
 use super::Resource;
+
+#[derive(Debug, Clone, Copy)]
+pub struct TextureRequest {
+    pub texture_index: usize,
+    pub color_space: ColorSpace,
+    pub format: TextureFormat,
+}
+
 #[derive(Debug)]
 pub struct TextureResource {
     scene: Weak<Scene>,
-    texture_index: usize,
+    request: TextureRequest,
 }
 
 impl TextureResource {
-    pub fn new(scene: Weak<Scene>, texture_index: usize) -> Self {
-        Self {
-            scene,
-            texture_index,
-        }
+    pub fn new(scene: Weak<Scene>, request: TextureRequest) -> Self {
+        Self { scene, request }
     }
 }
 
@@ -35,7 +40,7 @@ impl Resource for TextureResource {
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
         let scene = self.scene.upgrade().unwrap();
 
-        let image_data = &scene.gltf.images[self.texture_index];
+        let image_data = &scene.gltf.images[self.request.texture_index];
         let channel_count = match image_data.format {
             gltf::image::Format::R8 | gltf::image::Format::R16 => 1,
             gltf::image::Format::R8G8 | gltf::image::Format::R16G16 => 2,
@@ -53,9 +58,10 @@ impl Resource for TextureResource {
         compressor_params.set_uastc_quality_level(basis_universal::UASTC_QUALITY_DEFAULT);
         compressor_params.set_print_status_to_stdout(false);
 
-        // For now we are cooking only albedo textures, so use sRGB, as Linear is for normal maps and other material properties
-        //compressor_params.set_color_space(basis_universal::ColorSpace::Linear);
-        compressor_params.set_color_space(basis_universal::ColorSpace::Srgb);
+        compressor_params.set_color_space( match self.request.color_space {
+            ColorSpace::Linear => basis_universal::ColorSpace::Linear,
+            ColorSpace::sRGB => basis_universal::ColorSpace::Srgb,
+        });
 
         let mut compressor_image = compressor_params.source_image_mut(0);
         compressor_image.init(
@@ -75,11 +81,14 @@ impl Resource for TextureResource {
 
         let mut transcoder = Transcoder::new();
         transcoder.prepare_transcoding(basis_file).unwrap();
-        // Currenlty we cook only albedo textures, so just use the smallest format bc1 for that
         let result = transcoder
             .transcode_image_level(
                 basis_file,
-                basis_universal::TranscoderTextureFormat::BC1_RGB,
+                match self.request.format {
+                    TextureFormat::RGBA8 => basis_universal::TranscoderTextureFormat::RGBA32,
+                    TextureFormat::BC1_RGB => basis_universal::TranscoderTextureFormat::BC1_RGB,
+                    TextureFormat::BC7_RGBA => basis_universal::TranscoderTextureFormat::BC7_RGBA,
+                } ,
                 TranscodeParameters {
                     image_index: 0,
                     level_index: 0,
@@ -97,8 +106,8 @@ impl Resource for TextureResource {
             texture_info: TextureData::new(
                 image_description.original_width,
                 image_description.original_height,
-                TextureFormat::BC1_RGB,
-                ColorSpace::sRGB,
+                self.request.format,
+                self.request.color_space,
             ),
         }
     }

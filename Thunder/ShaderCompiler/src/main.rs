@@ -25,7 +25,7 @@ fn compile_with_include_handler(
         .create_blob_with_encoding_from_str(shader_text)
         .map_err(HassleError::Win32Error)?;
 
-    // TODO: Add support for debug build which outputs PDB for debugging
+
     let result = compiler.compile(
         &blob,
         source_name,
@@ -35,7 +35,6 @@ fn compile_with_include_handler(
         Some(Box::new(include_handler.clone())),
         defines,
     );
-
     match result {
         Err(result) => {
             let error_blob = result
@@ -58,6 +57,7 @@ fn compile_hlsl_source(
     source: &str,
     shader_type: ShaderType,
     include_handler: &IncludeHandler,
+    opt: &CommandLineOptions,
 ) -> Option<Vec<u8>> {
     let (target_profile, entry_point) = match shader_type {
         ShaderType::Vertex => ("vs_6_6", "VertexShaderMain"),
@@ -75,7 +75,7 @@ fn compile_hlsl_source(
         source,
         entry_point,
         target_profile,
-        &[],
+        if opt.debug_shaders { &["-O0", "-Zi"] } else { &[] },
         &[],
         include_handler,
     );
@@ -108,6 +108,10 @@ struct CommandLineOptions {
     /// Output folder to put compiled shaders
     #[structopt(short, long, parse(from_os_str))]
     output_folder: PathBuf,
+
+    /// Compile Shaders in Debug Mode
+    #[structopt(short, long)]
+    debug_shaders: bool,
 }
 
 #[derive(Clone)]
@@ -212,7 +216,7 @@ fn main() {
         for (regex, shader_type, shader_extension) in shader_type_regex.iter() {
             if regex.is_match(&hlsl_string) {
                 let compiled_shader =
-                    compile_hlsl_source(&hlsl_string, *shader_type, &include_handler);
+                    compile_hlsl_source(&hlsl_string, *shader_type, &include_handler, &opt);
 
                 let name = format!(
                     "{}-{}",

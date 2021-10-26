@@ -142,26 +142,44 @@ FLATBUFFERS_STRUCT_END(Meshlet, 16);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Material FLATBUFFERS_FINAL_CLASS {
  private:
-  Common::Tempest::Color albedo_color_;
-  uint32_t albedo_color_texture_;
+  Common::Tempest::Color albedo_color_factor_;
+  float metallic_factor_;
+  float roughness_factor_;
+  uint32_t albedo_color_texture_index_;
+  uint32_t metallic_roughness_texture_index_;
 
  public:
   Material()
-      : albedo_color_(),
-        albedo_color_texture_(0) {
+      : albedo_color_factor_(),
+        metallic_factor_(0),
+        roughness_factor_(0),
+        albedo_color_texture_index_(0),
+        metallic_roughness_texture_index_(0) {
   }
-  Material(const Common::Tempest::Color &_albedo_color, uint32_t _albedo_color_texture)
-      : albedo_color_(_albedo_color),
-        albedo_color_texture_(flatbuffers::EndianScalar(_albedo_color_texture)) {
+  Material(const Common::Tempest::Color &_albedo_color_factor, float _metallic_factor, float _roughness_factor, uint32_t _albedo_color_texture_index, uint32_t _metallic_roughness_texture_index)
+      : albedo_color_factor_(_albedo_color_factor),
+        metallic_factor_(flatbuffers::EndianScalar(_metallic_factor)),
+        roughness_factor_(flatbuffers::EndianScalar(_roughness_factor)),
+        albedo_color_texture_index_(flatbuffers::EndianScalar(_albedo_color_texture_index)),
+        metallic_roughness_texture_index_(flatbuffers::EndianScalar(_metallic_roughness_texture_index)) {
   }
-  const Common::Tempest::Color &albedo_color() const {
-    return albedo_color_;
+  const Common::Tempest::Color &albedo_color_factor() const {
+    return albedo_color_factor_;
   }
-  uint32_t albedo_color_texture() const {
-    return flatbuffers::EndianScalar(albedo_color_texture_);
+  float metallic_factor() const {
+    return flatbuffers::EndianScalar(metallic_factor_);
+  }
+  float roughness_factor() const {
+    return flatbuffers::EndianScalar(roughness_factor_);
+  }
+  uint32_t albedo_color_texture_index() const {
+    return flatbuffers::EndianScalar(albedo_color_texture_index_);
+  }
+  uint32_t metallic_roughness_texture_index() const {
+    return flatbuffers::EndianScalar(metallic_roughness_texture_index_);
   }
 };
-FLATBUFFERS_STRUCT_END(Material, 20);
+FLATBUFFERS_STRUCT_END(Material, 32);
 
 struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   typedef GeometryDatabaseBuilder Builder;

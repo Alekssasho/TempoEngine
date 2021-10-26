@@ -6,18 +6,23 @@ use data_definition_generated::{ColorSpace, TextureData, TextureFormat};
 use crate::{compiler::AsyncCompiler, scene::Scene};
 
 use super::Resource;
+
+#[derive(Debug, Clone, Copy)]
+pub struct TextureRequest {
+    pub texture_index: usize,
+    pub color_space: ColorSpace,
+    pub format: TextureFormat,
+}
+
 #[derive(Debug)]
 pub struct TextureResource {
     scene: Weak<Scene>,
-    texture_index: usize,
+    request: TextureRequest,
 }
 
 impl TextureResource {
-    pub fn new(scene: Weak<Scene>, texture_index: usize) -> Self {
-        Self {
-            scene,
-            texture_index,
-        }
+    pub fn new(scene: Weak<Scene>, request: TextureRequest) -> Self {
+        Self { scene, request }
     }
 }
 
@@ -35,7 +40,7 @@ impl Resource for TextureResource {
     async fn compile(&self, _compiled: std::sync::Arc<AsyncCompiler>) -> Self::ReturnValue {
         let scene = self.scene.upgrade().unwrap();
 
-        let image_data = &scene.gltf.images[self.texture_index];
+        let image_data = &scene.gltf.images[self.request.texture_index];
         let channel_count = match image_data.format {
             gltf::image::Format::R8 | gltf::image::Format::R16 => 1,
             gltf::image::Format::R8G8 | gltf::image::Format::R16G16 => 2,

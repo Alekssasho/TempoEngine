@@ -1,3 +1,4 @@
+use super::material_database::MaterialDatabaseResource;
 use super::*;
 use crate::resources::audio_database::AudioDatabaseResource;
 use crate::resources::entities_world::EntitiesWorldResource;
@@ -68,6 +69,15 @@ impl Resource for LevelResource {
             }));
         }
 
+        // While meshes are extracted we can prepare what textures are needed as well
+        let material_database_resource = MaterialDatabaseResource::new(Arc::downgrade(&scene));
+        let material_database_compiler = compiler.clone();
+        let material_database_future = tokio::spawn(async move {
+            material_database_resource
+                .compile(material_database_compiler)
+                .await
+        });
+
         let gathered_meshes = Arc::new(
             futures::future::join_all(mesh_futures)
                 .await
@@ -77,11 +87,18 @@ impl Resource for LevelResource {
         );
         assert!(gathered_meshes.len() == scene.meshes.len());
 
+        let ((texture_requests, compiled_materials),) =
+            tokio::try_join!(material_database_future).unwrap();
+
         // Second step prepare EntitiesWorld and GeometryDatabase which both require the extracted meshes
         let entities_resource_data = EntitiesWorldResource::new(Arc::downgrade(&scene));
-        let geometry_database_data =
-            GeometryDatabaseResource::new(Arc::downgrade(&scene), gathered_meshes.clone());
-        let texture_database_data = TextureDatabaseResource::new(Arc::downgrade(&scene));
+        let geometry_database_data = GeometryDatabaseResource::new(
+            Arc::downgrade(&scene),
+            gathered_meshes.clone(),
+            compiled_materials,
+        );
+        let texture_database_data =
+            TextureDatabaseResource::new(Arc::downgrade(&scene), texture_requests);
         let audio_database_data = AudioDatabaseResource {};
 
         let geometry_compiler = compiler.clone();

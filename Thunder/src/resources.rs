@@ -8,6 +8,7 @@ mod audio_database;
 mod entities_world;
 mod geometry_database;
 pub mod level;
+mod material_database;
 mod mesh;
 mod physics_world;
 mod texture;

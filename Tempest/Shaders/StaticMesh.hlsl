@@ -40,8 +40,7 @@ struct Material
 	float Metallic;
 	float Roughness;
 	uint BaseColorTextureIndex;
-	uint MetallicTextureIndex;
-	uint RoughnessTextureIndex;
+	uint MetallicRoughnessTextureIndex;
 };
 
 [NumThreads(128, 1, 1)]
@@ -108,27 +107,22 @@ float4 PixelShaderMain(VertexOutput input) : SV_TARGET
 		float4 color = materials[g_Geometry.materialIndex].BaseColor;
 		if(materials[g_Geometry.materialIndex].BaseColorTextureIndex != -1) {
 			Texture2D<float4> baseTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].BaseColorTextureIndex];
-			color = baseTexture.Sample(MaterialTextureSampler, input.UV);
+			color *= baseTexture.Sample(MaterialTextureSampler, input.UV);
 		}
 		material.BaseColor = color.rgb;
 	}
 
 	{
 		float metallic = materials[g_Geometry.materialIndex].Metallic;
-		if(materials[g_Geometry.materialIndex].MetallicTextureIndex != -1) {
-			Texture2D<float> metallicTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].MetallicTextureIndex];
-			metallic = metallicTexture.Sample(MaterialTextureSampler, input.UV);
+		float peceptualRoughness = materials[g_Geometry.materialIndex].Roughness;
+		if(materials[g_Geometry.materialIndex].MetallicRoughnessTextureIndex != -1) {
+			Texture2D<float4> metallicRoughnessTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].MetallicRoughnessTextureIndex];
+			float4 sampledValues = metallicRoughnessTexture.Sample(MaterialTextureSampler, input.UV);
+			// In GLTF metallic and roughness are packed in B and G channel of a single texture
+			metallic *= sampledValues.b;
+			peceptualRoughness *= sampledValues.g;
 		}
 		material.Metallic = metallic;
-	}
-
-	{
-		float peceptualRoughness = materials[g_Geometry.materialIndex].Roughness;
-		if(materials[g_Geometry.materialIndex].RoughnessTextureIndex != -1) {
-			Texture2D<float> roughnessTexture = ResourceDescriptorHeap[4 + materials[g_Geometry.materialIndex].RoughnessTextureIndex];
-			peceptualRoughness = roughnessTexture.Sample(MaterialTextureSampler, input.UV);
-		}
-		// Rougness in texture is perceptual, so we need to square it before calculation
 		material.Roughness = peceptualRoughness * peceptualRoughness;
 	}
 

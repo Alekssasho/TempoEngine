@@ -35,8 +35,11 @@ struct Material
     // TODO: We can try to have only a texture inputs, but we need to create procedural textures with specific color
     // So for now lets use both color and texture, if the texture is not used, we will use the color. -1 will be invalid value
     // for texture index in order to determine if present
-    albedo_color: Common.Tempest.Color;
-    albedo_color_texture: uint32;
+    albedo_color_factor: Common.Tempest.Color;
+    metallic_factor: float;
+    roughness_factor: float;
+    albedo_color_texture_index: uint32;
+    metallic_roughness_texture_index: uint32;
 }
 
 table GeometryDatabase

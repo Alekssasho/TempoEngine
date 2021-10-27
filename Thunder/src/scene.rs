@@ -214,6 +214,17 @@ impl GltfData {
         })
     }
 
+    pub fn mesh_tangents(&self, mesh_index: usize, prim_index: usize) -> Option<Vec<math::Vec4>> {
+        let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
+        let reader = primitive.reader(|buffer| Some(&self.buffers[buffer.index()]));
+        reader.read_tangents().and_then(|iter| {
+            Some(
+                iter.map(|tangent| math::vec4(tangent[0], tangent[1], tangent[2], tangent[3]))
+                    .collect(),
+            )
+        })
+    }
+
     pub fn mesh_uvs(&self, mesh_index: usize, prim_index: usize) -> Option<Vec<math::Vec2>> {
         let primitive = self.mesh(mesh_index).primitives().nth(prim_index).unwrap();
         let reader = primitive.reader(|buffer| Some(&self.buffers[buffer.index()]));

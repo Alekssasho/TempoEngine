@@ -19,6 +19,7 @@ impl MeshResource {
 pub struct VertexLayout {
     pub position: math::Vec3,
     pub normal: math::Vec3,
+    pub tangent: math::Vec4,
     pub uv: math::Vec2,
 }
 
@@ -41,6 +42,45 @@ impl PrimitiveMeshData {
 #[derive(Debug)]
 pub struct MeshData {
     pub primitive_meshes: Vec<PrimitiveMeshData>,
+}
+
+struct TangentGeometryGenerator<'a> {
+    num_faces: usize,
+    positions: &'a [math::Vec3],
+    normals: &'a [math::Vec3],
+    tex_coords: &'a [math::Vec2],
+    indices: &'a [u32],
+    tangents: Vec<math::Vec4>,
+}
+
+impl<'a> mikktspace::Geometry for TangentGeometryGenerator<'a> {
+    fn num_faces(&self) -> usize {
+        self.num_faces
+    }
+
+    fn num_vertices_of_face(&self, _face: usize) -> usize {
+        3
+    }
+
+    fn position(&self, face: usize, vert: usize) -> [f32; 3] {
+        let position = &self.positions[self.indices[face * 3 + vert] as usize];
+        [position.x, position.y, position.z]
+    }
+
+    fn normal(&self, face: usize, vert: usize) -> [f32; 3] {
+        let normal = &self.normals[self.indices[face * 3 + vert] as usize];
+        [normal.x, normal.y, normal.z]
+    }
+
+    fn tex_coord(&self, face: usize, vert: usize) -> [f32; 2] {
+        let tex_coord = &self.tex_coords[self.indices[face * 3 + vert] as usize];
+        [tex_coord.x, tex_coord.y]
+    }
+
+    fn set_tangent_encoded(&mut self, tangent: [f32; 4], face: usize, vert: usize) {
+        self.tangents[self.indices[face * 3 + vert] as usize] =
+            math::vec4(tangent[0], tangent[1], tangent[2], tangent[3]);
+    }
 }
 
 #[async_trait]
@@ -80,14 +120,30 @@ impl Resource for MeshResource {
             let positions = scene.gltf.mesh_positions(self.mesh_index, prim).unwrap();
             let normals = scene.gltf.mesh_normals(self.mesh_index, prim).unwrap();
             let uvs = scene.gltf.mesh_uvs(self.mesh_index, prim).unwrap();
+            let tangents = if let Some(tangents) = scene.gltf.mesh_tangents(self.mesh_index, prim) {
+                tangents
+            } else {
+                let mut generator = TangentGeometryGenerator {
+                    num_faces: (indices.len() / 3),
+                    positions: &positions,
+                    normals: &normals,
+                    tex_coords: &uvs,
+                    indices: &indices,
+                    tangents: vec![math::vec4(0.0, 0.0, 0.0, 0.0); positions.len()],
+                };
+                let result = mikktspace::generate_tangents(&mut generator);
+                assert!(result);
+                generator.tangents
+            };
 
             vertices.reserve(positions.len());
-            for (position, normal, uv) in izip!(positions, normals, uvs) {
+            for (position, normal, tangent, uv) in izip!(positions, normals, tangents, uvs) {
                 // GLTF uses RH coordinate system in which +Z is front, +Y is up, and +X is left, according to specs
                 // Tempest uses LH coordinate system with +Z is front, +Y is up nad +X is right, so we need to invert only X coordinate
                 vertices.push(VertexLayout {
                     position: math::vec3(-position.x, position.y, position.z),
                     normal: math::vec3(-normal.x, normal.y, normal.z),
+                    tangent: math::vec4(-tangent.x, tangent.y, tangent.z, tangent.w),
                     uv,
                 });
             }

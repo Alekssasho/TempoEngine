@@ -19,8 +19,9 @@
 
 namespace Tempest
 {
-Renderer::Renderer()
-	: m_Backend(new Dx12::Backend)
+Renderer::Renderer(const RendererOptions& options)
+	: m_Options(options)
+	, m_Backend(new Dx12::Backend)
 {
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
@@ -100,68 +101,76 @@ void Renderer::RenderFrame(const FrameData& data)
 
 	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager(), m_Backend->Managers.TemporaryTexture);
 
-	glm::mat4 shadowMatrix;
-	auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
-	auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
-	shadowMatrix = projectionMatrix * viewMatrix;
+	if (!m_Options.OverrideRenderGraph) {
 
-	auto shadowTextureId = graph.RequestTexture(Dx12::TextureDescription{
-		Dx12::TextureType::Texture2D,
-		DXGI_FORMAT_D32_FLOAT,
-		2048,
-		2048,
-		0,
-		nullptr
-	});
+		glm::mat4 shadowMatrix;
+		auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
+		auto viewMatrix = glm::lookAt(-data.DirectionalLights[0].Direction * 60.0f, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
+		shadowMatrix = projectionMatrix * viewMatrix;
 
-	graph.AddPass("Shadow Directional Light", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
-		builder.UseDepthStencil(shadowTextureId, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
+		auto shadowTextureId = graph.RequestTexture(Dx12::TextureDescription{
+			Dx12::TextureType::Texture2D,
+			DXGI_FORMAT_D32_FLOAT,
+			2048,
+			2048,
+			0,
+			nullptr
+			});
 
-		return [&shadowMatrix](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
-			const FrameData& data = blackboard.GetFrameData();
-			SceneConstantData sceneData {
-				shadowMatrix,
-				shadowMatrix,
-				glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-				glm::vec4(data.DirectionalLights[0].Color, 1.0f),
-				blackboard.GetRenderer().m_Views[0]->Position,
-				0,
+		graph.AddPass("Shadow Directional Light", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
+			builder.UseDepthStencil(shadowTextureId, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
+
+			return [&shadowMatrix](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
+				const FrameData& data = blackboard.GetFrameData();
+				SceneConstantData sceneData{
+					shadowMatrix,
+					shadowMatrix,
+					glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+					glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+					blackboard.GetRenderer().m_Views[0]->Position,
+					0,
+				};
+
+				blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
+				blackboard.SetRenderPhase(RenderPhase::Shadow);
+
+				for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
+				{
+					feature->GenerateCommands(data, commandList, blackboard);
+				}
 			};
+		});
 
-			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
-			blackboard.SetRenderPhase(RenderPhase::Shadow);
+		graph.AddPass("Main Pass", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
+			builder.UseRenderTarget(sBackbufferRenderTargetRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
+			builder.UseDepthStencil(sBackbufferDepthStencilRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare);
+			builder.ReadTexture(shadowTextureId);
 
-			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
-			{
-				feature->GenerateCommands(data, commandList, blackboard);
-			}
-		};
-	});
+			return [&shadowMatrix, shadowTextureId](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
+				const FrameData& data = blackboard.GetFrameData();
+				SceneConstantData sceneData{
+					blackboard.GetRenderer().m_Views[0]->GetViewProjection(),
+					shadowMatrix,
+					glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
+					glm::vec4(data.DirectionalLights[0].Color, 1.0f),
+					blackboard.GetRenderer().m_Views[0]->Position,
+					blackboard.GetTextureSlot(shadowTextureId)
+				};
+				blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
+				blackboard.SetRenderPhase(RenderPhase::Main);
 
-	graph.AddPass("Main Pass", [shadowTextureId, &shadowMatrix](RenderGraphBuilder& builder, RenderGraphBlackboard& blackboard) {
-		builder.UseRenderTarget(sBackbufferRenderTargetRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::Store);
-		builder.UseDepthStencil(sBackbufferDepthStencilRenderGraphHandle, TextureTargetLoadAction::Clear, TextureTargetStoreAction::DoNotCare);
-		builder.ReadTexture(shadowTextureId);
-
-		return [&shadowMatrix, shadowTextureId](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
-			const FrameData& data = blackboard.GetFrameData();
-			SceneConstantData sceneData{
-				blackboard.GetRenderer().m_Views[0]->GetViewProjection(),
-				shadowMatrix,
-				glm::vec4(data.DirectionalLights[0].Direction, 0.0f),
-				glm::vec4(data.DirectionalLights[0].Color, 1.0f),
-				blackboard.GetRenderer().m_Views[0]->Position,
-				blackboard.GetTextureSlot(shadowTextureId)
+				for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
+				{
+					feature->GenerateCommands(data, commandList, blackboard);
+				}
 			};
-			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
-			blackboard.SetRenderPhase(RenderPhase::Main);
+		});
 
-			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
-			{
-				feature->GenerateCommands(data, commandList, blackboard);
-			}
-		};
-	});
+	}
+	else
+	{
+		m_Options.OverrideRenderGraph(graph);
+	}
 
 	auto commandList = graph.Compile();
 

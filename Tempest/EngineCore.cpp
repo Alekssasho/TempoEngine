@@ -23,6 +23,7 @@ EngineCore::EngineCore(const EngineCoreOptions& options)
 	, m_Input(options.Width, options.Height)
 	, m_Platform(m_Input.m_Input)
 	, m_ResourceLoader(options.ResourceFolder)
+	, m_Renderer(options.Renderer)
 {
 	gEngine = this;
 }

@@ -8,6 +8,7 @@ namespace Tempest
 {
 class World;
 class Camera;
+class RenderGraph;
 struct RenderFeature;
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
 namespace Dx12 { class Backend; struct ConstantBufferDataManager; }
@@ -19,10 +20,15 @@ struct PipelineStateDescription
 	RenderPhase Phase;
 };
 
+struct RendererOptions
+{
+	void (*OverrideRenderGraph)(RenderGraph& graph);
+};
+
 class Renderer : Utils::NonCopyable
 {
 public:
-	Renderer();
+	Renderer(const RendererOptions& options);
 	~Renderer();
 	bool CreateWindowSurface(WindowHandle handle);
 
@@ -43,6 +49,8 @@ public:
 	// TODO: Hide this
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;
 private:
+	RendererOptions m_Options;
+
 	eastl::vector<eastl::unique_ptr<RenderFeature>> m_RenderFeatures;
 	eastl::vector<const Camera*> m_Views;
 

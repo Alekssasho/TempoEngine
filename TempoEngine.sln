@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Tempest", "Tempest\Tempest.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Spark", "Spark\Spark.vcxproj", "{701F582E-77DF-4737-A217-813873C1D18D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FluidSimulator", "FluidSimulator\FluidSimulator.vcxproj", "{048E9E3D-A2A3-419E-9D00-EF184B49263A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{701F582E-77DF-4737-A217-813873C1D18D}.Debug|x64.Build.0 = Debug|x64
 		{701F582E-77DF-4737-A217-813873C1D18D}.Release|x64.ActiveCfg = Release|x64
 		{701F582E-77DF-4737-A217-813873C1D18D}.Release|x64.Build.0 = Release|x64
+		{048E9E3D-A2A3-419E-9D00-EF184B49263A}.Debug|x64.ActiveCfg = Debug|x64
+		{048E9E3D-A2A3-419E-9D00-EF184B49263A}.Debug|x64.Build.0 = Debug|x64
+		{048E9E3D-A2A3-419E-9D00-EF184B49263A}.Release|x64.ActiveCfg = Release|x64
+		{048E9E3D-A2A3-419E-9D00-EF184B49263A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

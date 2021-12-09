@@ -20,6 +20,12 @@ struct EngineCoreOptions
 	uint32_t Height;
 	const char* ResourceFolder;
 	const char* LevelToLoad;
+
+	RendererOptions Renderer;
+
+	EngineCoreOptions() {
+		memset(this, 0, sizeof(EngineCoreOptions));
+	}
 };
 
 class TEMPEST_API EngineCore

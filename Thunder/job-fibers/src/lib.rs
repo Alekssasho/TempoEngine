@@ -49,7 +49,7 @@ impl JobSystem {
             worker_threads: Vec::new(),
             free_fibers: sender,
         };
-        for _ in 0..num_fibers {
+        for i in 0..num_fibers {
             fibers.push(unsafe {
                 wapi::CreateFiber(
                     fiber_stack_size,
@@ -57,6 +57,10 @@ impl JobSystem {
                     &mut system as *mut _ as *mut c_void,
                 )
             });
+            system.free_fibers.send(FreeFiber{
+                handle: *fibers.last().unwrap(),
+                index: i as u32,
+            }).unwrap();
         }
 
         if num_worker_threads > 0 {

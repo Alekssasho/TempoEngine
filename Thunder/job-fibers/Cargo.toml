@@ -6,4 +6,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-winapi = "0.3.9"
+#winapi = "0.3.9"
+windows = { version="0.28.0", features=["Win32_System_Threading", "Win32_Foundation"]}
+crossbeam = "0.8.1"

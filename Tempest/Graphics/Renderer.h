@@ -3,6 +3,7 @@
 #include <Platform/WindowsPlatform.h>
 #include <Graphics/RendererTypes.h>
 #include <Graphics/Managers/MeshManager.h>
+#include <Graphics/Managers/PipelineCache.h>
 
 namespace Tempest
 {
@@ -13,12 +14,6 @@ struct RenderFeature;
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
 namespace Dx12 { class Backend; struct ConstantBufferDataManager; }
 namespace Definition { struct ShaderLibrary; }
-
-struct PipelineStateDescription
-{
-	const char* ShaderName;
-	RenderPhase Phase;
-};
 
 struct RendererOptions
 {
@@ -42,9 +37,11 @@ public:
 	void UnregisterView(const Camera* camera);
 
 	// TODO: potentially this could be moved someplace else
+	// NB: Use PipelineCache instead of this directly
 	PipelineStateHandle RequestPipelineState(const PipelineStateDescription& description);
 
 	// Managers
+	PipelineCacheManager PipelineCache;
 	MeshManager Meshes;
 	// TODO: Hide this
 	eastl::unique_ptr<class Dx12::Backend> m_Backend;

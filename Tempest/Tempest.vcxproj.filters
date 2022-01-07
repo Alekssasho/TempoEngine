@@ -160,6 +160,9 @@
       <Filter>World\Systems</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="Graphics\Managers\PipelineCache.h">
+      <Filter>Graphics\Managers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -253,6 +256,9 @@
       <Filter>Graphics\Dx12\Managers</Filter>
     </ClCompile>
     <ClCompile Include="InputManager.cpp" />
+    <ClCompile Include="Graphics\Managers\PipelineCache.cpp">
+      <Filter>Graphics\Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Job">

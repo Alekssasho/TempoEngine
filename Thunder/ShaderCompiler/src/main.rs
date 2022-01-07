@@ -25,7 +25,6 @@ fn compile_with_include_handler(
         .create_blob_with_encoding_from_str(shader_text)
         .map_err(HassleError::Win32Error)?;
 
-
     let result = compiler.compile(
         &blob,
         source_name,
@@ -75,7 +74,11 @@ fn compile_hlsl_source(
         source,
         entry_point,
         target_profile,
-        if opt.debug_shaders { &["-O0", "-Zi"] } else { &[] },
+        if opt.debug_shaders {
+            &["-O0", "-Zi"]
+        } else {
+            &[]
+        },
         &[],
         include_handler,
     );

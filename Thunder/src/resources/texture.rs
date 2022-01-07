@@ -58,7 +58,7 @@ impl Resource for TextureResource {
         compressor_params.set_uastc_quality_level(basis_universal::UASTC_QUALITY_DEFAULT);
         compressor_params.set_print_status_to_stdout(false);
 
-        compressor_params.set_color_space( match self.request.color_space {
+        compressor_params.set_color_space(match self.request.color_space {
             ColorSpace::Linear => basis_universal::ColorSpace::Linear,
             ColorSpace::sRGB => basis_universal::ColorSpace::Srgb,
         });
@@ -88,7 +88,7 @@ impl Resource for TextureResource {
                     TextureFormat::RGBA8 => basis_universal::TranscoderTextureFormat::RGBA32,
                     TextureFormat::BC1_RGB => basis_universal::TranscoderTextureFormat::BC1_RGB,
                     TextureFormat::BC7_RGBA => basis_universal::TranscoderTextureFormat::BC7_RGBA,
-                } ,
+                },
                 TranscodeParameters {
                     image_index: 0,
                     level_index: 0,

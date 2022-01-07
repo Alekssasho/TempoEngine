@@ -41,7 +41,7 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 	});
 }
 
-void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
+void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, RenderGraphBlackboard& blackboard)
 {
 	struct GeometryConstants
 	{

@@ -13,6 +13,17 @@ enum class RenderPhase : uint8_t
 	Shadow
 };
 
+struct PipelineStateDescription
+{
+	const char* ShaderName;
+	RenderPhase Phase;
+
+	bool operator==(const PipelineStateDescription& rhs) {
+		return ShaderName == rhs.ShaderName
+			&& Phase == rhs.Phase;
+	}
+};
+
 class World;
 struct FrameData;
 struct RendererCommandList;

@@ -35,7 +35,7 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 	});
 }
 
-void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
+void Rects::GenerateCommands(const FrameData& data, RendererCommandList& commandList, RenderGraphBlackboard& blackboard)
 {
 	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 	for (const auto& rect : data.Rects)

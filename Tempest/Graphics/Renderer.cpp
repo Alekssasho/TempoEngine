@@ -21,6 +21,7 @@ namespace Tempest
 {
 Renderer::Renderer(const RendererOptions& options)
 	: m_Options(options)
+	, PipelineCache(*this)
 	, m_Backend(new Dx12::Backend)
 {
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);

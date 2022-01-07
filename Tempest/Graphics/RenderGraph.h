@@ -32,7 +32,7 @@ public:
 		, m_ConstantManager(constantManager)
 	{}
 
-	const Renderer& GetRenderer() const
+	Renderer& GetRenderer()
 	{
 		return m_Renderer;
 	}

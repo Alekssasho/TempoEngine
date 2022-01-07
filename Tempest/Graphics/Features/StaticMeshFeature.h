@@ -15,7 +15,7 @@ struct StaticMesh : RenderFeature
 
 	virtual void Initialize(const World& world, Renderer& renderer) override;
 	virtual void GatherData(const World&, FrameData&) override;
-	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard) override;
+	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, RenderGraphBlackboard& blackboard) override;
 private:
 	EntityQuery<Components::Transform, Components::StaticMesh> m_Query;
 	PipelineStateHandle m_Handle;

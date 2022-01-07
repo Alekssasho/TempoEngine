@@ -9,3 +9,4 @@ edition = "2018"
 #winapi = "0.3.9"
 windows = { version="0.28.0", features=["Win32_System_Threading", "Win32_Foundation"]}
 crossbeam = "0.8.1"
+multimap = "0.8.3"

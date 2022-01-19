@@ -61,7 +61,7 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 			constants.meshletOffset = meshData.meshlets_offset();
 			constants.materialIndex = meshData.material_index();
 
-			RendererCommandDrawMeshlet command;
+			RendererCommandDrawMeshlet command{};
 			command.Pipeline = blackboard.GetRenderPhase() == RenderPhase::Main ? m_Handle : m_ShadowHandle;
 			command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
 			command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(constants);

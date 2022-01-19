@@ -51,14 +51,14 @@ RendererCommandList RenderGraph::Compile()
 	{
 		if (passIsStarted && pass.Description.StartNewPass)
 		{
-			RendererCommandEndRenderPass endRenderPassCommand;
+			RendererCommandEndRenderPass endRenderPassCommand{};
 			commandList.AddCommand(endRenderPassCommand);
 		}
 
 		for (auto& resource : pass.Description.UsedResources) {
 			auto textureHandle = ResolveResourceToHandle(resource.Handle);
 			if (ResourceNeedsBarrier(resource)) {
-				RendererCommandBarrier transitionToDepthRead;
+				RendererCommandBarrier transitionToDepthRead{};
 				transitionToDepthRead.TextureHandle = textureHandle;
 				transitionToDepthRead.BeforeState = ResolveResourceCurrentState(resource.Handle);
 				transitionToDepthRead.AfterState = ResolveResourceRequiredState(resource);
@@ -98,7 +98,7 @@ RendererCommandList RenderGraph::Compile()
 
 		if (pass.Description.StartNewPass)
 		{
-			RendererCommandBeginRenderPass beginRenderPassCommand;
+			RendererCommandBeginRenderPass beginRenderPassCommand{};
 			beginRenderPassCommand.ColorTarget = {
 				ResolveResourceToHandle(pass.Description.RenderTarget.Handle), pass.Description.RenderTarget.LoadAction, pass.Description.RenderTarget.StoreAction
 			};
@@ -115,7 +115,7 @@ RendererCommandList RenderGraph::Compile()
 
 	if (passIsStarted)
 	{
-		RendererCommandEndRenderPass endRenderPassCommand;
+		RendererCommandEndRenderPass endRenderPassCommand{};
 		commandList.AddCommand(endRenderPassCommand);
 	}
 

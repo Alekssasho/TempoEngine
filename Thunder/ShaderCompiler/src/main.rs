@@ -2,6 +2,7 @@ use data_definition_generated::flatbuffer_derive::{FlatbufferSerialize, Flatbuff
 use data_definition_generated::ShaderType;
 use hassle_rs::{utils::HassleError, Dxc, DxcIncludeHandler};
 use regex::Regex;
+use walkdir::WalkDir;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -91,11 +92,11 @@ fn compile_hlsl_source(
 
 fn find_all_hlsl_files(input_folder: &PathBuf) -> Result<Vec<PathBuf>, std::io::Error> {
     let mut result = Vec::new();
-    for entry in std::fs::read_dir(input_folder)? {
+    for entry in WalkDir::new(input_folder) {
         let entry = entry?;
         let path = entry.path();
         match path.extension() {
-            Some(ext) if ext == "hlsl" => result.push(path),
+            Some(ext) if ext == "hlsl" => result.push(path.into()),
             _ => (),
         }
     }

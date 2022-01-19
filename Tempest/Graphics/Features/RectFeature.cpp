@@ -40,7 +40,7 @@ void Rects::GenerateCommands(const FrameData& data, RendererCommandList& command
 	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 	for (const auto& rect : data.Rects)
 	{
-		RendererCommandDrawInstanced command;
+		RendererCommandDrawInstanced command{};
 		command.Pipeline = m_Handle;
 		command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
 		command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(rect);

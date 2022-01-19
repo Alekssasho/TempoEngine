@@ -1,5 +1,6 @@
 #include <EngineCore.h>
 #include <Graphics/RenderGraph.h>
+#include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 
 int main()
 {
@@ -25,8 +26,17 @@ int main()
 			});
 
 			return [pipelineHandle](RendererCommandList& commandList, RenderGraphBlackboard& blackboard) {
-				RendererCommandDrawInstanced command;
+				Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
+
+				struct ConstantData {
+					glm::uvec2 size;
+				} constantData {
+					{100, 100}
+				};
+
+				RendererCommandDrawInstanced command{};
 				command.Pipeline = pipelineHandle;
+				command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = constantDataManager.AddData(constantData);
 				command.VertexCountPerInstance = 4;
 				command.InstanceCount = 1;
 				commandList.AddCommand(command);

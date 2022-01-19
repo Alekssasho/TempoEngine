@@ -11,3 +11,4 @@ hassle-rs = "0.4.0"
 structopt = "0.3"
 data_definition_generated = {path = "../DataDefinitionGenerated" }
 regex = "1"
+walkdir = "2.3"

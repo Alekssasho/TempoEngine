@@ -15,9 +15,16 @@ struct RenderFeature;
 namespace Dx12 { class Backend; struct ConstantBufferDataManager; }
 namespace Definition { struct ShaderLibrary; }
 
+class Renderer;
+struct CustomRenderer {
+	virtual void RenderFrame(RenderGraph& graph) = 0;
+	virtual void InitializeResources(Renderer& renderer) = 0;
+};
+
+// TODO: Make the default renderer using the same mechanism, it will be cleaner
 struct RendererOptions
 {
-	void (*OverrideRenderGraph)(RenderGraph& graph);
+	CustomRenderer* OverrideRenderer;
 };
 
 class Renderer : Utils::NonCopyable

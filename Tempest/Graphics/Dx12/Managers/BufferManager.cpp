@@ -19,6 +19,7 @@ static D3D12_HEAP_TYPE GetHeapTypeFromBufferType(BufferType type)
 	case BufferType::Constant:
 		return D3D12_HEAP_TYPE_UPLOAD;
 	case BufferType::Vertex:
+	case BufferType::UAV:
 		return D3D12_HEAP_TYPE_DEFAULT;
 	default: assert(false);
 	}

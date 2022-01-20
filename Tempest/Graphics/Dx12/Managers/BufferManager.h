@@ -13,7 +13,8 @@ struct UploadData;
 enum class BufferType
 {
 	Constant,
-	Vertex
+	Vertex,
+	UAV
 };
 
 struct BufferDescription

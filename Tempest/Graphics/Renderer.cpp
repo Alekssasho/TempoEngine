@@ -41,6 +41,10 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 		feature->Initialize(world, *this);
 	}
 
+	if (m_Options.OverrideRenderer) {
+		m_Options.OverrideRenderer->InitializeResources(*this);
+	}
+
 	//m_ShadowTexture = m_Backend->Managers.Texture.CreateTexture(Dx12::TextureDescription{
 	//		Dx12::TextureType::Texture2D,
 	//		DXGI_FORMAT_D32_FLOAT,
@@ -102,7 +106,7 @@ void Renderer::RenderFrame(const FrameData& data)
 
 	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager(), m_Backend->Managers.TemporaryTexture);
 
-	if (!m_Options.OverrideRenderGraph) {
+	if (!m_Options.OverrideRenderer) {
 
 		glm::mat4 shadowMatrix;
 		auto projectionMatrix = glm::ortho(-60.0f, 60.0f, -60.0f, 60.0f, 1.0f, 1.0f + 120.0f);
@@ -170,7 +174,7 @@ void Renderer::RenderFrame(const FrameData& data)
 	}
 	else
 	{
-		m_Options.OverrideRenderGraph(graph);
+		m_Options.OverrideRenderer->RenderFrame(graph);
 	}
 
 	auto commandList = graph.Compile();

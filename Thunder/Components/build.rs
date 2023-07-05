@@ -20,9 +20,9 @@ fn main() {
         // Tell that the header is c++
         .clang_arg("-xc++")
         // Export only Tempest types in the header
-        .whitelist_type("Tempest::.*")
+        .allowlist_type("Tempest::.*")
         // But disable glm export as we will be using our rust glm types
-        .blacklist_type("glm::.*")
+        .blocklist_type("glm::.*")
         // Tell cargo to invalidate the built crate whenever any of the
         // included header files changed.
         .parse_callbacks(Box::new(bindgen::CargoCallbacks))

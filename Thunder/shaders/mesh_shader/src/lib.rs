@@ -1,13 +1,12 @@
 #![cfg_attr(
     target_arch = "spirv",
-    no_std,
-    feature(register_attr),
-    register_attr(spirv)
+    no_std
 )]
 #![deny(warnings)]
 
 use core::f32::consts::PI;
-use glam::{vec3, Mat4, Vec2, Vec3, Vec3Swizzles};
+use spirv_std::spirv;
+use spirv_std::glam::{vec3, Mat4, Vec2, Vec3, Vec3Swizzles, vec4, Vec4};
 
 //use spirv_std::arch::{ddx_vector, ddy_vector};
 // Note: This cfg is incorrect on its surface, it really should be "are we compiling with std", but
@@ -61,11 +60,6 @@ pub fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
     // Evaluate polynomial
     x * x * (3.0 - 2.0 * x)
 }
-
-#[cfg(not(target_arch = "spirv"))]
-#[macro_use]
-pub extern crate spirv_std_macros;
-use glam::{vec4, Vec4};
 
 #[spirv(vertex)]
 pub fn main_vs(

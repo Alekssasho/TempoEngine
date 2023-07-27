@@ -15,6 +15,7 @@ impl MeshResource {
         Self { scene, mesh_index }
     }
 }
+#[repr(C)]
 #[derive(Debug, Copy, Clone, Default)]
 pub struct VertexLayout {
     pub position: math::Vec3,

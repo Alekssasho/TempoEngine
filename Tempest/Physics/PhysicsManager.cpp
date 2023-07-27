@@ -169,6 +169,11 @@ void PhysicsManager::LoadFromData(void* data, uint32_t size)
 	physx::PxCollection* collection = physx::PxSerialization::createCollectionFromBinary(m_AllignedAlloc.get(), *m_SerializationRegistry);
 
 	uint32_t numIds = collection->getNbIds();
+	if (numIds == 0)
+	{
+		collection->release();
+		return;
+	}
 	// TODO: Temp memory
 	eastl::vector<physx::PxSerialObjectId> ids(numIds);
 	collection->getIds(ids.data(), numIds);

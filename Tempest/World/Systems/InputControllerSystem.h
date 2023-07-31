@@ -65,7 +65,7 @@ struct CameraControllerSystem : public System
 						camera.Forward = glm::rotate(camera.Forward, -inputMap.GetFloatDelta(MouseY) * 5.0f, cameraRight);
 						camera.Up = glm::normalize(glm::cross(camera.Forward, cameraRight));
 					}
-		}));
+		}, 0));
 	}
 };
 
@@ -95,7 +95,7 @@ struct VehicleControllerSystem : public System
 					physics.VehicleInputData.setDigitalHandbrake(inputMap.GetBool(Handbrake));
 					physics.VehicleInputData.setDigitalSteerLeft(inputMap.GetBool(SteerLeft));
 					physics.VehicleInputData.setDigitalSteerRight(inputMap.GetBool(SteerRight));
-		}));
+		}, 1));
 	}
 };
 

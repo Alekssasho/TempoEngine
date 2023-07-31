@@ -22,10 +22,11 @@ struct ParallelFor : TaskGraph::Task
 template<typename FunctionType, typename... Components>
 struct ParallelQueryEach : TaskGraph::Task
 {
-	ParallelQueryEach(EntityQuery<Components...>* query, FunctionType&& function)
+	ParallelQueryEach(EntityQuery<Components...>* query, FunctionType&& function, uint32_t stage)
 		: Query(query)
 		, Func(function)
-		, NumJobs(std::thread::hardware_concurrency())
+		, NumJobs(1/*std::thread::hardware_concurrency()*/)
+		, Stage(stage)
 	{}
 
 	virtual void Execute(Job::JobSystem& jobSystem) override
@@ -47,13 +48,14 @@ struct ParallelQueryEach : TaskGraph::Task
 	static void ExecuteJob(uint32_t index, void* data)
 	{
 		ParallelQueryEach* task = (ParallelQueryEach*)data;
-		task->Query->ForEachWorker(index, task->NumJobs, std::forward<FunctionType&&>(task->Func));
+		task->Query->ForEachWorker(index, task->NumJobs, std::forward<FunctionType&&>(task->Func), task->Stage);
 	}
 
 	EntityQuery<Components...>* Query;
 	FunctionType Func;
 	//TODO: Possible this could be part of the Job system as input argument
 	uint32_t NumJobs;
+	uint32_t Stage;
 };
 
 template<typename Key, typename Value>

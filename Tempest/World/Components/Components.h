@@ -65,7 +65,7 @@ struct CameraController
 	Camera CameraData;
 	int InputMapIndex;
 
-	static constexpr const char* Name = "CameraController";
+	static constexpr const char* Name = "Component::CameraController";
 };
 
 struct VehicleController

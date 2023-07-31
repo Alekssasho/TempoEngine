@@ -27,6 +27,8 @@ World::World()
 	//ecs_tracing_enable(3);
 	m_EntityWorld.set_target_fps(60);
 
+	m_EntityWorld.set_stage_count(2);
+
 	// This is not needed when we are loading the world from serialized data
 	// Register all components
 	RegisterComponent<Components::Transform>(m_EntityWorld);
@@ -65,6 +67,7 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 {
 	//m_EntityWorld.progress(deltaTime);
 	{
+		m_EntityWorld.readonly_begin();
 		TaskGraph::TaskGraph graph;
 		for (const auto& system : m_BeforePhysicsSystems)
 		{
@@ -72,12 +75,14 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 		}
 
 		graph.CompileAndExecute(jobSystem);
+		m_EntityWorld.readonly_end();
 	}
 
 	// TODO: this probably could be fixed number and track it
 	gEngine->GetPhysics().Update(deltaTime);
 
 	{
+		m_EntityWorld.readonly_begin();
 		TaskGraph::TaskGraph graph;
 		for (const auto& system : m_AfterPhysicsSystems)
 		{
@@ -85,6 +90,7 @@ void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 		}
 
 		graph.CompileAndExecute(jobSystem);
+		m_EntityWorld.readonly_end();
 	}
 }
 
@@ -171,7 +177,18 @@ eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t siz
 		ecs_bulk_desc_t desc = {};
 		desc.count = numEntities;
 		desc.data = const_cast<void**>(componentArrayPointers.data());
-		desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
+		//desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
+
+		uint32_t currentTermCount = 0;
+		ecs_term_t currentTerm;
+		while (archetypeName[0] && (archetypeName = ecs_parse_term(m_EntityWorld, nullptr, nullptr, archetypeName, &currentTerm)))
+		{
+			ecs_term_finalize(m_EntityWorld, &currentTerm);
+			desc.ids[currentTermCount] = currentTerm.id;
+			++currentTermCount;
+			ecs_term_fini(&currentTerm);
+		}
+		//desc.table = ecs_table_find(m_EntityWorld, )
 
 		const ecs_entity_t* newlyCreatedIds = ecs_bulk_init(m_EntityWorld, &desc);
 		memcpy(newlyCreatedEntityIds.data() + beforeSize, newlyCreatedIds, numEntities * sizeof(ecs_entity_t));

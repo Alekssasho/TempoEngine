@@ -23,7 +23,7 @@ struct MoveSystem : public System
 			"MoveSystem::ParallelEach",
 			new Task::ParallelQueryEach(&m_Query, [deltaTime](flecs::entity, Components::Transform& transform) {
 				transform.Position += glm::vec3{ 0.2f, 0.0f, 0.0f } * deltaTime;
-		}));
+		}, 0));
 	}
 };
 

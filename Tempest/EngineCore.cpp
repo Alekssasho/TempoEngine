@@ -144,7 +144,7 @@ void EngineCore::LoadLevel(const char* levelToLoad)
 	gEngine->m_Camera.Up = glm::vec3(camera->up().x(), camera->up().y(), camera->up().z());
 	gEngine->m_Camera.SetPerspectiveProjection(camera->aspect_ratio(), camera->yfov(), camera->znear(), camera->zfar());
 
-	auto cameraController = gEngine->GetWorld().m_EntityWorld.entity("CameraController")
+	auto cameraController = gEngine->GetWorld().m_EntityWorld.entity("MainCameraController")
 		.set<Components::CameraController>({ gEngine->m_Camera, 0 })
 		.set<Components::VehicleController>({ 1 });
 

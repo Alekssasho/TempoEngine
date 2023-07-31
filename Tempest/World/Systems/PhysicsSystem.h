@@ -37,7 +37,7 @@ struct MirrorToPhysics : public System
 					pxTransform.q.z = transform.Rotation.z;
 					pxTransform.q.w = transform.Rotation.w;
 					physicsActor.Actor->setGlobalPose(pxTransform, false);
-		}));
+		}, 0));
 	}
 };
 
@@ -69,7 +69,7 @@ struct MirrorFromPhysics : public System
 					transform.Rotation.y = pxTransform.q.y;
 					transform.Rotation.z = pxTransform.q.z;
 					transform.Rotation.w = pxTransform.q.w;
-		}));
+		}, 0));
 
 		TaskGraph::TaskHandle carHandle = graph.AddTask(
 			"MirrorFromPhysics::CarPhysicsParts::ParallelEach",
@@ -86,7 +86,7 @@ struct MirrorFromPhysics : public System
 					transform.Rotation.y = pxTransform.q.y;
 					transform.Rotation.z = pxTransform.q.z;
 					transform.Rotation.w = pxTransform.q.w;
-		}));
+		}, 0));
 	}
 };
 

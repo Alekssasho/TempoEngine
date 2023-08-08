@@ -5,10 +5,9 @@
 #include <World/TaskGraph/TaskGraph.h>
 
 #include <World/Components/Components.h>
-#include <World/Systems/MoveSystem.h>
-#include <World/Systems/BoidsSystem.h>
-#include <World/Systems/PhysicsSystem.h>
-#include <World/Systems/InputControllerSystem.h>
+
+#include <World/GameplayFeatures/PhysicsFeature.h>
+#include <World/GameplayFeatures/InputControllerFeature.h>
 
 template<typename ComponentType>
 void RegisterComponent(flecs::world& world)
@@ -18,16 +17,51 @@ void RegisterComponent(flecs::world& world)
 
 namespace Tempest
 {
+
+struct TaskData
+{
+	ecs_os_thread_callback_t Callback;
+	void* CallbackParams;
+	Job::Counter WaitCounter;
+};
+
+static ecs_os_thread_t EcsNewTask(ecs_os_thread_callback_t callback, void* param)
+{
+    TaskData* data = new TaskData;
+    data->Callback = callback;
+    data->CallbackParams = param;
+    Job::JobDecl ecsTask{ [](uint32_t, void* taskData) {
+            TaskData* data = (TaskData*)taskData;
+            data->Callback(data->CallbackParams);
+        }, (void*)data };
+    gEngine->GetJobSystem().RunJobs("Ecs Task", &ecsTask, 1, &data->WaitCounter);
+    return (ecs_os_thread_t)data;
+}
+
+static void* EcsWaitTask(ecs_os_thread_t taskData)
+{
+    TaskData* data = (TaskData*)taskData;
+    gEngine->GetJobSystem().WaitForCounter(&data->WaitCounter, 0);
+    delete data;
+	return nullptr;
+}
+
+FlecsIniter::FlecsIniter()
+{
+    ecs_os_set_api_defaults();
+    ecs_os_api_t api = ecs_os_get_api();
+    api.task_new_ = EcsNewTask;
+    api.task_join_ = EcsWaitTask;
+    ecs_os_set_api(&api);
+}
+
 World::World()
 {
-	//ecs_os_api_t api;
-	//ecs_os_set_api(&api);
-
 	// Enable for debug
 	//ecs_tracing_enable(3);
-	m_EntityWorld.set_target_fps(60);
+	//m_EntityWorld.set_target_fps(60);
 
-	m_EntityWorld.set_stage_count(2);
+	m_EntityWorld.set_task_threads(std::thread::hardware_concurrency());
 
 	// This is not needed when we are loading the world from serialized data
 	// Register all components
@@ -43,55 +77,18 @@ World::World()
 	RegisterComponent<Tags::Boids>(m_EntityWorld);
 	RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
 
-	// Register all systems
-	//m_Systems.emplace_back(new Systems::MoveSystem);
-	//m_Systems.emplace_back(new Systems::BoidsSystem);
-
-	// This should be the last system in this bucket
-	// TODO: Mirror To Physics is needed only for kinematics objects as they are driven by animation, everything else should be physics driven
-	//m_BeforePhysicsSystems.emplace_back(new Systems::MirrorToPhysics);
-	m_BeforePhysicsSystems.emplace_back(new Systems::CameraControllerSystem);
-	m_BeforePhysicsSystems.emplace_back(new Systems::VehicleControllerSystem);
-
-	// This should be the first system in this bucket
-	m_AfterPhysicsSystems.emplace_back(new Systems::MirrorFromPhysics);
+    m_Features.emplace_back(new GameplayFeatures::Physics);
+    m_Features.emplace_back(new GameplayFeatures::InputController);
 }
 
 World::~World()
 {
-	m_BeforePhysicsSystems.clear();
-	m_AfterPhysicsSystems.clear();
 }
 
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 {
-	//m_EntityWorld.progress(deltaTime);
-	{
-		m_EntityWorld.readonly_begin();
-		TaskGraph::TaskGraph graph;
-		for (const auto& system : m_BeforePhysicsSystems)
-		{
-			system->Update(deltaTime, graph);
-		}
-
-		graph.CompileAndExecute(jobSystem);
-		m_EntityWorld.readonly_end();
-	}
-
-	// TODO: this probably could be fixed number and track it
-	gEngine->GetPhysics().Update(deltaTime);
-
-	{
-		m_EntityWorld.readonly_begin();
-		TaskGraph::TaskGraph graph;
-		for (const auto& system : m_AfterPhysicsSystems)
-		{
-			system->Update(deltaTime, graph);
-		}
-
-		graph.CompileAndExecute(jobSystem);
-		m_EntityWorld.readonly_end();
-	}
+	OPTICK_EVENT();
+	m_EntityWorld.progress(deltaTime);
 }
 
 class MemoryInputStream
@@ -194,14 +191,9 @@ eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t siz
 		memcpy(newlyCreatedEntityIds.data() + beforeSize, newlyCreatedIds, numEntities * sizeof(ecs_entity_t));
 	}
 
-	for (const auto& system : m_BeforePhysicsSystems)
+	for (const auto& feature : m_Features)
 	{
-		system->PrepareQueries(*this);
-	}
-
-	for (const auto& system : m_AfterPhysicsSystems)
-	{
-		system->PrepareQueries(*this);
+		feature->PrepareSystems(*this);
 	}
 
 	return newlyCreatedEntityIds;

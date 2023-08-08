@@ -160,6 +160,15 @@
       <Filter>World\Systems</Filter>
     </ClInclude>
     <ClInclude Include="InputManager.h" />
+    <ClInclude Include="World\GameplayFeature.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\GameplayFeatures\PhysicsFeature.h">
+      <Filter>World\GameplayFeatures</Filter>
+    </ClInclude>
+    <ClInclude Include="World\GameplayFeatures\InputControllerFeature.h">
+      <Filter>World\GameplayFeatures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineCore.cpp" />
@@ -323,6 +332,9 @@
     </Filter>
     <Filter Include="Physics">
       <UniqueIdentifier>{7e02d7d9-1842-40f8-8051-e15d61163bd8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World\GameplayFeatures">
+      <UniqueIdentifier>{6242a476-ab68-4083-a1f0-5a49e725cc67}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

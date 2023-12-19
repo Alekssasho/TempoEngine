@@ -9,7 +9,8 @@ members = [
     "Thunder/flatbuffer-derive",
     "Thunder/physics-handler",
     "Thunder/math",
-    "Thunder/geometry_database_explorer",
+    #"Thunder/geometry_database_explorer",
+    "Thunder/code_generator",
 
     "Thunder/shaders/mesh_shader",
 ]

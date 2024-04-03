@@ -1,3 +1,5 @@
+use structures::{Structure, Attribute};
+
 use crate::cppgenerator::generate_cpp_code;
 
 mod parser;
@@ -18,8 +20,17 @@ static TEST_STRING: &str = "
     }
 ";
 
+fn prepare_for_generation(structures: &mut Vec<Structure>) {
+    for mut structure in structures {
+        structure.is_component = structure.attributes.iter().find(|att| match att {
+            Attribute::Component => true,
+            _ => false,
+        }).is_some();
+    }
+}
+
 fn main() {
-    let (_, structures) = parser::parse_input(TEST_STRING).unwrap();
+    let (_, mut structures) = parser::parse_input(TEST_STRING).unwrap();
 
     assert_eq!(2, structures.len(), "Size of parsed structures");
     assert_eq!(structures[0].name, "Vector");
@@ -36,6 +47,7 @@ fn main() {
     }
     //println!("{:#?}", structures);
 
+    prepare_for_generation(&mut structures);
     let cpp_code = generate_cpp_code(&structures);
     println!("{}", cpp_code);
 }

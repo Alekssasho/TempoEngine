@@ -7,11 +7,12 @@ pub struct Member {
     pub ttype: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct Structure {
     pub name: String,
     pub members: Vec<Member>,
     pub attributes: Vec<Attribute>,
+    pub is_component: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

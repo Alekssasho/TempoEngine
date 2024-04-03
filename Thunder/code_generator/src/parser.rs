@@ -90,6 +90,7 @@ fn parse_structure(input: &str) -> IResult<&str, Structure> {
             name: name.to_string(),
             members,
             attributes,
+            ..Default::default()
         },
     ))
 }

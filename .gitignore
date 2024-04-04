@@ -428,3 +428,6 @@ MigrationBackup/
 *.gltf
 *.ogg
 *.blend
+
+# Folder generated with Sharpmake
+projects/

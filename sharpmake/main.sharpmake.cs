@@ -1,58 +1,36 @@
-using System.IO;
 using Sharpmake;
 
-namespace Tempo
+[module: Sharpmake.Include("common.sharpmake.cs")]
+[module: Sharpmake.Include("tempest.sharpmake.cs")]
+[module: Sharpmake.Include("spark.sharpmake.cs")]
+
+namespace TempoEngine
 {
-[Sharpmake.Generate]
-public class Spark : Project
-{
-    public Spark()
+    [Sharpmake.Generate]
+    public class TempoEngine : Solution
     {
-        Name = "Spark";
-        SourceRootPath = @"[project.SharpmakeCsPath]\..\Spark";
+        public TempoEngine()
+        {
+            Name = "TempoEngine";
+            AddTargets(TempoEngineTargets.Targets);
+        }
 
-        AddTargets(new Target(
-            Platform.win64,
-            DevEnv.vs2022,
-            Optimization.Debug | Optimization.Release
-        ));
+        [Configure]
+        public void ConfigureAll(Configuration conf, Target target)
+        {
+            conf.SolutionFileName = "TempoEngine";
+            conf.SolutionPath = @"[solution.SharpmakeCsPath]\..";
+
+            conf.AddProject<Spark>(target);
+        }
     }
 
-    [Configure]
-    public void ConfigureAll(Project.Configuration conf, Target target)
+    public static class Main
     {
-        conf.ProjectPath = @"[project.SharpmakeCsPath]\..\projects";
+        [Sharpmake.Main]
+        public static void SharpmakeMain(Sharpmake.Arguments arguments)
+        {
+            arguments.Generate<TempoEngine>();
+        }
     }
-}
-
-[Sharpmake.Generate]
-public class TempoEngine : Solution
-{
-    public TempoEngine()
-    {
-        Name = "TempoEngine";
-        AddTargets(new Target(
-            Platform.win64,
-            DevEnv.vs2022,
-            Optimization.Debug | Optimization.Release
-        ));
-    }
-
-    [Configure]
-    public void ConfigureAll(Configuration conf, Target target)
-    {
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]\..";
-
-        conf.AddProject<Spark>(target);
-    }
-}
-
-public static class Main
-{
-    [Sharpmake.Main]
-    public static void SharpmakeMain(Sharpmake.Arguments arguments)
-    {
-        arguments.Generate<TempoEngine>();
-    }
-}
 }

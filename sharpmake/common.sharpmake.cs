@@ -35,6 +35,20 @@ namespace TempoEngine
             conf.Options.Add(Options.Vc.Compiler.RTTI.Disable);
 
             conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
+            conf.Options.Add(Options.Vc.General.WarningLevel.Level3);
+        }
+    }
+
+    public class ThirdPartyProject : Project
+    {
+        public ThirdPartyProject()
+        {
+            AddTargets(TempoEngineTargets.Targets);
+        }
+
+        [Configure]
+        public virtual void ConfigureAll(Project.Configuration conf, Target target)
+        {
         }
     }
 }

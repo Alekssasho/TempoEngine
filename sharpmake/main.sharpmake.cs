@@ -1,6 +1,7 @@
 using Sharpmake;
 
 [module: Sharpmake.Include("common.sharpmake.cs")]
+[module: Sharpmake.Include("thirdparty.sharpmake.cs")]
 [module: Sharpmake.Include("tempest.sharpmake.cs")]
 [module: Sharpmake.Include("spark.sharpmake.cs")]
 

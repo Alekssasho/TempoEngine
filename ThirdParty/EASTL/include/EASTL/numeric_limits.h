@@ -1435,16 +1435,16 @@ namespace eastl
 				{ return 0.5f; }
 
 			static value_type infinity() 
-				{ return _CSTD _FInf._Float; }
+				{ return __builtin_huge_valf(); }
 
 			static value_type quiet_NaN() 
-				{ return _CSTD _FNan._Float; }
+				{ return  __builtin_nanf("0"); }
 
 			static value_type signaling_NaN()
-				{ return _CSTD _FSnan._Float; } 
+				{ return __builtin_nansf("1"); }
 
 			static value_type denorm_min() 
-				{ return _CSTD _FDenorm._Float; }
+				{ return FLT_TRUE_MIN; }
 
 		#endif
 	};
@@ -1553,16 +1553,16 @@ namespace eastl
 				{ return 0.5f; }
 
 			static value_type infinity() 
-				{ return _CSTD _Inf._Double; }
+				{ return __builtin_huge_val(); }
 
 			static value_type quiet_NaN() 
-				{ return _CSTD _Nan._Double; }
+				{ return __builtin_nan("0"); }
 
 			static value_type signaling_NaN()
-				{ return _CSTD _Snan._Double; } 
+				{ return __builtin_nans("1"); }
 
 			static value_type denorm_min() 
-				{ return _CSTD _Denorm._Double; }
+				{ return DBL_TRUE_MIN; }
 
 		#endif
 	};
@@ -1670,17 +1670,25 @@ namespace eastl
 			static value_type round_error() 
 				{ return 0.5f; }
 
-			static value_type infinity() 
-				{ return _CSTD _LInf._Long_double; }
+            static value_type infinity()
+            {
+                return __builtin_huge_val();
+            }
 
-			static value_type quiet_NaN() 
-				{ return _CSTD _LNan._Long_double; }
+            static value_type quiet_NaN()
+            {
+                return __builtin_nan("0");
+            }
 
-			static value_type signaling_NaN()
-				{ return _CSTD _LSnan._Long_double; } 
+            static value_type signaling_NaN()
+            {
+                return __builtin_nans("1");
+            }
 
-			static value_type denorm_min() 
-				{ return _CSTD _LDenorm._Long_double; }
+            static value_type denorm_min()
+            {
+                return LDBL_TRUE_MIN;
+            }
 
 		#endif
 	};

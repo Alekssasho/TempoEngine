@@ -17,8 +17,18 @@ namespace TempoEngine
 
             conf.AddPublicDependency<Glm>(target);
             conf.AddPublicDependency<EASTL>(target);
+            conf.AddPublicDependency<Optick>(target);
+
+            conf.AddPublicDependency<PhysX>(target);
+            conf.AddPublicDependency<Flecs>(target);
+            conf.AddPublicDependency<Flatbuffers>(target);
+            conf.AddPublicDependency<GAInput>(target);
+            conf.AddPublicDependency<ImGUI>(target);
+            conf.AddPublicDependency<Stb>(target);
 
             conf.IncludePaths.Add("[project.RootPath]");
+
+            conf.ReferencesByNuGetPackage.Add("Microsoft.Direct3D.D3D12", "1.4.9");
 
             conf.Output = Configuration.OutputType.Lib;
         }

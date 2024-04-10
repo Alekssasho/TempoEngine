@@ -10,7 +10,7 @@
 
 // DirectX 12 Agility SDK exports
 extern "C" { _declspec(dllexport) extern const UINT D3D12SDKVersion = 4; }
-extern "C" { _declspec(dllexport) extern const char* D3D12SDKPath = u8".\\D3D12\\"; }
+extern "C" { _declspec(dllexport) extern const char* D3D12SDKPath = (const char*) u8".\\D3D12\\"; }
 
 namespace Tempest
 {

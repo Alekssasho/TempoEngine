@@ -21,6 +21,9 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\EASTL\include");
+
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\EASTL\lib\[target.Name]");
+            conf.LibraryFiles.Add("EASTL");
         }
     }
 
@@ -32,6 +35,9 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\optick\include");
+
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\Optick\lib\[target.Name]");
+            conf.LibraryFiles.Add("OptickCore");
         }
     }
 
@@ -39,11 +45,17 @@ namespace TempoEngine
     [Sharpmake.Export]
     public class Flecs : ThirdPartyProject
     {
+        public Flecs()
+        {
+            SourceRootPath = @"[project.SharpmakeCsPath]\..\ThirdParty\flecs";
+        }
+
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flecs");
+
         }
     }
 
@@ -56,6 +68,9 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\gainput\include");
+
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\gainput\lib\[target.Name]");
+            conf.LibraryFiles.Add("gainputstatic");
         }
     }
 
@@ -79,6 +94,14 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\include");
+
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\lib\[target.Name]");
+            conf.LibraryFiles.Add("PhysXFoundation_64");
+            conf.LibraryFiles.Add("PhysXCommon_64");
+            conf.LibraryFiles.Add("PhysX_64");
+            conf.LibraryFiles.Add("PhysXExtensions_static_64");
+            conf.LibraryFiles.Add("PhysXPvdSDK_static_64");
+            conf.LibraryFiles.Add("PhysXVehicle_static_64");
         }
     }
 

@@ -38,6 +38,14 @@ namespace TempoEngine
             conf.Options.Add(Options.Vc.Compiler.Exceptions.Disable);
             conf.Options.Add(Options.Vc.Compiler.RTTI.Disable);
             conf.Options.Add(Options.Vc.Compiler.FiberSafe.Enable);
+            if (target.Optimization == Optimization.Debug)
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+            }
+            else
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
+            }
 
             conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
             conf.Options.Add(Options.Vc.General.WarningLevel.Level3);

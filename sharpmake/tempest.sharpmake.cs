@@ -9,6 +9,17 @@ namespace TempoEngine
         {
             Name = "Tempest";
             SourceRootPath = @"[project.SharpmakeCsPath]\..\Tempest";
+
+            // TODO: This maybe removed when we move to vcpkg
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flecs\flecs.c");
+
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui.cpp");
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_demo.cpp");
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_draw.cpp");
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_impl_dx12.cpp");
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_widgets.cpp");
+
+            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\stb\stb_vorbis.c");
         }
 
         public override void ConfigureAll(Project.Configuration conf, Target target)
@@ -29,6 +40,10 @@ namespace TempoEngine
             conf.IncludePaths.Add("[project.RootPath]");
 
             conf.ReferencesByNuGetPackage.Add("Microsoft.Direct3D.D3D12", "1.4.9");
+
+            conf.LibraryFiles.Add("d3d12");
+            conf.LibraryFiles.Add("dxgi");
+            conf.LibraryFiles.Add("xinput");
 
             conf.Output = Configuration.OutputType.Lib;
         }

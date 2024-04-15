@@ -1,0 +1,10 @@
+{
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": ["dx12-binding"]
+    },
+    "eastl",
+    "physx"
+  ]
+}

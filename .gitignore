@@ -431,3 +431,6 @@ MigrationBackup/
 
 # Folder generated with Sharpmake
 projects/
+
+# Third party dependencies from vcpkg
+vcpkg_installed/

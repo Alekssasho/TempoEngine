@@ -14,16 +14,17 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class EASTL : ThirdPartyProject
+    public class EASTL : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\EASTL\include");
-
-            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\EASTL\lib\[target.Name]");
             conf.LibraryFiles.Add("EASTL");
+
+            // We don't use EaStdC so we need to disable this and use our version
+            // of vsnprintf
+            conf.ExportDefines.Add("EASTL_EASTDC_VSNPRINTF=0");
         }
     }
 
@@ -106,13 +107,13 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class ImGUI : ThirdPartyProject
+    public class ImGUI : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include");
+            conf.LibraryFiles.Add("imgui");
         }
     }
 

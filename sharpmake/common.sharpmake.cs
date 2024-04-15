@@ -67,4 +67,15 @@ namespace TempoEngine
         {
         }
     }
+
+    public class ThirdPartyVcpkgProject : ThirdPartyProject
+    {
+        public override void ConfigureAll(Project.Configuration conf, Target target)
+        {
+            base.ConfigureAll(conf, target);
+
+            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\include");
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\lib");
+        }
+    }
 }

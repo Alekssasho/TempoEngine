@@ -13,12 +13,6 @@ namespace TempoEngine
             // TODO: This maybe removed when we move to vcpkg
             SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flecs\flecs.c");
 
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui.cpp");
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_demo.cpp");
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_draw.cpp");
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_impl_dx12.cpp");
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\imgui\include\imgui_widgets.cpp");
-
             SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\stb\stb_vorbis.c");
         }
 

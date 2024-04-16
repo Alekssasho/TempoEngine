@@ -3,13 +3,13 @@ using Sharpmake;
 namespace TempoEngine
 {
     [Sharpmake.Export]
-    public class Glm : ThirdPartyProject
+    public class Glm : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\glm\include");
+            conf.ExportDefines.Add("GLM_ENABLE_EXPERIMENTAL");
         }
     }
 
@@ -44,46 +44,37 @@ namespace TempoEngine
 
 
     [Sharpmake.Export]
-    public class Flecs : ThirdPartyProject
+    public class Flecs : ThirdPartyVcpkgProject
     {
-        public Flecs()
-        {
-            SourceRootPath = @"[project.SharpmakeCsPath]\..\ThirdParty\flecs";
-        }
-
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flecs");
-
+            conf.LibraryFiles.Add("flecs");
+            conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\flecs.dll");
         }
     }
 
 
     [Sharpmake.Export]
-    public class GAInput : ThirdPartyProject
+    public class GAInput : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\gainput\include");
-
-            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\gainput\lib\[target.Name]");
-            conf.LibraryFiles.Add("gainputstatic");
+            conf.LibraryFiles.Add("gainput");
+            conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\gainput.dll");
         }
     }
 
 
     [Sharpmake.Export]
-    public class Flatbuffers : ThirdPartyProject
+    public class Flatbuffers : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
-
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flatbuffers\include");
         }
     }
 
@@ -118,13 +109,11 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class Stb : ThirdPartyProject
+    public class Stb : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
-
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\stb");
         }
     }
 }

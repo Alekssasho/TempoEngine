@@ -9,11 +9,6 @@ namespace TempoEngine
         {
             Name = "Tempest";
             SourceRootPath = @"[project.SharpmakeCsPath]\..\Tempest";
-
-            // TODO: This maybe removed when we move to vcpkg
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\flecs\flecs.c");
-
-            SourceFiles.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\stb\stb_vorbis.c");
         }
 
         public override void ConfigureAll(Project.Configuration conf, Target target)
@@ -38,6 +33,9 @@ namespace TempoEngine
             conf.LibraryFiles.Add("d3d12");
             conf.LibraryFiles.Add("dxgi");
             conf.LibraryFiles.Add("xinput");
+
+            conf.PrecompHeader = "CommonIncludes.h";
+            conf.PrecompSource = "CommonIncludesPch.cpp";
 
             conf.Output = Configuration.OutputType.Lib;
         }

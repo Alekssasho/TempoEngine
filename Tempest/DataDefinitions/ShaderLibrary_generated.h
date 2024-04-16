@@ -89,7 +89,7 @@ struct Shader FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
-           VerifyField<int8_t>(verifier, VT_TYPE) &&
+           VerifyField<int8_t>(verifier, VT_TYPE, 1) &&
            VerifyOffset(verifier, VT_CODE) &&
            verifier.VerifyVector(code()) &&
            verifier.EndTable();

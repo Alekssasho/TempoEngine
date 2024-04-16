@@ -52,6 +52,9 @@ namespace TempoEngine
 
             conf.Defines.Add("_SILENCE_CXX20_CISO646_REMOVED_WARNING");
             conf.Defines.Add("_HAS_EXCEPTIONS=0");
+
+            conf.Defines.Add("NOMINMAX");
+            conf.Defines.Add("WIN32_LEAN_AND_MEAN");
         }
     }
 

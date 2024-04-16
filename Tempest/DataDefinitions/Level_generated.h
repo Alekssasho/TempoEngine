@@ -115,7 +115,7 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(texture_database_file()) &&
            VerifyOffset(verifier, VT_AUDIO_DATABASE_FILE) &&
            verifier.VerifyString(audio_database_file()) &&
-           VerifyField<Tempest::Definition::Camera>(verifier, VT_CAMERA) &&
+           VerifyField<Tempest::Definition::Camera>(verifier, VT_CAMERA, 4) &&
            verifier.EndTable();
   }
 };

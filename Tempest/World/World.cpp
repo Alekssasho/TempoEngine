@@ -178,7 +178,7 @@ eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t siz
 
 		uint32_t currentTermCount = 0;
 		ecs_term_t currentTerm;
-		while (archetypeName[0] && (archetypeName = ecs_parse_term(m_EntityWorld, nullptr, nullptr, archetypeName, &currentTerm)))
+		while (archetypeName[0] && (archetypeName = ecs_parse_term(m_EntityWorld, nullptr, nullptr, archetypeName, &currentTerm, nullptr, nullptr, false)))
 		{
 			ecs_term_finalize(m_EntityWorld, &currentTerm);
 			desc.ids[currentTermCount] = currentTerm.id;

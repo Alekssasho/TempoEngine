@@ -5,11 +5,9 @@
 #include <EngineCore.h>
 #include <DataDefinitions/AudioDatabase_generated.h>
 
-#define STB_VORBIS_HEADER_ONLY
+//#define STB_VORBIS_HEADER_ONLY
 #include <stb_vorbis.c>
 
-#define NOMINMAX
-#define WIN32_LEAN_AND_MEAN
 #include <Audioclient.h>
 #include <limits>
 #include <mmdeviceapi.h>

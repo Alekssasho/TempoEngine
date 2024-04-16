@@ -5,6 +5,11 @@
       "features": ["dx12-binding"]
     },
     "eastl",
-    "physx"
+    "physx",
+    "stb",
+    "flatbuffers",
+    "gainput",
+    "flecs",
+    "glm"
   ]
 }

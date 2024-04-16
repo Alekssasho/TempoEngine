@@ -5,8 +5,6 @@
 
 #ifdef TEMPEST_PLATFORM_WIN
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <Windows.h>
 
 namespace Tempest

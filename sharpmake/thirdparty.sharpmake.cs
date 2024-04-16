@@ -63,8 +63,16 @@ namespace TempoEngine
         {
             base.ConfigureAll(conf, target);
 
-            conf.LibraryFiles.Add("gainput");
-            conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\gainput.dll");
+            if (target.Optimization == Optimization.Debug)
+            {
+                conf.LibraryFiles.Add("gainput-d");
+                conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\debug\bin\gainput-d.dll");
+            }
+            else
+            {
+                conf.LibraryFiles.Add("gainput");
+                conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\gainput.dll");
+            }
         }
     }
 
@@ -104,7 +112,14 @@ namespace TempoEngine
         {
             base.ConfigureAll(conf, target);
 
-            conf.LibraryFiles.Add("imgui");
+            if(target.Optimization == Optimization.Debug)
+            {
+                conf.LibraryFiles.Add("imguid");
+            }
+            else
+            {
+                conf.LibraryFiles.Add("imgui");
+            }
         }
     }
 

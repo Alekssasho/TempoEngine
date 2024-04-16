@@ -78,7 +78,14 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
 
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\include");
-            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\lib");
+            if(target.Optimization == Optimization.Debug)
+            {
+                conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\debug\lib");
+            }
+            else
+            {
+                conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\lib");
+            }
         }
     }
 }

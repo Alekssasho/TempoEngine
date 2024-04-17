@@ -1,6 +1,6 @@
 #pragma once
 
-#include <EngineCore.h>
+#include <Engine.h>
 #include <World/GameplayFeature.h>
 #include <World/Components/Components.h>
 

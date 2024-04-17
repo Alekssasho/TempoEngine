@@ -2,7 +2,7 @@
 
 #include <Platform/WindowsPlatform.h>
 
-#include <EngineCore.h>
+#include <Engine.h>
 
 #include <Windows.h>
 
@@ -15,11 +15,11 @@
 static bool g_MouseJustPressed[3] = { false, false, false };
 static bool g_MouseCurrentState[3] = { false, false, false };
 
-static Tempest::EngineCore* GetEngine(HWND hWnd)
+static Tempest::Engine* GetEngine(HWND hWnd)
 {
 	LONG_PTR ptr = GetWindowLongPtr(hWnd, GWLP_USERDATA);
 	assert(ptr);
-	return reinterpret_cast<Tempest::EngineCore*>(ptr);
+	return reinterpret_cast<Tempest::Engine*>(ptr);
 }
 
 LRESULT CALLBACK DefaultWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -30,8 +30,8 @@ LRESULT CALLBACK DefaultWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 	case WM_CREATE:
 	{
 		CREATESTRUCT* pCreate = reinterpret_cast<CREATESTRUCT*>(lParam);
-		auto engineCore = reinterpret_cast<Tempest::EngineCore*>(pCreate->lpCreateParams);
-		::SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)engineCore);
+		auto engine = reinterpret_cast<Tempest::Engine*>(pCreate->lpCreateParams);
+		::SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)engine);
 		break;
 	}
 	case WM_DESTROY:
@@ -104,7 +104,7 @@ WindowsPlatform::WindowsPlatform(gainput::InputManager& inputManager)
 {
 }
 
-void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* title, EngineCore* core)
+void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* title, Engine* engine)
 {
 	ImGui::CreateContext();
 
@@ -133,7 +133,7 @@ void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* t
 		NULL,
 		NULL,
 		hIntance,
-		core);
+		engine);
 
 	auto res = ::ShowWindow(hWnd, SW_RESTORE);
 

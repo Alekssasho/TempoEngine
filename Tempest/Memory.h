@@ -26,6 +26,9 @@ void operator delete[](void* ptr)
 }
 #endif
 
+// TODO: This cannot be included in two different cpps as there will be multiple definition of this symbols.
+// Maybe we need to hide them inside some macro
+
 void* operator new[](size_t size, const char* name, int flags, unsigned debugFlags, const char* file, int line)
 {
 	return new uint8_t[size];

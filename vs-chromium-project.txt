@@ -19,6 +19,8 @@ target/
 *.VC.opendb
 packages/
 Intermediate/
+binaries/
+projects/
 
 [SearchableFiles.include]
 *

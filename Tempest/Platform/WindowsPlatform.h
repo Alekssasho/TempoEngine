@@ -12,7 +12,7 @@ class WindowsPlatform
 public:
 	WindowsPlatform(gainput::InputManager& inputManager);
 
-	void SpawnWindow(unsigned width, unsigned height, const char* title, class EngineCore* core);
+	void SpawnWindow(unsigned width, unsigned height, const char* title, class Engine* core);
 	void PumpMessages();
 	void KillWindow();
 	void SetTitleName(const char* name);

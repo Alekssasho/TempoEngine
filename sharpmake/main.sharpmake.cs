@@ -3,6 +3,7 @@ using Sharpmake;
 [module: Sharpmake.Include("common.sharpmake.cs")]
 [module: Sharpmake.Include("thirdparty.sharpmake.cs")]
 [module: Sharpmake.Include("tempest.sharpmake.cs")]
+[module: Sharpmake.Include("maelstrom.sharpmake.cs")]
 [module: Sharpmake.Include("spark.sharpmake.cs")]
 
 namespace TempoEngine
@@ -23,6 +24,7 @@ namespace TempoEngine
             conf.SolutionPath = @"[solution.SharpmakeCsPath]\..";
 
             conf.AddProject<Spark>(target);
+            conf.AddProject<Maelstrom>(target);
         }
     }
 

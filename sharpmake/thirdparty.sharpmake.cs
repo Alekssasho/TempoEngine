@@ -131,4 +131,13 @@ namespace TempoEngine
             base.ConfigureAll(conf, target);
         }
     }
+
+    [Sharpmake.Export]
+    public class TinyGLTF : ThirdPartyVcpkgProject
+    {
+        public override void ConfigureAll(Project.Configuration conf, Target target)
+        {
+            base.ConfigureAll(conf, target);
+        }
+    }
 }

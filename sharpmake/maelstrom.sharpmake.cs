@@ -18,6 +18,8 @@ namespace TempoEngine
             conf.Output = Configuration.OutputType.Exe;
 
             conf.AddPrivateDependency<Tempest>(target);
+
+            conf.AddPublicDependency<TinyGLTF>(target);
         }
     }
 }

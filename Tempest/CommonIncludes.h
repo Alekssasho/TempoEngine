@@ -10,6 +10,7 @@
 #include <EASTL/unique_ptr.h>
 #include <EASTL/array.h>
 #include <EASTL/span.h>
+#include <EASTL/algorithm.h>
 
 #include <Logging.h>
 #include <cassert>

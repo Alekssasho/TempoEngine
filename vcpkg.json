@@ -10,6 +10,7 @@
     "flatbuffers",
     "gainput",
     "flecs",
-    "glm"
+    "glm",
+    "tinygltf"
   ]
 }

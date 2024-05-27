@@ -133,11 +133,23 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class TinyGLTF : ThirdPartyVcpkgProject
+    public class CGLTF : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
+        }
+    }
+
+    [Sharpmake.Export]
+    public class MeshOptimizer : ThirdPartyVcpkgProject
+    {
+        public override void ConfigureAll(Project.Configuration conf, Target target)
+        {
+            base.ConfigureAll(conf, target);
+
+            conf.LibraryFiles.Add("meshoptimizer");
+            conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\meshoptimizer.dll");
         }
     }
 }

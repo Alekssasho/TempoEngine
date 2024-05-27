@@ -11,6 +11,7 @@
     "gainput",
     "flecs",
     "glm",
-    "tinygltf"
+    "meshoptimizer",
+    "cgltf"
   ]
 }

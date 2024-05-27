@@ -17,9 +17,12 @@ namespace TempoEngine
 
             conf.Output = Configuration.OutputType.Exe;
 
+            conf.Defines.Add("_CRT_SECURE_NO_WARNINGS");
+
             conf.AddPrivateDependency<Tempest>(target);
 
-            conf.AddPublicDependency<TinyGLTF>(target);
+            conf.AddPublicDependency<CGLTF>(target);
+            conf.AddPublicDependency<MeshOptimizer>(target);
         }
     }
 }

@@ -2,6 +2,11 @@
 
 #include "Resource.h"
 #include "Mesh.h"
+#include "MaterialDatabase.h"
+#include "GeometryDatabase.h"
+#include "TextureDatabase.h"
+#include "EntitiesDatabase.h"
+#include "AudioDatabase.h"
 
 #include "../GLTFScene.h"
 
@@ -27,12 +32,29 @@ public:
 		Tempest::Job::Counter meshJobCounter;
 		meshResources.reserve(scene.m_Meshes.size());
 
-		for (int meshIndex : scene.m_Meshes)
+		for (int meshIndex = 0; meshIndex < scene.m_Meshes.size(); ++meshIndex)
 		{
 			meshResources.emplace_back(scene, meshIndex);
 		}
 
-		CompileResourceArray(meshResources, meshJobCounter);
+		CompileResourceArray(eastl::span(meshResources), meshJobCounter);
+
+        MaterialDatabaseResource materialDatabaseResource(scene);
+        Tempest::Job::Counter materialDatabaseCounter;
+        CompileResources(materialDatabaseCounter, materialDatabaseResource);
+
+		Tempest::gEngineCore->GetJobSystem().WaitForCounter(&meshJobCounter, 0);
+		Tempest::gEngineCore->GetJobSystem().WaitForCounter(&materialDatabaseCounter, 0);
+
+		EntitiesDatabaseResource entitiesDatabaseResource(scene);
+		GeometryDatabaseResource geometryDatabaseResource(scene/*, meshResources, materialDatabaseResource.GetCompiledData().Materials*/);
+		TextureDatabaseResource textureDatabaseResource(scene/*, materialDatabaseResource.GetCompiledData().TextureRequests*/);
+		AudioDatabaseResource audioDatabaseResource;
+
+		Tempest::Job::Counter databaseCounter;
+		CompileResources(databaseCounter, entitiesDatabaseResource, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
+
+		Tempest::gEngineCore->GetJobSystem().WaitForCounter(&databaseCounter, 0);
 
 		m_CompiledData = eastl::vector<uint8_t>();
 	}

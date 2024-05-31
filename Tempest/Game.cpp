@@ -82,14 +82,14 @@ void Game::LoadLevel(uint32_t, void* data)
 
 	// Async Load the physics world
 	const flatbuffers::Vector<uint8_t>* physicsData = level->physics_world();
-	Job::Counter physicsWorldCounter;
-	{
-		Job::JobDecl loadPhysicsWorld{ [](uint32_t, void* data) {
-			auto dataVector = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(data);
-			gEngine->GetPhysics().LoadFromData(dataVector->Data(), dataVector->size());
-		}, (void*)physicsData };
-		gEngine->GetJobSystem().RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
-	}
+	//Job::Counter physicsWorldCounter;
+	//{
+	//	Job::JobDecl loadPhysicsWorld{ [](uint32_t, void* data) {
+	//		auto dataVector = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(data);
+	//		gEngine->GetPhysics().LoadFromData(dataVector->Data(), dataVector->size());
+	//	}, (void*)physicsData };
+	//	gEngine->GetJobSystem().RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
+	//}
 
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 	const eastl::vector<flecs::entity_t>& newlyCreatedEntities = gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
@@ -109,10 +109,10 @@ void Game::LoadLevel(uint32_t, void* data)
 	gEngine->GetRenderer().RegisterView(&controller->CameraData);
 
 	// Wait for physics as well
-	gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);
+	//gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);
 
 	// Patch the world with the loaded physics
-	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
+	//gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
 
 	// Wait for the loading of the rendering databases before initializing it
 	gEngine->GetJobSystem().WaitForCounter(&renderingDatabasesCounter, 0);

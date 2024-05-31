@@ -33,7 +33,7 @@ int main()
 			level.Compile();
 			eastl::vector<uint8_t> compiledData = level.GetCompiledData();
 
-			std::filesystem::path outputPath(options.InputFolder.c_str());
+			std::filesystem::path outputPath(options.OutputFolder.c_str());
 			outputPath.append(("Level_" + levelName).c_str());
 			outputPath.replace_extension(Tempest::Definition::LevelExtension());
 			std::ofstream outputFile(outputPath, std::ios::binary);

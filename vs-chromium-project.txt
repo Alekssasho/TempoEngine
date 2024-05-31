@@ -21,6 +21,8 @@ packages/
 Intermediate/
 binaries/
 projects/
+#vcpkg_installed/
+ThirdParty/
 
 [SearchableFiles.include]
 *

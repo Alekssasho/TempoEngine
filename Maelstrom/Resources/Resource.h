@@ -29,7 +29,7 @@ public:
 	Resource(const Resource&) = delete;
 	Resource& operator=(const Resource&) = delete;
 
-	const OutputDataType& GetCompiledData() { return m_CompiledData; }
+	const OutputDataType& GetCompiledData() const { return m_CompiledData; }
 protected:
 	OutputDataType m_CompiledData;
 };

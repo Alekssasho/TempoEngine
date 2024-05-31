@@ -13,7 +13,15 @@ struct FlecsIniter
 	FlecsIniter();
 };
 
-class World
+struct WorldStorage
+{
+    FlecsIniter m_Initer;
+    flecs::world m_EntityWorld;
+
+	WorldStorage();
+};
+
+class World : public WorldStorage
 {
 public:
 	World();
@@ -24,10 +32,6 @@ public:
 	eastl::vector<flecs::entity_t> LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better
 //private:
-
-	FlecsIniter m_Initer;
-	flecs::world m_EntityWorld;
-
 	eastl::vector<eastl::unique_ptr<GameplayFeature>> m_Features;
 };
 }

@@ -12,6 +12,25 @@
 #define CGLTF_IMPLEMENTATION
 #include <cgltf.h>
 
+struct TRS
+{
+	glm::quat Rotation;
+	glm::vec3 Translation;
+	glm::vec3 Scale;
+
+	TRS(const glm::mat4& mat)
+	{
+        glm::vec3 scale, translation, skew;
+        glm::quat rotation;
+        glm::vec4 perspective;
+        glm::decompose(mat, scale, rotation, translation, skew, perspective);
+
+		Rotation = glm::quat::wxyz(rotation.w, rotation.x, -rotation.y, -rotation.z);
+		Translation = glm::vec3(-translation.x, translation.y, translation.z);
+		Scale = scale;
+	}
+};
+
 class Scene
 {
 public:
@@ -147,7 +166,7 @@ public:
 	uint32_t MeshMaterialIndex(int meshIndex, int primIndex) const
 	{
 		cgltf_primitive* primitive = m_Meshes[meshIndex]->primitives + primIndex;
-		return uint32_t(eastl::distance(eastl::find(m_Materials.begin(), m_Materials.end(), primitive->material), m_Materials.begin()));
+		return uint32_t(eastl::distance(m_Materials.begin(), eastl::find(m_Materials.begin(), m_Materials.end(), primitive->material)));
 	}
 
 private:
@@ -172,20 +191,17 @@ private:
 
 			if (value.has_value())
 			{
-				glm::vec3 scale, translation, skew;
-				glm::quat rotation;
-				glm::vec4 perspective;
-				glm::decompose(value->second, scale, rotation, translation, skew, perspective);
+				TRS trs(value->second);
 
-				auto rotatedUp = rotation * glm::vec3(0.0f, 1.0f, 0.0f);
-				auto rotatedForward = rotation * glm::vec3(0.0f, 0.0f, -1.0f);
+				auto rotatedUp = trs.Rotation * glm::vec3(0.0f, 1.0f, 0.0f);
+				auto rotatedForward = trs.Rotation * glm::vec3(0.0f, 0.0f, -1.0f);
 
 				m_Camera = Tempest::Definition::Camera(
 					std::get<0>(value->first),
 					std::get<2>(value->first),
 					std::get<3>(value->first),
 					std::get<1>(value->first),
-					Common::Tempest::Vec3(translation.x, translation.y, translation.z),
+					Common::Tempest::Vec3(trs.Translation.x, trs.Translation.y, trs.Translation.z),
 					Common::Tempest::Vec3(rotatedForward.x, rotatedForward.y, rotatedForward.z),
 					Common::Tempest::Vec3(rotatedUp.x, rotatedUp.y, rotatedUp.z)
 				);
@@ -246,7 +262,7 @@ private:
 		m_CarIndices.insert(m_CarIndices.begin(), carIndices.begin(), carIndices.end());
 	}
 
-	glm::mat4 GetNodeTransform(cgltf_node* node)
+	glm::mat4 GetNodeTransform(cgltf_node* node) const
 	{
 		float m[16];
 		cgltf_node_transform_local(node, m);
@@ -254,12 +270,12 @@ private:
         return glm::mat4(
             m[0], m[1], m[2], m[3],
             m[4], m[5], m[6], m[7],
-            m[11], m[10], m[9], m[8],
+            m[8], m[9], m[10], m[11],
             m[12], m[13], m[14], m[15]);
     }
 
 	template<typename T>
-	eastl::optional<T> WalkNodes(cgltf_node* node, const glm::mat4& parentTransform, eastl::function<eastl::optional<T>(const cgltf_data* data, cgltf_node* node, const glm::mat4& transform)> walkFunction)
+	eastl::optional<T> WalkNodes(cgltf_node* node, const glm::mat4& parentTransform, eastl::function<eastl::optional<T>(const cgltf_data* data, cgltf_node* node, const glm::mat4& transform)> walkFunction) const
 	{
 		glm::mat4 worldTransform = parentTransform * GetNodeTransform(node);
 
@@ -275,6 +291,25 @@ private:
 			if (data.has_value())
 			{
 				return data;
+			}
+		}
+
+		return eastl::nullopt;
+	}
+
+public:
+	template<typename T>
+	eastl::optional<T> WalkRootNodes(eastl::function<eastl::optional<T>(const cgltf_data* data, cgltf_node* node, const glm::mat4& transform)> walkFunction) const
+	{
+		for (int i = 0; i < m_Data->scene->nodes_count; ++i)
+		{
+			auto returnValue = WalkNodes(
+				m_Data->scene->nodes[i],
+				glm::identity<glm::mat4>(),
+				walkFunction);
+			if (returnValue.has_value())
+			{
+				return returnValue;
 			}
 		}
 

@@ -16,10 +16,12 @@ public:
 	void Compile() override
 	{
 		const char* backgroundMusicFile = "file_example_oog_48.ogg";
+        std::filesystem::path outputPath(gCompilerOptions->InputFolder.c_str());
+        outputPath.append(backgroundMusicFile);
 
-		uint64_t size = std::filesystem::file_size(backgroundMusicFile);
+		uint64_t size = std::filesystem::file_size(outputPath);
 
-		std::ifstream file(backgroundMusicFile, std::ios::binary);
+		std::ifstream file(outputPath, std::ios::binary);
 
 		// TODO: check if we can use eastl instead of std here
 		std::vector<uint8_t> data(size);

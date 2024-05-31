@@ -152,4 +152,26 @@ namespace TempoEngine
             conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\meshoptimizer.dll");
         }
     }
+
+    [Sharpmake.Export]
+    public class Compressonator : ThirdPartyProject
+    {
+        public override void ConfigureAll(Project.Configuration conf, Target target)
+        {
+            base.ConfigureAll(conf, target);
+
+            if(target.Optimization == Optimization.Debug)
+            {
+                conf.LibraryFiles.Add("Compressonator_MDd");
+            }
+            else
+            {
+                conf.LibraryFiles.Add("Compressonator_MD");
+            }    
+            
+            conf.LibraryPaths.Add(@"C:\Compressonator_4.5.52\lib\bin\x64");
+            
+            conf.IncludePaths.Add(@"C:\Compressonator_4.5.52\include");
+        }
+    }
 }

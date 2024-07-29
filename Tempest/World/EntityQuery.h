@@ -14,7 +14,7 @@ struct EntityQuery
 
 	~EntityQuery()
 	{
-		Query.destruct();
+		//Query.destruct();
 	}
 
 	void Init(const World& world)

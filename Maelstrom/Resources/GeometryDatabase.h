@@ -10,9 +10,8 @@
 struct GeometryDatabaseResource : Resource<eastl::vector<uint8_t>>
 {
 public:
-	GeometryDatabaseResource(const Scene& scene, const eastl::vector<MeshResource>& meshes, const eastl::vector<Tempest::Definition::Material>& materials)
-        : m_Scene(scene)
-		, m_Meshes(meshes)
+	GeometryDatabaseResource(const eastl::vector<MeshResource>& meshes, const eastl::vector<Tempest::Definition::Material>& materials)
+        : m_Meshes(meshes)
 		, m_Materials(materials)
     {}
 
@@ -100,7 +99,6 @@ public:
 	}
 
 private:
-	const Scene& m_Scene;
 	const eastl::vector<MeshResource>& m_Meshes;
 	const eastl::vector<Tempest::Definition::Material>& m_Materials;
 };

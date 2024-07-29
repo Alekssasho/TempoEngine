@@ -33,7 +33,7 @@ public:
             .system<>("Physics Update")
             .kind(flecs::OnUpdate)
             //.singleton()
-            .iter(&Physics::PhysicsUpdate);
+            .run(&Physics::PhysicsUpdate);
     }
 
     static void PhysicsUpdate(flecs::iter& it)

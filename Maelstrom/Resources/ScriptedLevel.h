@@ -12,10 +12,10 @@
 
 #include <DataDefinitions/Level_generated.h>
 
-struct LevelResource : Resource<eastl::vector<uint8_t>>
+struct ScriptedLevelResource : Resource<eastl::vector<uint8_t>>
 {
 public:
-    LevelResource(const eastl::string& name)
+    ScriptedLevelResource(const eastl::string& name)
         : m_Name(name)
     {
 

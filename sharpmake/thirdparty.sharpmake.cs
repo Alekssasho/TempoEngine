@@ -154,7 +154,7 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class Compressonator : ThirdPartyProject
+    public class Nvtt : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
@@ -162,16 +162,22 @@ namespace TempoEngine
 
             if(target.Optimization == Optimization.Debug)
             {
-                conf.LibraryFiles.Add("Compressonator_MDd");
+                conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\debug\lib\static");
+                
             }
             else
             {
-                conf.LibraryFiles.Add("Compressonator_MD");
-            }    
-            
-            conf.LibraryPaths.Add(@"C:\Compressonator_4.5.52\lib\bin\x64");
-            
-            conf.IncludePaths.Add(@"C:\Compressonator_4.5.52\include");
+                conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\lib\static");
+            }
+            var suffix = (target.Optimization == Optimization.Debug) ? "_d" : "";
+            conf.LibraryFiles.Add("nvtt" + suffix);
+            conf.LibraryFiles.Add("nvthread" + suffix);
+            conf.LibraryFiles.Add("nvsquish" + suffix);
+            conf.LibraryFiles.Add("nvmath" + suffix);
+            conf.LibraryFiles.Add("nvimage" + suffix);
+            conf.LibraryFiles.Add("nvcore" + suffix);
+            conf.LibraryFiles.Add("bc6h" + suffix);
+            conf.LibraryFiles.Add("bc7" + suffix);
         }
     }
 }

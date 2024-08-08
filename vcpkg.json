@@ -12,6 +12,7 @@
     "flecs",
     "glm",
     "meshoptimizer",
-    "cgltf"
+    "cgltf",
+    "nvtt"
   ]
 }

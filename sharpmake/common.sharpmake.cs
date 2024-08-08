@@ -52,6 +52,8 @@ namespace TempoEngine
 
             conf.Defines.Add("_SILENCE_CXX20_CISO646_REMOVED_WARNING");
             conf.Defines.Add("_HAS_EXCEPTIONS=0");
+            // There is some difference in VC STD lib and in release sometimes std::mutex crash. This is fixing it
+            conf.Defines.Add("_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR");
 
             conf.Defines.Add("NOMINMAX");
             conf.Defines.Add("WIN32_LEAN_AND_MEAN");

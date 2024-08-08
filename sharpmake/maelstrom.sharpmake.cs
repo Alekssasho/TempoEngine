@@ -23,7 +23,7 @@ namespace TempoEngine
 
             conf.AddPublicDependency<CGLTF>(target);
             conf.AddPublicDependency<MeshOptimizer>(target);
-            conf.AddPublicDependency<Compressonator>(target);
+            conf.AddPublicDependency<Nvtt>(target);
         }
     }
 }

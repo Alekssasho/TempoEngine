@@ -25,8 +25,10 @@ struct PrimitiveMeshData
 
 struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 {
-	MeshResource(const Scene& scene, int meshIndex)
-		: m_Scene(scene), m_MeshIndex(meshIndex)
+	MeshResource(const Scene& scene, uint32_t sceneIndex, uint32_t meshIndex)
+		: m_Scene(scene)
+		, m_SceneIndex(sceneIndex)
+		, m_MeshIndex(meshIndex)
 	{}
 
 	void Compile() override
@@ -147,5 +149,6 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 	}
 
 	const Scene& m_Scene;
-	int m_MeshIndex;
+	uint32_t m_SceneIndex; // This is needed for later remapping of materials
+	uint32_t m_MeshIndex;
 };

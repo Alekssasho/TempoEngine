@@ -423,6 +423,7 @@ MigrationBackup/
 *.tslb
 *.tgb
 *.tab
+*.ttb
 
 # Source Data which should be kept in something else
 *.gltf

@@ -10,8 +10,8 @@
 struct TextureDatabaseResource : Resource<eastl::vector<uint8_t>>
 {
 public:
-	TextureDatabaseResource(const Scene& scene, const eastl::vector<TextureRequest>& textureRequests)
-		: m_Scene(scene)
+	TextureDatabaseResource(eastl::span<const Scene> scenes, const eastl::vector<TextureRequest>& textureRequests)
+		: m_Scenes(scenes)
 		, m_TextureRequests(textureRequests)
 	{}
 
@@ -22,7 +22,7 @@ public:
 		for (const TextureRequest& request : m_TextureRequests)
 		{
 			textures.emplace_back(
-				m_Scene,
+				m_Scenes[request.SceneIndex],
 				request
 			);
 		}
@@ -67,6 +67,6 @@ public:
 	}
 
 private:
-	const Scene& m_Scene;
+	eastl::span<const Scene> m_Scenes;
 	const eastl::vector<TextureRequest>& m_TextureRequests;
 };

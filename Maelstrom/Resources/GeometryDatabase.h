@@ -10,9 +10,10 @@
 struct GeometryDatabaseResource : Resource<eastl::vector<uint8_t>>
 {
 public:
-	GeometryDatabaseResource(const eastl::vector<MeshResource>& meshes, const eastl::vector<Tempest::Definition::Material>& materials)
+	GeometryDatabaseResource(const eastl::vector<MeshResource>& meshes, const eastl::vector<Tempest::Definition::Material>& materials, const eastl::vector<MaterialRequest>& materialRequests)
         : m_Meshes(meshes)
 		, m_Materials(materials)
+		, m_MaterialRequests(materialRequests)
     {}
 
 	void Compile() override
@@ -62,10 +63,14 @@ public:
 					primitiveMesh.MeshletIndices.end()
 				);
 
+				// We need to remap material index as we can have multiple scenes
+				MaterialRequest findRequest{ m_Meshes[index].m_SceneIndex, primitiveMesh.MaterialIndex };
+				const uint32_t remmapedMaterialIndex = uint32_t(eastl::distance(m_MaterialRequests.begin(), eastl::find(m_MaterialRequests.begin(), m_MaterialRequests.end(), findRequest)));
+
 				primitiveMeshes.emplace_back(
 					currentMeshletBufferOffset,
 					uint32_t(primitiveMesh.Meshlets.size()),
-					primitiveMesh.MaterialIndex
+					remmapedMaterialIndex
 				);
 
 				currentMeshletBufferOffset += uint32_t(primitiveMesh.Meshlets.size());
@@ -101,4 +106,5 @@ public:
 private:
 	const eastl::vector<MeshResource>& m_Meshes;
 	const eastl::vector<Tempest::Definition::Material>& m_Materials;
+	const eastl::vector<MaterialRequest>& m_MaterialRequests;
 };

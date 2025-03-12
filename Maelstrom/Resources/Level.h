@@ -46,7 +46,7 @@ public:
 
         for (int meshIndex = 0; meshIndex < scene.m_Meshes.size(); ++meshIndex)
         {
-            meshResources.emplace_back(scene, meshIndex);
+            meshResources.emplace_back(scene, 0, meshIndex);
         }
 
         CompileResourceArray(eastl::span(meshResources), meshJobCounter);
@@ -59,8 +59,8 @@ public:
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&materialDatabaseCounter, 0);
 
         EntitiesDatabaseResource entitiesDatabaseResource(scene);
-        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials);
-        TextureDatabaseResource textureDatabaseResource(scene, materialDatabaseResource.GetCompiledData().TextureRequests);
+        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialDatabaseResource.m_MaterialRequests);
+        TextureDatabaseResource textureDatabaseResource(eastl::span(&scene, 1), materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource;
 
         Tempest::Job::Counter databaseCounter;

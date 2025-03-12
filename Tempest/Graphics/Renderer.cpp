@@ -22,7 +22,7 @@ namespace Tempest
 Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
 {
-	m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
+	//m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Lights);
 }

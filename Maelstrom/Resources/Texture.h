@@ -13,6 +13,7 @@
 
 struct TextureRequest
 {
+	uint32_t SceneIndex;
 	uint32_t TextureIndex;
 	Tempest::Definition::ColorSpace ColorSpace;
 	Tempest::Definition::TextureFormat TextureFormat;

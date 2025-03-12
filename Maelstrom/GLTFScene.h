@@ -51,6 +51,19 @@ public:
 		cgltf_free(m_Data);
 	}
 
+	uint32_t MeshIndexFromName(const char* name) const
+	{
+		for (auto meshIndex = 0; meshIndex < m_Meshes.size(); ++meshIndex)
+		{
+			if (strcmp(m_Meshes[meshIndex]->name, name) == 0)
+			{
+				return meshIndex;
+			}
+		}
+		assert(false);
+		return -1;
+	}
+
 	uint32_t MeshPrimitiveCount(int meshIndex) const
 	{
 		return uint32_t(m_Meshes[meshIndex]->primitives_count);

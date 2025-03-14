@@ -8,6 +8,7 @@
 
 #include <World/GameplayFeatures/PhysicsFeature.h>
 #include <World/GameplayFeatures/InputControllerFeature.h>
+#include <World/GameplayFeatures/SoldierMovementFeature.h>
 
 template<typename ComponentType>
 void RegisterComponent(flecs::world& world)
@@ -90,6 +91,7 @@ WorldStorage::WorldStorage()
         .member<glm::vec3>("Color")
         .member<float>("Intensity");
 	RegisterComponent<Components::VehicleController>(m_EntityWorld);
+	RegisterComponent<Components::Faction>(m_EntityWorld);
 
 	RegisterComponent<Tags::Boids>(m_EntityWorld);
 	RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
@@ -99,6 +101,7 @@ World::World()
 {
     //m_Features.emplace_back(new GameplayFeatures::Physics);
     m_Features.emplace_back(new GameplayFeatures::InputController);
+    m_Features.emplace_back(new GameplayFeatures::SoldierMovementController);
 }
 
 World::~World()

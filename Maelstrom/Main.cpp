@@ -75,4 +75,16 @@ int main()
 
 		engine.GetJobSystem().WaitForCompletion();
 	}
+
+	// Debug options to just launch Spark.exe with the new data
+	const char* processName = "Spark.exe";
+
+	STARTUPINFO startupInfo;
+	::ZeroMemory(&startupInfo, sizeof(startupInfo));
+	startupInfo.cb = sizeof(startupInfo);
+
+    PROCESS_INFORMATION proccessInfo;
+    ::ZeroMemory(&proccessInfo, sizeof(proccessInfo));
+
+	::CreateProcess(processName, nullptr, nullptr, nullptr, false, 0, nullptr, nullptr, &startupInfo, &proccessInfo);
 }

@@ -10,6 +10,19 @@ class PxRigidBody;
 
 namespace Tempest
 {
+namespace CastleFight
+{
+enum class Faction : uint32_t
+{
+	Red,
+	Blue,
+	Count
+};
+}
+}
+
+namespace Tempest
+{
 namespace Components
 {
 struct Transform
@@ -74,6 +87,13 @@ struct VehicleController
 	int InputMapIndex;
 
 	static constexpr const char* Name = "VehicleController";
+};
+
+struct Faction
+{
+	CastleFight::Faction FactionFlag;
+
+	static constexpr const char* Name = "Faction";
 };
 }
 

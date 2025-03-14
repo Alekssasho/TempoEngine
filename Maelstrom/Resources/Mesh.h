@@ -67,8 +67,8 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 			for (int i = 0; i < positions.size(); ++i)
 			{
 				vertices[i] = VertexLayout{
-					.Position = glm::vec3(-positions[i].x, positions[i].y, positions[i].z),
-					.Normal = glm::vec3(-normals[i].x, normals[i].y, normals[i].z),
+					.Position = glm::vec3(positions[i].x, positions[i].y, -positions[i].z),
+					.Normal = glm::vec3(normals[i].x, normals[i].y, -normals[i].z),
 					.UV = uvs[i]
 				};
 			}

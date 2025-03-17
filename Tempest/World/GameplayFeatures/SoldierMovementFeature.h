@@ -13,9 +13,9 @@ struct SoldierMovementController : public GameplayFeature
 {
 	virtual void PrepareSystems(class World& world) override
 	{
-		world.m_EntityWorld.system<Components::Transform, const Components::Faction>("SoldierMovementController")
+		world.m_EntityWorld.system<Components::Transform, const Components::Faction, const Tags::SimpleMovement>("SoldierMovementController")
 			.kind(flecs::PreUpdate)
-            .each([](flecs::entity, Components::Transform& transform, const Components::Faction& faction) {
+            .each([](flecs::entity, Components::Transform& transform, const Components::Faction& faction, const Tags::SimpleMovement) {
 				transform.Position += (transform.Rotation * sForwardDirection) * 0.01f;
 			});
 	}

@@ -95,6 +95,15 @@ struct Faction
 
 	static constexpr const char* Name = "Faction";
 };
+
+struct Factory
+{
+    flecs::entity PrefabToSpawn;
+	float TimeToSpawn;
+	float CurrentTime;
+
+    static constexpr const char* Name = "Factory";
+};
 }
 
 namespace Tags
@@ -107,6 +116,11 @@ struct Boids
 struct DirectionalLight
 {
 	static constexpr const char* Name = "DirectionalLight";
+};
+
+struct SimpleMovement
+{
+    static constexpr const char* Name = "SimpleMovement";
 };
 }
 }

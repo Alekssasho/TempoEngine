@@ -9,6 +9,7 @@
 #include <World/GameplayFeatures/PhysicsFeature.h>
 #include <World/GameplayFeatures/InputControllerFeature.h>
 #include <World/GameplayFeatures/SoldierMovementFeature.h>
+#include <World/GameplayFeatures/FactorySpawner.h>
 
 template<typename ComponentType>
 void RegisterComponent(flecs::world& world)
@@ -58,6 +59,8 @@ FlecsIniter::FlecsIniter()
 
 WorldStorage::WorldStorage()
 {
+	m_EntityWorld.set<flecs::Rest>({});
+	m_EntityWorld.import<flecs::stats>();
 	// Enable for debug
 	//ecs_tracing_enable(3);
 	//m_EntityWorld.set_target_fps(60);
@@ -91,10 +94,18 @@ WorldStorage::WorldStorage()
         .member<glm::vec3>("Color")
         .member<float>("Intensity");
 	RegisterComponent<Components::VehicleController>(m_EntityWorld);
-	RegisterComponent<Components::Faction>(m_EntityWorld);
+	//RegisterComponent<Components::Faction>(m_EntityWorld);
+	m_EntityWorld.component<Components::Faction>(Components::Faction::Name)
+		.member<uint32_t>("FactionFlag");
+	//RegisterComponent<Components::Factory>(m_EntityWorld);
+	m_EntityWorld.component<Components::Factory>(Components::Factory::Name)
+		.member<flecs::entity>("PrefabToSpawn")
+		.member<uint32_t>("TimeToSpawn")
+		.member<uint32_t>("CurrentTime");
 
 	RegisterComponent<Tags::Boids>(m_EntityWorld);
-	RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
+    RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
+    RegisterComponent<Tags::SimpleMovement>(m_EntityWorld);
 }
 
 World::World()
@@ -102,6 +113,7 @@ World::World()
     //m_Features.emplace_back(new GameplayFeatures::Physics);
     m_Features.emplace_back(new GameplayFeatures::InputController);
     m_Features.emplace_back(new GameplayFeatures::SoldierMovementController);
+    m_Features.emplace_back(new GameplayFeatures::FactorySpawner);
 }
 
 World::~World()

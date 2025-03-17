@@ -14,39 +14,75 @@ public:
         return "CastleFight";
     }
 
-    void AddPerFactionData(Tempest::CastleFight::Faction faction, glm::vec3 originPoint)
+    const char* GetSuffixPerFaction(Tempest::CastleFight::Faction faction)
     {
-        eastl::string suffix;
         switch (faction)
         {
         case Tempest::CastleFight::Faction::Red:
-            suffix = "_Red";
-            break;
+            return "_Red";
         case Tempest::CastleFight::Faction::Blue:
-            suffix = "_Blue";
-            break;
+            return "_Blue";
         default:
             assert(false);
         }
+        return "";
+    }
+
+    void AddPrefabsPerFaction(Tempest::CastleFight::Faction faction)
+    {
+        eastl::string suffix = GetSuffixPerFaction(faction);
+
+        {
+            const uint32_t meshIndex = AddMeshRequest("Soldier", "Warrior" + suffix);
+            m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab(("Soldier_Prefab" + suffix).c_str())
+                .is_a(m_BasePrefabs[Prefabs::Soldier])
+                .set(Tempest::Components::StaticMesh{ meshIndex })
+                .set(Tempest::Components::Faction{ faction });
+        }
+
+        {
+            const uint32_t meshIndex = AddMeshRequest("car3", "Cube.001");
+            m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Factory] = m_ECS.m_EntityWorld.prefab(("Factory_Prefab" + suffix).c_str())
+                .is_a(m_BasePrefabs[Prefabs::Factory])
+                .set(Tempest::Components::StaticMesh{ meshIndex })
+                .set(Tempest::Components::Faction{ faction })
+                .set(Tempest::Components::Factory{
+                        .PrefabToSpawn = m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier],
+                        .TimeToSpawn = 5.0f,
+                        .CurrentTime = 0.0f,
+                    });
+        }
+    }
+
+    void AddPrefabs()
+    {
+        m_BasePrefabs[Prefabs::Factory] = m_ECS.m_EntityWorld.prefab("Factory_Prefab_Base");
+        m_BasePrefabs[Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab("Soldier_Prefab_Base")
+            .add<Tempest::Tags::SimpleMovement>();
+
+        AddPrefabsPerFaction(Tempest::CastleFight::Faction::Blue);
+        AddPrefabsPerFaction(Tempest::CastleFight::Faction::Red);
+    }
+
+    void AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction faction, glm::vec3 originPoint)
+    {
+        eastl::string suffix = GetSuffixPerFaction(faction);
 
         const glm::vec3 factionOriginToWorldOrigin = glm::normalize(-originPoint);
 
         // Add castle
         {
-            const uint32_t meshIndex = AddMeshRequest("car3", "Cube.001");
             m_ECS.m_EntityWorld.entity(("Castle" + suffix).c_str())
-                .set(Tempest::Components::StaticMesh{ meshIndex })
+                .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Factory])
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint, glm::vec3(1.0f, 1.0f, 1.0f) });
         }
 
-        // Soldiers
-        {
-            const uint32_t meshIndex = AddMeshRequest("Soldier", "Warrior" + suffix);
-            m_ECS.m_EntityWorld.entity(("Warrior" + suffix).c_str())
-                .set(Tempest::Components::StaticMesh{ meshIndex })
-                .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint + 2.0f * factionOriginToWorldOrigin, glm::vec3(1.0f, 1.0f, 1.0f) })
-                .set(Tempest::Components::Faction{ faction });
-        }
+        //// Soldiers
+        //{
+        //    m_ECS.m_EntityWorld.entity(("Soldier" + suffix).c_str())
+        //        .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier])
+        //        .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint + 2.0f * factionOriginToWorldOrigin, glm::vec3(1.0f, 1.0f, 1.0f) });
+        //}
     }
 
     void ConstructScript() override
@@ -86,8 +122,20 @@ public:
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(23.0f, 23.0f, 23.0f)});
         }
 
-        AddPerFactionData(Tempest::CastleFight::Faction::Blue, glm::vec3(20.0f, 0.0f, 0.0f));
-        AddPerFactionData(Tempest::CastleFight::Faction::Red, glm::vec3(-20.0f, 0.0f, 0.0f));
+        AddPrefabs();
 
+        AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction::Blue, glm::vec3(20.0f, 0.0f, 0.0f));
+        AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction::Red, glm::vec3(-20.0f, 0.0f, 0.0f));
     }
+
+private:
+    enum Prefabs
+    {
+        Factory,
+        Soldier,
+        Count
+    };
+
+    eastl::array<flecs::entity, Prefabs::Count> m_BasePrefabs;
+    eastl::array<eastl::array<flecs::entity, Prefabs::Count>, uint32_t(Tempest::CastleFight::Faction::Count)> m_PerFactionPrefabs;
 };

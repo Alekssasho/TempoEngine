@@ -1,0 +1,88 @@
+#pragma once
+
+namespace Tempest
+{
+namespace Components
+{
+
+struct Transform
+{
+    glm::quat Rotation;
+    glm::vec3 Position;
+    glm::vec3 Scale;
+    static constexpr const char* Name = "Transform";
+};
+struct Rect
+{
+    float Width;
+    float Height;
+    glm::vec4 Color;
+    static constexpr const char* Name = "Rect";
+};
+struct StaticMesh
+{
+    MeshHandle Mesh;
+    static constexpr const char* Name = "StaticMesh";
+};
+struct DynamicPhysicsActor
+{
+    physx::PxRigidBody* Actor;
+    static constexpr const char* Name = "DynamicPhysicsActor";
+};
+struct LightColorInfo
+{
+    glm::vec3 Color;
+    float Intensity;
+    static constexpr const char* Name = "LightColorInfo";
+};
+struct CarPhysicsPart
+{
+    physx::PxRigidBody* CarActor;
+    uint32_t ShapeIndex;
+    static constexpr const char* Name = "CarPhysicsPart";
+};
+struct CameraController
+{
+    Camera CameraData;
+    uint32_t InputMapIndex;
+    static constexpr const char* Name = "CameraController";
+};
+struct VehicleController
+{
+    uint32_t InputMapIndex;
+    static constexpr const char* Name = "VehicleController";
+};
+struct Faction
+{
+    CastleFight::Faction FactionFlag;
+    static constexpr const char* Name = "Faction";
+};
+struct Factory
+{
+    flecs::entity PrefabToSpawn;
+    float TimeToSpawn;
+    float CurrentTime;
+    static constexpr const char* Name = "Factory";
+};
+}
+}
+
+namespace Tempest
+{
+namespace Tags
+{
+
+struct Boids
+{
+    static constexpr const char* Name = "Boids";
+};
+struct DirectionalLight
+{
+    static constexpr const char* Name = "DirectionalLight";
+};
+struct SimpleMovement
+{
+    static constexpr const char* Name = "SimpleMovement";
+};
+}
+}

@@ -1,0 +1,23 @@
+#include <CommonIncludes.h>
+#include <World/Components/Components.h>
+
+namespace Tempest
+{
+void RegisterComponents(flecs::world& world)
+{
+    {% for structure in structures -%}
+    {%- if structure.ttype == "Component" -%}
+    world.component<Components::{{structure.name}}>(Components::{{structure.name}}::Name)
+        {% if structure is needs_reflection -%}
+        {% for member in structure.members -%}
+        .member<{{type_for_member(member=member)}}>("{{member.name}}")
+        {% endfor %}
+        {%- endif -%};
+    {% endif -%}
+
+    {%- if structure.ttype == "Tag" -%}
+    world.component<Tags::{{structure.name}}>(Tags::{{structure.name}}::Name);
+    {% endif -%}
+    {% endfor %}
+}
+}

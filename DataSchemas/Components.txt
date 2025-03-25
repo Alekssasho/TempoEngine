@@ -1,0 +1,69 @@
+Component Transform
+{
+    Rotation : glm::quat;
+    Position : glm::vec3;
+    Scale : glm::vec3;
+}
+
+Component Rect
+{
+	Width : float;
+	Height : float;
+	Color : glm::vec4;
+}
+
+// Static mesh component for rendering
+Component StaticMesh
+{
+    [StorageType(uint32_t)]
+	Mesh : MeshHandle;
+}
+
+[NoReflection]
+Component DynamicPhysicsActor
+{
+    Actor : physx::PxRigidBody*;
+}
+
+Component LightColorInfo
+{
+	Color : glm::vec3;
+	Intensity : float;
+}
+
+[NoReflection]
+Component CarPhysicsPart
+{
+	CarActor : physx::PxRigidBody*;
+	ShapeIndex : uint32_t;
+}
+
+[NoReflection]
+Component CameraController
+{
+	CameraData : Camera;
+	InputMapIndex : uint32_t;
+}
+
+Component VehicleController
+{
+	// TODO: add input stuff
+	InputMapIndex : uint32_t;
+}
+
+Component Faction
+{
+    [StorageType(uint32_t)]
+	FactionFlag : CastleFight::Faction;
+}
+
+Component Factory
+{
+    PrefabToSpawn : flecs::entity;
+	TimeToSpawn : float;
+	CurrentTime : float;
+}
+
+Tag Boids;
+Tag DirectionalLight;
+Tag SimpleMovement;

@@ -28,9 +28,9 @@ void Rects::GatherData(const World& world, FrameData& frameData)
 		frameData.Rects.push_back(RectData{
 			transform.Position.x,
 			transform.Position.y,
-			rect.width,
-			rect.height,
-			rect.color,
+			rect.Width,
+			rect.Height,
+			rect.Color,
 		});
 	});
 }

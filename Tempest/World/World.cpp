@@ -11,12 +11,6 @@
 #include <World/GameplayFeatures/SoldierMovementFeature.h>
 #include <World/GameplayFeatures/FactorySpawner.h>
 
-template<typename ComponentType>
-void RegisterComponent(flecs::world& world)
-{
-	flecs::component<ComponentType>(world, ComponentType::Name);
-}
-
 namespace Tempest
 {
 
@@ -68,44 +62,21 @@ WorldStorage::WorldStorage()
 	m_EntityWorld.set_task_threads(std::thread::hardware_concurrency());
 
 	// Register all components
-	//RegisterComponent<Components::Transform>(m_EntityWorld);
 	m_EntityWorld.component<glm::quat>()
 		.member<float>("x")
 		.member<float>("y")
 		.member<float>("z")
 		.member<float>("w");
-    m_EntityWorld.component<glm::vec3>()
-        .member<float>("x")
-        .member<float>("y")
-        .member<float>("z");
-    m_EntityWorld.component<Components::Transform>(Components::Transform::Name)
-        .member<glm::quat>("Rotation")
-		.member<glm::vec3>("Position")
-		.member<glm::vec3>("Scale");
-	RegisterComponent<Components::Rect>(m_EntityWorld);
-	//RegisterComponent<Components::StaticMesh>(m_EntityWorld);
-	m_EntityWorld.component<Components::StaticMesh>(Components::StaticMesh::Name)
-		.member<uint32_t>("Mesh");
-	RegisterComponent<Components::CameraController>(m_EntityWorld);
-	RegisterComponent<Components::CarPhysicsPart>(m_EntityWorld);
-	RegisterComponent<Components::DynamicPhysicsActor>(m_EntityWorld);
-	//RegisterComponent<Components::LightColorInfo>(m_EntityWorld);
-    m_EntityWorld.component<Components::LightColorInfo>(Components::LightColorInfo::Name)
-        .member<glm::vec3>("Color")
-        .member<float>("Intensity");
-	RegisterComponent<Components::VehicleController>(m_EntityWorld);
-	//RegisterComponent<Components::Faction>(m_EntityWorld);
-	m_EntityWorld.component<Components::Faction>(Components::Faction::Name)
-		.member<uint32_t>("FactionFlag");
-	//RegisterComponent<Components::Factory>(m_EntityWorld);
-	m_EntityWorld.component<Components::Factory>(Components::Factory::Name)
-		.member<flecs::entity>("PrefabToSpawn")
-		.member<uint32_t>("TimeToSpawn")
-		.member<uint32_t>("CurrentTime");
-
-	RegisterComponent<Tags::Boids>(m_EntityWorld);
-    RegisterComponent<Tags::DirectionalLight>(m_EntityWorld);
-    RegisterComponent<Tags::SimpleMovement>(m_EntityWorld);
+	m_EntityWorld.component<glm::vec3>()
+		.member<float>("x")
+		.member<float>("y")
+		.member<float>("z");
+	m_EntityWorld.component<glm::vec4>()
+		.member<float>("x")
+		.member<float>("y")
+		.member<float>("z")
+		.member<float>("w");
+	RegisterComponents(m_EntityWorld);
 }
 
 World::World()
@@ -165,67 +136,8 @@ private:
 eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t size)
 {
 	m_EntityWorld.from_json(data);
+	// TODO: This is not working
 	eastl::vector<flecs::entity_t> newlyCreatedEntityIds;
-
-	//MemoryInputStream stream(reinterpret_cast<const uint8_t*>(data), size);
-
-	//uint32_t numArchetypes;
-	//stream.Read(numArchetypes);
-
-	//for (uint32_t i = 0; i < numArchetypes; ++i) {
-	//	uint32_t numEntities;
-	//	stream.Read(numEntities);
-
-	//	// Read the number of components
-	//	uint32_t numComponents;
-	//	stream.Read(numComponents);
-
-	//	// TODO: Temp memory
-	//	eastl::vector<uint32_t> componentSizes;
-	//	componentSizes.resize(numComponents);
-	//	stream.Read(reinterpret_cast<uint8_t*>(componentSizes.data()), numComponents * sizeof(uint32_t));
-
-	//	uint32_t nameLen;
-	//	stream.Read(nameLen);
-
-	//	auto archetypeName = reinterpret_cast<const char*>(stream.Jump(nameLen));
-
-	//	eastl::vector<const void*> componentArrayPointers;
-	//	componentArrayPointers.reserve(numComponents);
-
-	//	for (auto size : componentSizes) {
-	//		// This is a tag, so we just push a nullptr
-	//		if (size == 0) {
-	//			componentArrayPointers.push_back(nullptr);
-	//		}
-	//		else
-	//		{
-	//			componentArrayPointers.push_back(stream.Jump(numEntities * size));
-	//		}
-	//	}
-
-	//	const uint32_t beforeSize = uint32_t(newlyCreatedEntityIds.size());
-	//	newlyCreatedEntityIds.resize(beforeSize + numEntities);
-
-	//	ecs_bulk_desc_t desc = {};
-	//	desc.count = numEntities;
-	//	desc.data = const_cast<void**>(componentArrayPointers.data());
-	//	//desc.table = ecs_table_from_str(m_EntityWorld, archetypeName);
-
-	//	uint32_t currentTermCount = 0;
-	//	ecs_term_t currentTerm;
-	//	while (archetypeName[0] && (archetypeName = ecs_parse_term(m_EntityWorld, nullptr, nullptr, archetypeName, &currentTerm, nullptr, nullptr, false)))
-	//	{
-	//		ecs_term_finalize(m_EntityWorld, &currentTerm);
-	//		desc.ids[currentTermCount] = currentTerm.id;
-	//		++currentTermCount;
-	//		ecs_term_fini(&currentTerm);
-	//	}
-	//	//desc.table = ecs_table_find(m_EntityWorld, )
-
-	//	const ecs_entity_t* newlyCreatedIds = ecs_bulk_init(m_EntityWorld, &desc);
-	//	memcpy(newlyCreatedEntityIds.data() + beforeSize, newlyCreatedIds, numEntities * sizeof(ecs_entity_t));
-	//}
 
 	for (const auto& feature : m_Features)
 	{

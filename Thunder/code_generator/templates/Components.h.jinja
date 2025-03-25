@@ -1,0 +1,32 @@
+{% macro structure_template(structure) %}
+struct {{structure.name}}
+{
+    {% for member in structure.members -%}
+    {{member.ttype}} {{member.name}};
+    {% endfor -%}
+    static constexpr const char* Name = "{{structure.name}}";
+};
+{%- endmacro structure_template -%}
+#pragma once
+
+namespace Tempest
+{
+namespace Components
+{
+{% for structure in structures -%}
+    {% if structure.ttype != "Component" %}{% continue %}{% endif %}
+    {{-self::structure_template(structure=structure)-}}
+{% endfor %}
+}
+}
+
+namespace Tempest
+{
+namespace Tags
+{
+{% for structure in structures -%}
+    {% if structure.ttype != "Tag" %}{% continue %}{% endif %}
+    {{-self::structure_template(structure=structure)-}}
+{% endfor %}
+}
+}

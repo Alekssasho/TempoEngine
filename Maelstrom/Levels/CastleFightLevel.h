@@ -72,9 +72,11 @@ public:
 
         // Add castle
         {
-            m_ECS.m_EntityWorld.entity(("Castle" + suffix).c_str())
+            flecs::entity castleId = m_ECS.m_EntityWorld.entity(("Castle" + suffix).c_str())
                 .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Factory])
+                .add<Tempest::Tags::Castle>()
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint, glm::vec3(1.0f, 1.0f, 1.0f) });
+            m_CastleManager.Castles[(uint32_t(faction) + 1) % uint32_t(Tempest::CastleFight::Faction::Count)] = castleId;
         }
 
         //// Soldiers
@@ -124,8 +126,12 @@ public:
 
         AddPrefabs();
 
+        m_CastleManager.Castles.resize(uint32_t(Tempest::CastleFight::Faction::Count));
+
         AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction::Blue, glm::vec3(20.0f, 0.0f, 0.0f));
         AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction::Red, glm::vec3(-20.0f, 0.0f, 0.0f));
+
+        m_ECS.m_EntityWorld.set<Tempest::Components::CastleManager>(m_CastleManager);
     }
 
 private:
@@ -138,4 +144,6 @@ private:
 
     eastl::array<flecs::entity, Prefabs::Count> m_BasePrefabs;
     eastl::array<eastl::array<flecs::entity, Prefabs::Count>, uint32_t(Tempest::CastleFight::Faction::Count)> m_PerFactionPrefabs;
+
+    Tempest::Components::CastleManager m_CastleManager;
 };

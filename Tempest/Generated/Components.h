@@ -64,6 +64,11 @@ struct Factory
     float CurrentTime;
     static constexpr const char* Name = "Factory";
 };
+struct CastleManager
+{
+    eastl::vector<flecs::entity> Castles;
+    static constexpr const char* Name = "CastleManager";
+};
 }
 }
 
@@ -72,6 +77,14 @@ namespace Tempest
 namespace Tags
 {
 
+struct Attacks
+{
+    static constexpr const char* Name = "Attacks";
+};
+struct Castle
+{
+    static constexpr const char* Name = "Castle";
+};
 struct Boids
 {
     static constexpr const char* Name = "Boids";

@@ -64,6 +64,13 @@ Component Factory
 	CurrentTime : float;
 }
 
+Component CastleManager
+{
+	Castles : eastl::vector<flecs::entity>;
+}
+
+Tag Attacks;
+Tag Castle;
 Tag Boids;
 Tag DirectionalLight;
 Tag SimpleMovement;

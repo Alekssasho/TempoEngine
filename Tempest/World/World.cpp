@@ -51,6 +51,39 @@ FlecsIniter::FlecsIniter()
     ecs_os_set_api(&api);
 }
 
+template<typename Elem, typename Vector = eastl::vector<Elem>>
+flecs::opaque<Vector, Elem> std_vector_support(flecs::world& world) {
+    return flecs::opaque<Vector, Elem>()
+        .as_type(world.vector<Elem>())
+
+        // Forward elements of std::vector value to serializer
+        .serialize([](const flecs::serializer *s, const Vector *data) {
+            for (const auto& el : *data) {
+                s->value(el);
+            }
+            return 0;
+        })
+
+        // Return vector count
+        .count([](const Vector *data) {
+            return data->size();
+        })
+
+        // Resize contents of vector
+        .resize([](Vector *data, size_t size) {
+            data->resize(size);
+        })
+
+        // Ensure element exists, return pointer
+        .ensure_element([](Vector *data, size_t elem) {
+            if (data->size() <= elem) {
+                data->resize(elem + 1);
+            }
+
+            return &data->data()[elem];
+        });
+}
+
 WorldStorage::WorldStorage()
 {
 	m_EntityWorld.set<flecs::Rest>({});
@@ -76,6 +109,10 @@ WorldStorage::WorldStorage()
 		.member<float>("y")
 		.member<float>("z")
 		.member<float>("w");
+
+	m_EntityWorld.component<eastl::vector<flecs::entity>>()
+		.opaque(std_vector_support<flecs::entity>);
+
 	RegisterComponents(m_EntityWorld);
 }
 
@@ -135,14 +172,16 @@ private:
 
 eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t size)
 {
-	m_EntityWorld.from_json(data);
-	// TODO: This is not working
-	eastl::vector<flecs::entity_t> newlyCreatedEntityIds;
-
+	// We need to prepare systems first as to add observers if needed.
+	// if this is a problem maybe a split will be needed for observers and systems
 	for (const auto& feature : m_Features)
 	{
 		feature->PrepareSystems(*this);
 	}
+
+	m_EntityWorld.from_json(data);
+	// TODO: This is not working
+	eastl::vector<flecs::entity_t> newlyCreatedEntityIds;
 
 	return newlyCreatedEntityIds;
 }

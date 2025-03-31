@@ -415,6 +415,8 @@ MigrationBackup/
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,c++,rust
 
+TempoEngine.sln
+
 /.vscode/launch.json
 /.vscode/settings.json
 
@@ -429,6 +431,7 @@ MigrationBackup/
 *.gltf
 *.ogg
 *.blend
+*.bin
 
 # Folder generated with Sharpmake
 projects/

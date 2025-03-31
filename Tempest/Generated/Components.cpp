@@ -39,6 +39,11 @@ void RegisterComponents(flecs::world& world)
         .member<float>("TimeToSpawn")
         .member<float>("CurrentTime")
         ;
+    world.component<Components::CastleManager>(Components::CastleManager::Name)
+        .member<eastl::vector<flecs::entity>>("Castles")
+        ;
+    world.component<Tags::Attacks>(Tags::Attacks::Name);
+    world.component<Tags::Castle>(Tags::Castle::Name);
     world.component<Tags::Boids>(Tags::Boids::Name);
     world.component<Tags::DirectionalLight>(Tags::DirectionalLight::Name);
     world.component<Tags::SimpleMovement>(Tags::SimpleMovement::Name);

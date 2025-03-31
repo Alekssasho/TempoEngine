@@ -33,7 +33,7 @@ where
 fn identifier(input: &str) -> IResult<&str, &str> {
     recognize(pair(
         alt((alpha1, tag("_"))),
-        many0_count(alt((alphanumeric1, tag("_"), tag("::"), tag("*")))),
+        many0_count(alt((alphanumeric1, tag("_"), tag("::"), tag("*"), tag("<"), tag(">"), tag(",")))),
     ))
     .parse(input)
 }

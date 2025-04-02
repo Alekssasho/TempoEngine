@@ -2,6 +2,8 @@
 
 #include "../Resources/ScriptedLevel.h"
 
+#include "../NavigationBuilder/NavigationBuilder.h"
+
 struct CastleFightLevel : ScriptedLevelResource
 {
 public:
@@ -132,6 +134,23 @@ public:
         AddInitialEntitiesPerFaction(Tempest::CastleFight::Faction::Red, glm::vec3(-20.0f, 0.0f, 0.0f));
 
         m_ECS.m_EntityWorld.set<Tempest::Components::CastleManager>(m_CastleManager);
+
+        // Set Navigation
+        NavigationBuilder::NavigationBuilder builder;
+        auto& leftLane = builder.NewLine();
+        leftLane.AddPoint(glm::vec3(20.0f, 0.0f, 0.0f));
+        leftLane.AddPoint(glm::vec3(10.0f, 0.0f, 10.0f));
+        leftLane.AddPoint(glm::vec3(-10.0f, 0.0f, 10.0f));
+        leftLane.AddPoint(glm::vec3(-20.0f, 0.0f, 0.0f));
+
+        auto& rightLane = builder.NewLine();
+        rightLane.AddPoint(glm::vec3(20.0f, 0.0f, 0.0f));
+        rightLane.AddPoint(glm::vec3(10.0f, 0.0f, -10.0f));
+        rightLane.AddPoint(glm::vec3(-10.0f, 0.0f, -10.0f));
+        rightLane.AddPoint(glm::vec3(-20.0f, 0.0f, 0.0f));
+
+        m_ECS.m_EntityWorld.set<Tempest::Components::NavigationData>({});
+        builder.Build(*m_ECS.m_EntityWorld.get_mut<Tempest::Components::NavigationData>());
     }
 
 private:

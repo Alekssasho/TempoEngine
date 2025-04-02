@@ -69,6 +69,12 @@ struct CastleManager
     eastl::vector<flecs::entity> Castles;
     static constexpr const char* Name = "CastleManager";
 };
+struct NavigationData
+{
+    eastl::vector<glm::vec3> Points;
+    eastl::vector<Navigation::LineData> Lines;
+    static constexpr const char* Name = "NavigationData";
+};
 }
 }
 

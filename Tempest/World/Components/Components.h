@@ -1,7 +1,8 @@
 #pragma once
 
-#include <Graphics/RendererTypes.h>
 #include <World/Camera.h>
+#include <World/Navigation.h>
+#include <Graphics/RendererTypes.h>
 #include <flecs.h>
 
 namespace physx

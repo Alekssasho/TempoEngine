@@ -69,6 +69,12 @@ Component CastleManager
 	Castles : eastl::vector<flecs::entity>;
 }
 
+Component NavigationData
+{
+	Points : eastl::vector<glm::vec3>;
+	Lines : eastl::vector<Navigation::LineData>;
+}
+
 Tag Attacks;
 Tag Castle;
 Tag Boids;

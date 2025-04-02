@@ -42,6 +42,10 @@ void RegisterComponents(flecs::world& world)
     world.component<Components::CastleManager>(Components::CastleManager::Name)
         .member<eastl::vector<flecs::entity>>("Castles")
         ;
+    world.component<Components::NavigationData>(Components::NavigationData::Name)
+        .member<eastl::vector<glm::vec3>>("Points")
+        .member<eastl::vector<Navigation::LineData>>("Lines")
+        ;
     world.component<Tags::Attacks>(Tags::Attacks::Name);
     world.component<Tags::Castle>(Tags::Castle::Name);
     world.component<Tags::Boids>(Tags::Boids::Name);

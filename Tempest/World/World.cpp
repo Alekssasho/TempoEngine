@@ -110,8 +110,16 @@ WorldStorage::WorldStorage()
 		.member<float>("z")
 		.member<float>("w");
 
+	m_EntityWorld.component<Navigation::LineData>()
+		.member<uint32_t>("StartIndex")
+		.member<uint32_t>("Count");
+
 	m_EntityWorld.component<eastl::vector<flecs::entity>>()
 		.opaque(std_vector_support<flecs::entity>);
+	m_EntityWorld.component<eastl::vector<glm::vec3>>()
+		.opaque(std_vector_support<glm::vec3>);
+	m_EntityWorld.component<eastl::vector<Navigation::LineData>>()
+		.opaque(std_vector_support<Navigation::LineData>);
 
 	RegisterComponents(m_EntityWorld);
 }

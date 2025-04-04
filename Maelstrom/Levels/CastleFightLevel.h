@@ -60,7 +60,10 @@ public:
     {
         m_BasePrefabs[Prefabs::Factory] = m_ECS.m_EntityWorld.prefab("Factory_Prefab_Base");
         m_BasePrefabs[Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab("Soldier_Prefab_Base")
-            .add<Tempest::Tags::SimpleMovement>();
+            .add<Tempest::Tags::SimpleMovement>()
+            .set(Tempest::Components::MovementInfo{ 1.0f })
+            .emplace_auto_override<Tempest::Components::Transform>()
+            .emplace_auto_override<Tempest::Components::Movement>();
 
         AddPrefabsPerFaction(Tempest::CastleFight::Faction::Blue);
         AddPrefabsPerFaction(Tempest::CastleFight::Faction::Red);

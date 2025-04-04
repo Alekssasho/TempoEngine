@@ -46,6 +46,14 @@ void RegisterComponents(flecs::world& world)
         .member<eastl::vector<glm::vec3>>("Points")
         .member<eastl::vector<Navigation::LineData>>("Lines")
         ;
+    world.component<Components::Movement>(Components::Movement::Name)
+        .member<glm::vec3>("Velocity")
+        ;
+    world.component<Components::LaneMovement>(Components::LaneMovement::Name)
+        ;
+    world.component<Components::MovementInfo>(Components::MovementInfo::Name)
+        .member<float>("Speed")
+        ;
     world.component<Tags::Attacks>(Tags::Attacks::Name);
     world.component<Tags::Castle>(Tags::Castle::Name);
     world.component<Tags::Boids>(Tags::Boids::Name);

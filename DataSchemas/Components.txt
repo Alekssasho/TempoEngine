@@ -75,6 +75,24 @@ Component NavigationData
 	Lines : eastl::vector<Navigation::LineData>;
 }
 
+// Movement stuff
+Component Movement
+{
+	Velocity : glm::vec3;
+}
+
+[NoReflection]
+Component LaneMovement
+{
+	Itr : Navigation::LaneIterator;
+}
+
+// TODO: add tags for lanes
+Component MovementInfo
+{
+	Speed : float;
+}
+
 Tag Attacks;
 Tag Castle;
 Tag Boids;

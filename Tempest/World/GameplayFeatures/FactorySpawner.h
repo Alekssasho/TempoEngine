@@ -25,6 +25,7 @@ struct FactorySpawner : public GameplayFeature
                     it.world().entity()
                         .is_a(factory.PrefabToSpawn)
                         .set(transform)
+                        .set(Components::LaneMovement{}) // TODO: maybe we can set in the prefab
                         .add<Tags::Attacks>(manager->Castles[uint32_t(faction.FactionFlag)]);
                     factory.CurrentTime = 0.0f;
                 }

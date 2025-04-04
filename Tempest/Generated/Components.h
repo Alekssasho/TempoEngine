@@ -75,6 +75,21 @@ struct NavigationData
     eastl::vector<Navigation::LineData> Lines;
     static constexpr const char* Name = "NavigationData";
 };
+struct Movement
+{
+    glm::vec3 Velocity;
+    static constexpr const char* Name = "Movement";
+};
+struct LaneMovement
+{
+    Navigation::LaneIterator Itr;
+    static constexpr const char* Name = "LaneMovement";
+};
+struct MovementInfo
+{
+    float Speed;
+    static constexpr const char* Name = "MovementInfo";
+};
 }
 }
 

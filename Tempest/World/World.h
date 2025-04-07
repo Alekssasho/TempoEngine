@@ -34,4 +34,6 @@ public:
 //private:
 	eastl::vector<eastl::unique_ptr<GameplayFeature>> m_Features;
 };
+
+uint64_t GetGlobalSeed();
 }

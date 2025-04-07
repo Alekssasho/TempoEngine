@@ -14,6 +14,11 @@
 namespace Tempest
 {
 
+uint64_t GetGlobalSeed()
+{
+	return 1234;
+}
+
 struct TaskData
 {
 	ecs_os_thread_callback_t Callback;

@@ -1,7 +1,10 @@
 #include <CommonIncludes.h>
 
+#include <World/World.h>
 #include <World/Navigation.h>
 #include <World/Components/Components.h>
+
+#include <random>
 
 namespace Tempest
 {
@@ -24,29 +27,57 @@ uint32_t FindClosestPointOnLane(eastl::span<const glm::vec3> points, glm::vec3 p
     return index;
 }
 
-LaneIterator FindClosestLane(const Components::NavigationData& navData, glm::vec3 currentPos, glm::vec3 targetPos)
+LaneIterator FindLane(const Components::NavigationData& navData, glm::vec3 currentPos, glm::vec3 targetPos, uint64_t entitySeed)
 {
-    float minScore = std::numeric_limits<float>::max();
-    LaneIterator result;
+    // TODO: Temp memory
+    float totalScore = 0.0f;
+    eastl::vector<float> scores;
+    eastl::vector<LaneIterator> iterators;
+    scores.reserve(navData.Lines.size());
+    iterators.reserve(navData.Lines.size());
     for (uint32_t i = 0; i < navData.Lines.size(); ++i)
     {
         auto lanePoints = eastl::span(&navData.Points[navData.Lines[i].StartIndex], navData.Lines[i].Count);
         auto currentClosestPointIndex = FindClosestPointOnLane(lanePoints, currentPos);
         auto targetClosestPointIndex = FindClosestPointOnLane(lanePoints, targetPos);
 
-        float score = glm::distance2(lanePoints[currentClosestPointIndex], currentPos) + glm::distance2(lanePoints[targetClosestPointIndex], targetPos);
-        if (score < minScore)
-        {
-            minScore = score;
-            result = LaneIterator{
+        // Add little epsilon to avoid 0 scores
+        float score = glm::distance2(lanePoints[currentClosestPointIndex], currentPos) + glm::distance2(lanePoints[targetClosestPointIndex], targetPos) + 0.001f;
+        totalScore += score;
+        scores.push_back(score);
+        iterators.push_back(LaneIterator{
                 .LaneIndex = i,
                 .CurrentPointIndex = currentClosestPointIndex,
                 .CurrentMode = currentClosestPointIndex < targetClosestPointIndex ? LaneIterator::Mode::Forward : LaneIterator::Mode::Backward,
-            };
-        }
+            });
     }
 
-    return result;
+    // Normalize and invert as we want smallest score
+    for (uint32_t i = 0; i < scores.size(); ++i)
+    {
+        scores[i] /= totalScore;
+        scores[i] = 1.0f - scores[i];
+    }
+
+    // Prefix sum
+    float sum = 0.0f;
+    for (uint32_t i = 0; i < scores.size(); ++i)
+    {
+        float currentScore = scores[i];
+        scores[i] += sum;
+        sum += currentScore;
+    }
+
+    uint64_t seed = entitySeed + GetGlobalSeed();
+
+    using FastRandomEngine = std::linear_congruential_engine<uint64_t, 16807, 0, 2147483647>;
+    std::ranlux48 rng(seed);
+    std::uniform_real_distribution<float> dist(0.0f, 1.0f);
+
+    float chosenValue = std::generate_canonical<float, 10>(rng);
+    auto chosenScore = eastl::lower_bound(scores.begin(), scores.end(), chosenValue);
+
+    return iterators[eastl::distance(scores.begin(), chosenScore)];
 }
 
 bool LaneIterator::IsValid()

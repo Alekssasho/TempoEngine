@@ -27,7 +27,7 @@ struct SoldierMovementController : public GameplayFeature
 
 				Components::LaneMovement& movement = itr.field_at<Components::LaneMovement>(0, row);
 
-				movement.Itr = Navigation::FindClosestLane(*navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position);
+				movement.Itr = Navigation::FindLane(*navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id());
 			});
 
 

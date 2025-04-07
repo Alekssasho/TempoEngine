@@ -30,6 +30,8 @@ struct LaneIterator
     glm::vec3 UpdateNextDirection(const Components::NavigationData& navData, glm::vec3 pos);
 };
 
-LaneIterator FindClosestLane(const Components::NavigationData& navData, glm::vec3 currentPos, glm::vec3 targetPos);
+// NB: enum with mode of finding could be added, if different ways are needed
+// for now we go with creating CDF of distance score and getting random
+LaneIterator FindLane(const Components::NavigationData& navData, glm::vec3 currentPos, glm::vec3 targetPos, uint64_t seed);
 }
 }

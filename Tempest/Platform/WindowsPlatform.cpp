@@ -107,6 +107,7 @@ WindowsPlatform::WindowsPlatform(gainput::InputManager& inputManager)
 void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* title, Engine* engine)
 {
 	ImGui::CreateContext();
+	ImGui::LoadIniSettingsFromDisk("imgui_settings.ini");
 
 	auto hIntance = ::GetModuleHandle(NULL);
 	WNDCLASSEX wc;
@@ -212,6 +213,7 @@ void WindowsPlatform::PumpMessages()
 
 void WindowsPlatform::KillWindow()
 {
+	ImGui::SaveIniSettingsToDisk("imgui_settings.ini");
 	::DestroyWindow(HWND(m_Handle));
 }
 

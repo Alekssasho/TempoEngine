@@ -3,7 +3,7 @@
 #include <fstream>
 #include <filesystem>
 
-int main()
+int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
 {
 	char exePath[MAX_PATH];
 	::GetModuleFileNameA(NULL, exePath, MAX_PATH);

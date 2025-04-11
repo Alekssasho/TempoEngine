@@ -13,7 +13,6 @@
 
 namespace Tempest
 {
-
 uint64_t GetGlobalSeed()
 {
 	return 1234;

@@ -7,6 +7,8 @@
 
 #include <Graphics/FrameData.h>
 
+#include <World/Components/Components.h>
+
 namespace Tempest
 {
 Engine* gEngine = nullptr;
@@ -96,13 +98,7 @@ void Engine::DoFrame()
 		ImGui::NewFrame();
 	}
 
-	// Test Code
-	//ImGui::ShowDemoWindow();
-	//ImGui::Begin("Test");
-	//ImGui::Checkbox("Perspective Projection Negative To One", &m_Camera.proper);
-	//ImGui::DragFloat("Znear", &m_Camera.znear);
-	//ImGui::End();
-
+	DoDebugMenu();
 
 	// TODO: add real delta time
 	m_World.Update(1.0f / 60.0f, m_JobSystem);

@@ -5,6 +5,8 @@
 #include <World/TaskGraph/Tasks.h>
 #include <World/Components/Components.h>
 
+#include <imgui.h>
+
 namespace Tempest
 {
 namespace GameplayFeatures
@@ -48,6 +50,8 @@ struct InputController : public GameplayFeature
 					camera.Position += cameraRight * speed;
 				}
 
+				if (ImGui::GetIO().WantCaptureMouse)
+					return;
 				// Change target
 				if (inputMap.GetBool(MoveCameraOrientation))
 				{

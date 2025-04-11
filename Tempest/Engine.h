@@ -2,6 +2,7 @@
 #include <CommonIncludes.h>
 
 #include <EngineCore.h>
+#include <DebugMenu.h>
 #include <Graphics/Renderer.h>
 #include <World/World.h>
 #include <World/Camera.h>
@@ -75,12 +76,16 @@ private:
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
 
+	DebugOptions m_DebugOptions;
+
 	// Methods for jobs and executions
 	static void InitializeWindowJob(uint32_t, void*);
 	void InitializeWindow();
 
 	static void DoFrameJob(uint32_t, void*);
 	void DoFrame();
+
+	void DoDebugMenu();
 };
 
 extern Engine* gEngine;

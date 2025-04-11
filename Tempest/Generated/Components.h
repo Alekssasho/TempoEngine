@@ -62,6 +62,7 @@ struct Factory
     flecs::entity PrefabToSpawn;
     float TimeToSpawn;
     float CurrentTime;
+    uint32_t NumSpawned;
     static constexpr const char* Name = "Factory";
 };
 struct CastleManager

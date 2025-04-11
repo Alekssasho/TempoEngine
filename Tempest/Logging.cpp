@@ -2,6 +2,7 @@
 
 #include <Logging.h>
 #include <stdio.h>
+#include <Windows.h>
 
 namespace Tempest
 {
@@ -30,6 +31,9 @@ static const char* StringifySeverity(LogSeverity severity)
 void Logger::WriteLog(LogSeverity severity, const char* system, const char* message)
 {
 	// TODO: This could be better
-	printf("%s: [%s] %s\n", StringifySeverity(severity), system, message);
+	//printf("%s: [%s] %s\n", StringifySeverity(severity), system, message);
+    eastl::string buffer;
+    buffer.sprintf("%s: [%s] %s\n", StringifySeverity(severity), system, message);
+	::OutputDebugString(buffer.c_str());
 }
 }

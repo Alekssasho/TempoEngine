@@ -93,45 +93,7 @@ public:
         // Compile ECS state, while other databases are being compiled
         eastl::vector<uint8_t> ecsState;
 
-
-
         auto jsonString = m_ECS.m_EntityWorld.to_json();
-        //ecs_query_desc_t query_desc = { 0 };
-
-        //int32_t term_id = 0;
-
-        //query_desc.terms[term_id].id = ecs_pair(EcsChildOf, EcsFlecs);
-        //query_desc.terms[term_id].oper = EcsNot;
-        //query_desc.terms[term_id].src.id = EcsSelf | EcsUp;
-        //term_id++;
-        //query_desc.terms[term_id].id = EcsModule;
-        //query_desc.terms[term_id].oper = EcsNot;
-        //query_desc.terms[term_id].src.id = EcsSelf | EcsUp;
-        //term_id++;
-        //query_desc.terms[term_id].id = ecs_id(EcsComponent);
-        //query_desc.terms[term_id].oper = EcsNot;
-        //query_desc.terms[term_id].src.id = EcsSelf | EcsUp;
-        //term_id++;
-
-        //query_desc.flags = EcsQueryMatchDisabled | EcsQueryMatchPrefab;
-
-        //ecs_query_t* q = ecs_query_init(m_ECS.m_EntityWorld, &query_desc);
-
-        //ecs_iter_t it = ecs_query_iter(m_ECS.m_EntityWorld, q);
-        //ecs_iter_to_json_desc_t json_desc = {
-        //    .serialize_entity_ids = true,
-        //    .serialize_values = true,
-        //    .serialize_full_paths = true,
-        //    .serialize_table = true,
-        //};
-
-        //auto jsonString = flecs::string(ecs_iter_to_json(&it, &json_desc));
-        //ecs_query_fini(q);
-
-
-
-
-
         ecsState.resize(jsonString.size());
         memcpy(ecsState.data(), jsonString.c_str(), jsonString.size());
 

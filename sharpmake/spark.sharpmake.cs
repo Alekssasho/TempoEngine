@@ -15,6 +15,7 @@ namespace TempoEngine
         {
             base.ConfigureAll(conf, target);
             conf.Output = Configuration.OutputType.Exe;
+            conf.Options.Add(Options.Vc.Linker.SubSystem.Windows);
 
             conf.AddPrivateDependency<Tempest>(target);
         }

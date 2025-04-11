@@ -1,18 +1,34 @@
 #include <CommonIncludes.h>
 #include <World/Components/Components.h>
+#include <World/Components/DebugImGuiComponents.h>
 
 namespace Tempest
 {
+{% for structure in structures -%}
+{%- if structure.ttype == "Component" -%}
+void {{structure.name}}ImGuiDebug(void* data)
+{
+    auto comp = (Components::{{structure.name}}*)data;
+    ImGui::Text("{{structure.name}}");
+    {% for member in structure.members -%}
+    ImGuiDebugRender(&comp->{{member.name}}, "{{member.name}}");
+    {% endfor %}
+}
+{% endif -%}
+{% endfor %}
 void RegisterComponents(flecs::world& world)
 {
     {% for structure in structures -%}
     {%- if structure.ttype == "Component" -%}
-    world.component<Components::{{structure.name}}>(Components::{{structure.name}}::Name)
-        {% if structure is needs_reflection -%}
-        {% for member in structure.members -%}
-        .member<{{type_for_member(member=member)}}>("{{member.name}}")
-        {% endfor %}
-        {%- endif -%};
+    {
+        auto componentId = world.component<Components::{{structure.name}}>(Components::{{structure.name}}::Name)
+            {% if structure is needs_reflection -%}
+            {% for member in structure.members -%}
+            .member<{{type_for_member(member=member)}}>("{{member.name}}")
+            {% endfor %}
+            {%- endif -%};
+        g_CompIdToImGuiFunc[componentId] = &{{structure.name}}ImGuiDebug;
+    }
     {% endif -%}
 
     {%- if structure.ttype == "Tag" -%}

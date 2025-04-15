@@ -6,6 +6,7 @@
 
 namespace Tempest
 {
+// TODO: Remove this, we no longer need and we can directly use flecs::query
 template<typename... Components>
 struct EntityQuery
 {

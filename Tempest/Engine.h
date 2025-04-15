@@ -63,6 +63,11 @@ public:
 		return m_Camera;
 	}
 
+	DebugOptions& GetDebug()
+	{
+		return m_DebugOptions;
+	}
+
 private:
 	// Data members
 	EngineOptions m_Options;

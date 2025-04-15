@@ -4,14 +4,13 @@
 
 namespace Tempest
 {
-// TODO: Remove me
-struct RectData
+// Rect is rendered as
+// x = (0,0,0), y = (0,0,0)
+// width = (1,0,0), height = (0,0,1)
+struct DebugRectData
 {
-	float x;
-	float y;
-	float width;
-	float height;
-	glm::vec4 color;
+	glm::mat4x4 Transform;
+	glm::vec4 Color;
 };
 
 struct FrameData
@@ -21,7 +20,7 @@ struct FrameData
 	glm::mat4x4 ViewProjection;
 
 	// TODO: This is not very good memory wise as it contains pointers. We need a single allocation and just suballocate from it.
-	eastl::vector<RectData> Rects;
+	eastl::vector<DebugRectData> DebugRects;
 	// TODO: This should not be part of this. This class should only be a memory pool in which every feature writes arbitrary data.
 	struct StaticMeshData {
 		MeshHandle Mesh;

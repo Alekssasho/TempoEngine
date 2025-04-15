@@ -8,7 +8,7 @@
 #include <Graphics/RenderGraph.h>
 
 // TODO: Find a better way than just to include them
-#include <Graphics/Features/RectFeature.h>
+#include <Graphics/Features/DebugFeature.h>
 #include <Graphics/Features/StaticMeshFeature.h>
 #include <Graphics/Features/LightsFeature.h>
 
@@ -22,7 +22,7 @@ namespace Tempest
 Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
 {
-	//m_RenderFeatures.emplace_back(new GraphicsFeature::Rects);
+	m_RenderFeatures.emplace_back(new GraphicsFeature::Debug);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Lights);
 }

@@ -119,7 +119,7 @@ void Engine::DoDebugMenu()
 
 		if (ImGui::BeginMenu("Render"))
 		{
-
+			ImGui::Checkbox("Show Navigation", &m_DebugOptions.ShowNavigationLanes);
 			ImGui::EndMenu();
 		}
 

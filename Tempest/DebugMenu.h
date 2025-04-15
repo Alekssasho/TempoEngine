@@ -20,5 +20,7 @@ struct DebugOptions
 	eastl::array<float, 5> DeltaTimes;
 	float CurrentDeltaTime;
 	eastl::vector<eastl::unique_ptr<DebugWindow>> DebugWindows;
+
+	bool ShowNavigationLanes = false;
 };
 }

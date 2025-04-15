@@ -1,7 +1,7 @@
 [workspace]
 members = [
     #"Thunder",
-    #"Thunder/ShaderCompiler",
+    "Thunder/ShaderCompiler",
     #"Thunder/DataDefinitionGenerated",
     #"Thunder/Components",
     #"Thunder/flecs-rs",

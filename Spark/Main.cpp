@@ -10,7 +10,7 @@ int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
 	std::filesystem::current_path(std::filesystem::path(exePath).parent_path());
 
 	Tempest::EngineOptions options;
-	options.NumWorkerThreads = std::thread::hardware_concurrency();
+	options.NumWorkerThreads = std::thread::hardware_concurrency() / 2;
 	//options.NumWorkerThreads = 1;
 	options.Width = 1280;
 	options.Height = 720;

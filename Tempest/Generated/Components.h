@@ -91,6 +91,18 @@ struct MovementInfo
     float Speed;
     static constexpr const char* Name = "MovementInfo";
 };
+struct Health
+{
+    float CurrentHealth;
+    float MaxHealth;
+    static constexpr const char* Name = "Health";
+};
+struct Attack
+{
+    float DamageAmount;
+    float Radius;
+    static constexpr const char* Name = "Attack";
+};
 }
 }
 

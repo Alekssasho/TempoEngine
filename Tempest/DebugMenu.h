@@ -17,7 +17,7 @@ struct DebugOptions
 {
 	DebugOptions();
 
-	eastl::array<float, 5> DeltaTimes;
+	eastl::array<float, 6> DeltaTimes;
 	float CurrentDeltaTime;
 	eastl::vector<eastl::unique_ptr<DebugWindow>> DebugWindows;
 

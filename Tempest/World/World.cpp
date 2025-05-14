@@ -10,6 +10,9 @@
 #include <World/GameplayFeatures/InputControllerFeature.h>
 #include <World/GameplayFeatures/SoldierMovementFeature.h>
 #include <World/GameplayFeatures/FactorySpawner.h>
+#include <World/GameplayFeatures/SpaceLocation.h>
+#include <World/GameplayFeatures/BattleFeature.h>
+#include <World/GameplayFeatures/HealthManagementFeature.h>
 
 namespace Tempest
 {
@@ -96,8 +99,6 @@ WorldStorage::WorldStorage()
 	//ecs_tracing_enable(3);
 	//m_EntityWorld.set_target_fps(60);
 
-	m_EntityWorld.set_task_threads(std::thread::hardware_concurrency());
-
 	// Register all components
 	m_EntityWorld.component<glm::quat>()
 		.member<float>("x")
@@ -134,6 +135,9 @@ World::World()
     m_Features.emplace_back(new GameplayFeatures::InputController);
     m_Features.emplace_back(new GameplayFeatures::SoldierMovementController);
     m_Features.emplace_back(new GameplayFeatures::FactorySpawner);
+    m_Features.emplace_back(new GameplayFeatures::SpaceLocation);
+    m_Features.emplace_back(new GameplayFeatures::Battle);
+    m_Features.emplace_back(new GameplayFeatures::HealthManagement);
 }
 
 World::~World()

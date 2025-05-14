@@ -3,6 +3,7 @@
 #include <Engine.h>
 #include <DebugMenu.h>
 #include <World/Components/DebugImGuiComponents.h>
+#include <World/GameplayFeatures/SpaceLocation.h>
 
 #include <imgui.h>
 
@@ -88,10 +89,75 @@ struct PrefabDebugger : DebugWindow
 	flecs::query<> Query;
 };
 
+struct SpaceLocationDebugger : DebugWindow
+{
+	SpaceLocationDebugger()
+	{
+		Name = "Space Location Debugger";
+	}
+
+	virtual void DoRender() override
+	{
+		auto spaceData = gEngine->GetWorld().m_EntityWorld.get<GameplayFeatures::SpaceLocation::SpaceData>();
+
+		auto drawList = ImGui::GetWindowDrawList();
+
+		auto windowSize = ImGui::GetContentRegionAvail();
+		auto windowPos = ImGui::GetCursorScreenPos();
+
+		// Make background grid
+		for (uint32_t i = 0; i <= GameplayFeatures::SpaceLocation::s_WorldCellDivisions; ++i)
+		{
+			const auto horizontalLineHeight = windowPos.y + (i * (windowSize.y / GameplayFeatures::SpaceLocation::s_WorldCellDivisions));
+			drawList->AddLine(ImVec2(windowPos.x, horizontalLineHeight), ImVec2(windowPos.x + windowSize.x, horizontalLineHeight), IM_COL32_WHITE);
+
+			const auto verticalLineHeight = windowPos.x + (i * (windowSize.x / GameplayFeatures::SpaceLocation::s_WorldCellDivisions));
+			drawList->AddLine(ImVec2(verticalLineHeight, windowPos.y), ImVec2(verticalLineHeight, windowPos.y + windowSize.y), IM_COL32_WHITE);
+		}
+
+		const auto cellWindowSize = glm::vec2(
+			windowSize.x / float(GameplayFeatures::SpaceLocation::s_WorldCellDivisions),
+			windowSize.y / float(GameplayFeatures::SpaceLocation::s_WorldCellDivisions)
+		);
+
+		const auto cellWorldSize = glm::vec2(
+			GameplayFeatures::SpaceLocation::s_WorldSize / float(GameplayFeatures::SpaceLocation::s_WorldCellDivisions),
+			GameplayFeatures::SpaceLocation::s_WorldSize / float(GameplayFeatures::SpaceLocation::s_WorldCellDivisions)
+		);
+
+		// Draw each entity from every cell
+		for (uint32_t cellIndex = 0; cellIndex < spaceData->Cells.size(); ++cellIndex)
+		{
+			uint32_t cellX = cellIndex % GameplayFeatures::SpaceLocation::s_WorldCellDivisions;
+			uint32_t cellY = cellIndex / GameplayFeatures::SpaceLocation::s_WorldCellDivisions;
+
+			auto cellWorldPos = glm::vec2(
+				float(cellX * cellWorldSize.x) - GameplayFeatures::SpaceLocation::s_WorldSize / 2.0f,
+				float(cellY * cellWorldSize.y) - GameplayFeatures::SpaceLocation::s_WorldSize / 2.0f
+			);
+
+			auto& cellData = spaceData->Cells[cellIndex];
+
+			for (uint32_t entityIndex = 0; entityIndex < cellData.Count; ++entityIndex)
+			{
+				if (!spaceData->Entities[entityIndex + cellData.StartIndex].is_alive())
+					continue;
+				auto& faction = spaceData->Entities[entityIndex + cellData.StartIndex].get<Components::Faction>()->FactionFlag;
+				auto factionColor = faction == CastleFight::Faction::Blue ? IM_COL32(0, 0, 255, 255) : IM_COL32(255, 0, 0, 255);
+
+				auto& entityPosition = spaceData->Entities[entityIndex + cellData.StartIndex].get<Components::Transform>()->Position;
+				auto localPosInCell = glm::vec2(entityPosition.x - cellWorldPos.x, entityPosition.z - cellWorldPos.y) * (cellWindowSize / cellWorldSize);
+
+				drawList->AddCircle(ImVec2(localPosInCell.x + windowPos.x + cellX * cellWindowSize.x, localPosInCell.y + windowPos.y + cellY * cellWindowSize.y), 10, factionColor);
+			}
+		}
+	}
+};
+
 DebugOptions::DebugOptions()
 {
 	CurrentDeltaTime = 1.0f;
-	DeltaTimes = { 0.0f, 0.1f, 0.5f, 1.0f, 2.0f };
+	DeltaTimes = { 0.0f, 0.1f, 0.5f, 1.0f, 2.0f, 5.0f };
 }
 
 void Engine::DoDebugMenu()
@@ -103,6 +169,7 @@ void Engine::DoDebugMenu()
 	{
 		m_DebugOptions.DebugWindows.push_back(eastl::make_unique<EntitiesDebugger>());
 		m_DebugOptions.DebugWindows.push_back(eastl::make_unique<PrefabDebugger>());
+		m_DebugOptions.DebugWindows.push_back(eastl::make_unique<SpaceLocationDebugger>());
 	}
 
 	if (ImGui::BeginMainMenuBar())
@@ -123,12 +190,12 @@ void Engine::DoDebugMenu()
 			ImGui::EndMenu();
 		}
 
-		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 260.0f);
+		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 280.0f);
 		ImGui::Text("World Speed:");
 		ImGui::SameLine();
-		const char* names[] = { "0x", "0.1x", "0.5x", "1x", "2x" };
+		const char* names[] = { "0x", "0.1x", "0.5x", "1x", "2x", "5x"};
 		auto selectedIndex = eastl::distance(m_DebugOptions.DeltaTimes.begin(), eastl::find(m_DebugOptions.DeltaTimes.begin(), m_DebugOptions.DeltaTimes.end(), m_DebugOptions.CurrentDeltaTime));
-		for (uint32_t i = 0; i < 5; ++i)
+		for (uint32_t i = 0; i < 6; ++i)
 		{
 			if (ImGui::Selectable(names[i], i == selectedIndex, ImGuiSelectableFlags_None, ImVec2(25.0f, 0.0f)))
 			{

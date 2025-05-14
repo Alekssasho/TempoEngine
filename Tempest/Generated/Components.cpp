@@ -120,6 +120,22 @@ void MovementInfoImGuiDebug(void* data)
     ImGuiDebugRender(&comp->Speed, "Speed");
     
 }
+void HealthImGuiDebug(void* data)
+{
+    auto comp = (Components::Health*)data;
+    ImGui::Text("Health");
+    ImGuiDebugRender(&comp->CurrentHealth, "CurrentHealth");
+    ImGuiDebugRender(&comp->MaxHealth, "MaxHealth");
+    
+}
+void AttackImGuiDebug(void* data)
+{
+    auto comp = (Components::Attack*)data;
+    ImGui::Text("Attack");
+    ImGuiDebugRender(&comp->DamageAmount, "DamageAmount");
+    ImGuiDebugRender(&comp->Radius, "Radius");
+    
+}
 
 void RegisterComponents(flecs::world& world)
 {
@@ -217,6 +233,20 @@ void RegisterComponents(flecs::world& world)
             .member<float>("Speed")
             ;
         g_CompIdToImGuiFunc[componentId] = &MovementInfoImGuiDebug;
+    }
+    {
+        auto componentId = world.component<Components::Health>(Components::Health::Name)
+            .member<float>("CurrentHealth")
+            .member<float>("MaxHealth")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &HealthImGuiDebug;
+    }
+    {
+        auto componentId = world.component<Components::Attack>(Components::Attack::Name)
+            .member<float>("DamageAmount")
+            .member<float>("Radius")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &AttackImGuiDebug;
     }
     world.component<Tags::Attacks>(Tags::Attacks::Name);
     world.component<Tags::Castle>(Tags::Castle::Name);

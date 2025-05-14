@@ -48,7 +48,7 @@ struct SoldierMovementController : public GameplayFeature
 
 
 		world.m_EntityWorld.system<Components::Transform, const Components::Movement, const Components::MovementInfo>("MovementSystem")
-			.kind(flecs::OnUpdate)
+			.kind(flecs::PostUpdate)
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter it, size_t row, Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo) {
 				auto deltaTime = it.delta_time();

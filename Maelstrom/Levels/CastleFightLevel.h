@@ -62,6 +62,8 @@ public:
         m_BasePrefabs[Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab("Soldier_Prefab_Base")
             .add<Tempest::Tags::SimpleMovement>()
             .set(Tempest::Components::MovementInfo{ 1.0f })
+            .set(Tempest::Components::Health{ .CurrentHealth = 1.0f, .MaxHealth = 1.0f })
+            .set(Tempest::Components::Attack{ .DamageAmount = 1.0f, .Radius = 1.5f })
             .emplace_auto_override<Tempest::Components::Transform>()
             .emplace_auto_override<Tempest::Components::Movement>();
 
@@ -80,6 +82,7 @@ public:
             flecs::entity castleId = m_ECS.m_EntityWorld.entity(("Castle" + suffix).c_str())
                 .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Factory])
                 .add<Tempest::Tags::Castle>()
+                .set(Tempest::Components::Health{ .CurrentHealth = 10.0f, .MaxHealth = 10.0f })
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint, glm::vec3(1.0f, 1.0f, 1.0f) });
             m_CastleManager.Castles[(uint32_t(faction) + 1) % uint32_t(Tempest::CastleFight::Faction::Count)] = castleId;
         }
@@ -96,7 +99,7 @@ public:
     {
         // Setup camera
         {
-            const auto cameraPos = glm::vec3(20.0f, 20.0f, 0.0f);
+            const auto cameraPos = glm::vec3(0.0f, 20.0f, 20.0f);
             const auto cameraForward = glm::normalize(glm::vec3(0.0f, 0.0f, 0.0f) - cameraPos);
             const auto cameraUp = glm::cross(cameraForward, glm::normalize(glm::cross(sUpDirection, cameraForward)));
 

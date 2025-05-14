@@ -94,6 +94,19 @@ Component MovementInfo
 	Speed : float;
 }
 
+// Battle
+Component Health
+{
+	CurrentHealth : float;
+	MaxHealth : float;
+}
+
+Component Attack
+{
+	DamageAmount : float;
+	Radius : float;
+}
+
 Tag Attacks;
 Tag Castle;
 Tag Boids;

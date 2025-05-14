@@ -20,6 +20,8 @@ Engine::Engine(const EngineOptions& options)
     , m_Platform(m_Input.m_Input)
 {
 	gEngine = this;
+
+	m_World.m_EntityWorld.set_task_threads(options.NumWorkerThreads);
 }
 
 Engine::~Engine()

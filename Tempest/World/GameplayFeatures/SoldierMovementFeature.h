@@ -27,23 +27,40 @@ struct SoldierMovementController : public GameplayFeature
 
 				Components::LaneMovement& movement = itr.field_at<Components::LaneMovement>(0, row);
 
-				movement.Itr = Navigation::FindLane(*navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id());
+				auto factionFlag = uint64_t(e.get<Components::Faction>()->FactionFlag);
+
+				movement.Itr = Navigation::FindLane(*navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id() + factionFlag * 100000);
 			});
 
 
-		world.m_EntityWorld.system<const Components::Transform, Components::Movement, Components::LaneMovement>("SoldierMovementController")
+		world.m_EntityWorld.system<const Components::Transform, Components::Movement, Components::LaneMovement, const Components::Attacking, const Components::AttackInfo>("SoldierMovementController")
 			.kind(flecs::PreUpdate)
 			.with<Tags::SimpleMovement>()
-			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement) {
-				if (!laneMovement.Itr.IsValid())
+			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo) {
+				if (laneMovement.Itr.IsValid())
+				{
+					auto navData = itr.world().get<Components::NavigationData>();
+
+					movement.Velocity = laneMovement.Itr.UpdateNextDirection(*navData, transform.Position);
+				}
+				else
 				{
 					movement.Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-					return;
 				}
 
-				auto navData = itr.world().get<Components::NavigationData>();
+				if (att.Target.is_valid() && att.Target.is_alive())
+				{
+					const auto& targetPos = att.Target.get<Components::Transform>()->Position;
+					if (glm::distance2(transform.Position, targetPos) > attackInfo.Range * attackInfo.Range)
+					{
+						movement.Velocity = glm::normalize(targetPos - transform.Position);
+					}
+					else
+					{
+						movement.Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
+					}
+				}
 
-				movement.Velocity = laneMovement.Itr.UpdateNextDirection(*navData, transform.Position);
 			});
 
 

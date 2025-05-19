@@ -91,17 +91,30 @@ struct MovementInfo
     float Speed;
     static constexpr const char* Name = "MovementInfo";
 };
+struct Presence
+{
+    float Radius;
+    static constexpr const char* Name = "Presence";
+};
 struct Health
 {
     float CurrentHealth;
     float MaxHealth;
     static constexpr const char* Name = "Health";
 };
-struct Attack
+struct AttackInfo
 {
     float DamageAmount;
-    float Radius;
-    static constexpr const char* Name = "Attack";
+    float Range;
+    float Speed;
+    float AwarenessRadius;
+    static constexpr const char* Name = "AttackInfo";
+};
+struct Attacking
+{
+    flecs::entity Target;
+    float CurrentTime;
+    static constexpr const char* Name = "Attacking";
 };
 }
 }

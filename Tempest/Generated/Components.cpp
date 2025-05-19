@@ -120,6 +120,13 @@ void MovementInfoImGuiDebug(void* data)
     ImGuiDebugRender(&comp->Speed, "Speed");
     
 }
+void PresenceImGuiDebug(void* data)
+{
+    auto comp = (Components::Presence*)data;
+    ImGui::Text("Presence");
+    ImGuiDebugRender(&comp->Radius, "Radius");
+    
+}
 void HealthImGuiDebug(void* data)
 {
     auto comp = (Components::Health*)data;
@@ -128,12 +135,22 @@ void HealthImGuiDebug(void* data)
     ImGuiDebugRender(&comp->MaxHealth, "MaxHealth");
     
 }
-void AttackImGuiDebug(void* data)
+void AttackInfoImGuiDebug(void* data)
 {
-    auto comp = (Components::Attack*)data;
-    ImGui::Text("Attack");
+    auto comp = (Components::AttackInfo*)data;
+    ImGui::Text("AttackInfo");
     ImGuiDebugRender(&comp->DamageAmount, "DamageAmount");
-    ImGuiDebugRender(&comp->Radius, "Radius");
+    ImGuiDebugRender(&comp->Range, "Range");
+    ImGuiDebugRender(&comp->Speed, "Speed");
+    ImGuiDebugRender(&comp->AwarenessRadius, "AwarenessRadius");
+    
+}
+void AttackingImGuiDebug(void* data)
+{
+    auto comp = (Components::Attacking*)data;
+    ImGui::Text("Attacking");
+    ImGuiDebugRender(&comp->Target, "Target");
+    ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
     
 }
 
@@ -235,6 +252,12 @@ void RegisterComponents(flecs::world& world)
         g_CompIdToImGuiFunc[componentId] = &MovementInfoImGuiDebug;
     }
     {
+        auto componentId = world.component<Components::Presence>(Components::Presence::Name)
+            .member<float>("Radius")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &PresenceImGuiDebug;
+    }
+    {
         auto componentId = world.component<Components::Health>(Components::Health::Name)
             .member<float>("CurrentHealth")
             .member<float>("MaxHealth")
@@ -242,11 +265,20 @@ void RegisterComponents(flecs::world& world)
         g_CompIdToImGuiFunc[componentId] = &HealthImGuiDebug;
     }
     {
-        auto componentId = world.component<Components::Attack>(Components::Attack::Name)
+        auto componentId = world.component<Components::AttackInfo>(Components::AttackInfo::Name)
             .member<float>("DamageAmount")
-            .member<float>("Radius")
+            .member<float>("Range")
+            .member<float>("Speed")
+            .member<float>("AwarenessRadius")
             ;
-        g_CompIdToImGuiFunc[componentId] = &AttackImGuiDebug;
+        g_CompIdToImGuiFunc[componentId] = &AttackInfoImGuiDebug;
+    }
+    {
+        auto componentId = world.component<Components::Attacking>(Components::Attacking::Name)
+            .member<flecs::entity>("Target")
+            .member<float>("CurrentTime")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &AttackingImGuiDebug;
     }
     world.component<Tags::Attacks>(Tags::Attacks::Name);
     world.component<Tags::Castle>(Tags::Castle::Name);

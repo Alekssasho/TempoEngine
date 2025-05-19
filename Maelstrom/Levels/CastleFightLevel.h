@@ -48,6 +48,7 @@ public:
                 .is_a(m_BasePrefabs[Prefabs::Factory])
                 .set(Tempest::Components::StaticMesh{ meshIndex })
                 .set(Tempest::Components::Faction{ faction })
+                .set(Tempest::Components::Presence{ .Radius = 1.0f })
                 .set(Tempest::Components::Factory{
                         .PrefabToSpawn = m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier],
                         .TimeToSpawn = 5.0f,
@@ -62,10 +63,13 @@ public:
         m_BasePrefabs[Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab("Soldier_Prefab_Base")
             .add<Tempest::Tags::SimpleMovement>()
             .set(Tempest::Components::MovementInfo{ 1.0f })
-            .set(Tempest::Components::Health{ .CurrentHealth = 1.0f, .MaxHealth = 1.0f })
-            .set(Tempest::Components::Attack{ .DamageAmount = 1.0f, .Radius = 1.5f })
+            .set(Tempest::Components::Presence{ .Radius = 1.0f })
+            .set(Tempest::Components::AttackInfo{ .DamageAmount = 1.0f, .Range = 0.5f, .Speed = 1.0f, .AwarenessRadius = 5.0f })
             .emplace_auto_override<Tempest::Components::Transform>()
-            .emplace_auto_override<Tempest::Components::Movement>();
+            .emplace_auto_override<Tempest::Components::Movement>()
+            .emplace_auto_override<Tempest::Components::Attacking>()
+            .emplace_auto_override<Tempest::Components::Health>(Tempest::Components::Health{ .CurrentHealth = 3.0f, .MaxHealth = 3.0f })
+            ;
 
         AddPrefabsPerFaction(Tempest::CastleFight::Faction::Blue);
         AddPrefabsPerFaction(Tempest::CastleFight::Faction::Red);

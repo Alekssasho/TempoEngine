@@ -75,6 +75,7 @@ LaneIterator FindLane(const Components::NavigationData& navData, glm::vec3 curre
     std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
     float chosenValue = std::generate_canonical<float, 10>(rng);
+    //FORMAT_LOG(Warning, Navigation, "Chooser %f, for %d id", chosenValue, entitySeed);
     auto chosenScore = eastl::lower_bound(scores.begin(), scores.end(), chosenValue);
 
     return iterators[eastl::distance(scores.begin(), chosenScore)];

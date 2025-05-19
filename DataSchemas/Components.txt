@@ -94,6 +94,11 @@ Component MovementInfo
 	Speed : float;
 }
 
+Component Presence
+{
+	Radius : float;
+}
+
 // Battle
 Component Health
 {
@@ -101,10 +106,18 @@ Component Health
 	MaxHealth : float;
 }
 
-Component Attack
+Component AttackInfo
 {
 	DamageAmount : float;
-	Radius : float;
+	Range : float;
+	Speed : float;
+	AwarenessRadius : float;
+}
+
+Component Attacking
+{
+	Target : flecs::entity;
+	CurrentTime : float;
 }
 
 Tag Attacks;

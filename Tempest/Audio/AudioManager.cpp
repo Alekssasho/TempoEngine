@@ -132,7 +132,14 @@ void AudioManager::Update()
 
 	auto samples = reinterpret_cast<AudioFrame*>(pData);
 
+	//uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
 
+	//if(framesDecoded < framesAvailable)
+	//{
+	//	// Loop the background music
+	//	stb_vorbis_seek_start(m_VorbisDecoder);
+	//	stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData) + framesDecoded * 2, 2 * (framesAvailable - framesDecoded));
+	//}
 
 	//for (uint32_t i = 0; i < framesAvailable; ++i)
 	//{

@@ -64,6 +64,19 @@ public:
 		return -1;
 	}
 
+	uint32_t MeshSkeleton(int meshIndex) const
+	{
+		for (auto mapping : m_MeshToSkeletonMappings)
+		{
+			if (mapping.MeshIndex == meshIndex)
+			{
+				return mapping.SkeletonIndex;
+			}
+		}
+		assert(false);
+		return -1;
+	}
+
 	uint32_t MeshPrimitiveCount(int meshIndex) const
 	{
 		return uint32_t(m_Meshes[meshIndex]->primitives_count);
@@ -230,9 +243,12 @@ private:
 			nodeStack[i] = m_Data->scene->nodes[i];
 		}
 
-		eastl::unordered_set<cgltf_mesh*> meshes;
+        eastl::unordered_set<cgltf_mesh*> meshes;
+        eastl::unordered_set<cgltf_skin*> skins;
 		eastl::unordered_set<cgltf_node*> carIndices;
 		eastl::set<cgltf_material*> materials; // we want this to be ordered
+
+		eastl::vector<eastl::pair<cgltf_mesh*, cgltf_skin*>> meshToSkeletonMappings;
 
 		while (!nodeStack.empty())
 		{
@@ -252,7 +268,19 @@ private:
 						materials.insert(firstNode->mesh->primitives[i].material);
 					}
 				}
+
+				if (firstNode->skin)
+				{
+					skins.insert(firstNode->skin);
+
+					auto mapping = eastl::make_pair(firstNode->mesh, firstNode->skin);
+					if (eastl::find(meshToSkeletonMappings.begin(), meshToSkeletonMappings.end(), mapping) == meshToSkeletonMappings.end())
+					{
+						meshToSkeletonMappings.push_back(mapping);
+					}
+				}
 			}
+
 			// TODO: we need JSON parsing here
 			//auto extension = node.extensions.find("TEMPEST_extension");
 			//if (extension != node.extensions.end())
@@ -272,7 +300,27 @@ private:
 
 		m_Meshes.insert(m_Meshes.begin(), meshes.begin(), meshes.end());
 		m_Materials.insert(m_Materials.begin(), materials.begin(), materials.end());
+		m_SkeletonIndices.insert(m_SkeletonIndices.begin(), skins.begin(), skins.end());
 		m_CarIndices.insert(m_CarIndices.begin(), carIndices.begin(), carIndices.end());
+
+		for (auto mapping : meshToSkeletonMappings)
+		{
+            for (auto meshIndex = 0; meshIndex < m_Meshes.size(); ++meshIndex)
+            {
+                if (m_Meshes[meshIndex] == mapping.first)
+                {
+					for (auto skinIndex = 0; skinIndex < m_SkeletonIndices.size(); ++skinIndex)
+					{
+						if (m_SkeletonIndices[skinIndex] == mapping.second)
+						{
+							m_MeshToSkeletonMappings.emplace_back(meshIndex, skinIndex);
+							break;
+						}
+					}
+					break;
+                }
+            }
+		}
 	}
 
 	glm::mat4 GetNodeTransform(cgltf_node* node) const
@@ -334,5 +382,14 @@ public:
 	Tempest::Definition::Camera m_Camera;
 	eastl::vector<cgltf_mesh*> m_Meshes;
 	eastl::vector<cgltf_material*> m_Materials;
-	eastl::vector<cgltf_node*> m_CarIndices;
+    eastl::vector<cgltf_skin*> m_SkeletonIndices;
+    eastl::vector<cgltf_node*> m_CarIndices;
+
+	struct MeshToSkeletonMapping
+	{
+		uint32_t MeshIndex;
+		uint32_t SkeletonIndex;
+	};
+
+	eastl::vector<MeshToSkeletonMapping> m_MeshToSkeletonMappings;
 };

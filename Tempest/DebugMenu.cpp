@@ -186,7 +186,8 @@ void Engine::DoDebugMenu()
 
 		if (ImGui::BeginMenu("Render"))
 		{
-			ImGui::Checkbox("Show Navigation", &m_DebugOptions.ShowNavigationLanes);
+            ImGui::Checkbox("Show Navigation", &m_DebugOptions.ShowNavigationLanes);
+            ImGui::Checkbox("Show Skeletons", &m_DebugOptions.ShowSkeletons);
 			ImGui::EndMenu();
 		}
 

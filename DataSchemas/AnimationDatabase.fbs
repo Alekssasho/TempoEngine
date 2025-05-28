@@ -1,0 +1,36 @@
+include "CommonTypes.fbs";
+
+namespace Tempest.Definition;
+
+struct Bone
+{
+    local_rotation : Common.Tempest.Quat;
+    local_position : Common.Tempest.Vec3;
+    parent : uint32;
+}
+
+struct Skeleton
+{
+    start_index: uint32;
+    count: uint32;
+}
+
+struct Animation
+{
+    skeleton_index: uint32;
+    num_frames: uint32;
+    start_index: uint32;
+    count: uint32;
+}
+
+table AnimationDatabase
+{
+    skeletons: [Skeleton];
+    bones: [Bone];
+    animations: [Animation];
+    anim_data: [ubyte];
+}
+
+file_identifier "TADB";
+file_extension "tab";
+root_type AnimationDatabase;

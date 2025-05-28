@@ -21,6 +21,7 @@ struct DebugOptions
 	float CurrentDeltaTime;
 	eastl::vector<eastl::unique_ptr<DebugWindow>> DebugWindows;
 
-	bool ShowNavigationLanes = false;
+    bool ShowNavigationLanes = false;
+    bool ShowSkeletons = false;
 };
 }

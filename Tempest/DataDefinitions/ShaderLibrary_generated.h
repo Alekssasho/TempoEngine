@@ -6,6 +6,13 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
+              FLATBUFFERS_VERSION_MINOR == 3 &&
+              FLATBUFFERS_VERSION_REVISION == 25,
+             "Non-compatible flatbuffers version included");
+
 namespace Tempest {
 namespace Definition {
 
@@ -15,7 +22,7 @@ struct ShaderBuilder;
 struct ShaderLibrary;
 struct ShaderLibraryBuilder;
 
-enum ShaderType {
+enum ShaderType : int8_t {
   ShaderType_Vertex = 0,
   ShaderType_Pixel = 1,
   ShaderType_Mesh = 2,
@@ -58,34 +65,40 @@ inline const char * const *EnumNamesShaderType() {
 }
 
 inline const char *EnumNameShaderType(ShaderType e) {
-  if (flatbuffers::IsOutRange(e, ShaderType_Vertex, ShaderType_Geometry)) return "";
+  if (::flatbuffers::IsOutRange(e, ShaderType_Vertex, ShaderType_Geometry)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesShaderType()[index];
 }
 
-struct Shader FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Shader FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ShaderBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
     VT_TYPE = 6,
     VT_CODE = 8
   };
-  const flatbuffers::String *name() const {
-    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  const ::flatbuffers::String *name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  bool KeyCompareLessThan(const Shader *o) const {
+  bool KeyCompareLessThan(const Shader * const o) const {
     return *name() < *o->name();
   }
-  int KeyCompareWithValue(const char *val) const {
-    return strcmp(name()->c_str(), val);
+  int KeyCompareWithValue(const char *_name) const {
+    return strcmp(name()->c_str(), _name);
+  }
+  template<typename StringType>
+  int KeyCompareWithValue(const StringType& _name) const {
+    if (name()->c_str() < _name) return -1;
+    if (_name < name()->c_str()) return 1;
+    return 0;
   }
   Tempest::Definition::ShaderType type() const {
     return static_cast<Tempest::Definition::ShaderType>(GetField<int8_t>(VT_TYPE, 0));
   }
-  const flatbuffers::Vector<uint8_t> *code() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_CODE);
+  const ::flatbuffers::Vector<uint8_t> *code() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_CODE);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffsetRequired(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
@@ -98,34 +111,34 @@ struct Shader FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct ShaderBuilder {
   typedef Shader Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_name(::flatbuffers::Offset<::flatbuffers::String> name) {
     fbb_.AddOffset(Shader::VT_NAME, name);
   }
   void add_type(Tempest::Definition::ShaderType type) {
     fbb_.AddElement<int8_t>(Shader::VT_TYPE, static_cast<int8_t>(type), 0);
   }
-  void add_code(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> code) {
+  void add_code(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> code) {
     fbb_.AddOffset(Shader::VT_CODE, code);
   }
-  explicit ShaderBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ShaderBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Shader> Finish() {
+  ::flatbuffers::Offset<Shader> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Shader>(end);
+    auto o = ::flatbuffers::Offset<Shader>(end);
     fbb_.Required(o, Shader::VT_NAME);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Shader> CreateShader(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> name = 0,
+inline ::flatbuffers::Offset<Shader> CreateShader(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> name = 0,
     Tempest::Definition::ShaderType type = Tempest::Definition::ShaderType_Vertex,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> code = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> code = 0) {
   ShaderBuilder builder_(_fbb);
   builder_.add_code(code);
   builder_.add_name(name);
@@ -133,8 +146,8 @@ inline flatbuffers::Offset<Shader> CreateShader(
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Shader> CreateShaderDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Shader> CreateShaderDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *name = nullptr,
     Tempest::Definition::ShaderType type = Tempest::Definition::ShaderType_Vertex,
     const std::vector<uint8_t> *code = nullptr) {
@@ -147,15 +160,15 @@ inline flatbuffers::Offset<Shader> CreateShaderDirect(
       code__);
 }
 
-struct ShaderLibrary FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct ShaderLibrary FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef ShaderLibraryBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_SHADERS = 4
   };
-  const flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::Shader>> *shaders() const {
-    return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::Shader>> *>(VT_SHADERS);
+  const ::flatbuffers::Vector<::flatbuffers::Offset<Tempest::Definition::Shader>> *shaders() const {
+    return GetPointer<const ::flatbuffers::Vector<::flatbuffers::Offset<Tempest::Definition::Shader>> *>(VT_SHADERS);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_SHADERS) &&
            verifier.VerifyVector(shaders()) &&
@@ -166,33 +179,33 @@ struct ShaderLibrary FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct ShaderLibraryBuilder {
   typedef ShaderLibrary Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_shaders(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::Shader>>> shaders) {
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_shaders(::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Tempest::Definition::Shader>>> shaders) {
     fbb_.AddOffset(ShaderLibrary::VT_SHADERS, shaders);
   }
-  explicit ShaderLibraryBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit ShaderLibraryBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<ShaderLibrary> Finish() {
+  ::flatbuffers::Offset<ShaderLibrary> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<ShaderLibrary>(end);
+    auto o = ::flatbuffers::Offset<ShaderLibrary>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<ShaderLibrary> CreateShaderLibrary(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Tempest::Definition::Shader>>> shaders = 0) {
+inline ::flatbuffers::Offset<ShaderLibrary> CreateShaderLibrary(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<::flatbuffers::Offset<Tempest::Definition::Shader>>> shaders = 0) {
   ShaderLibraryBuilder builder_(_fbb);
   builder_.add_shaders(shaders);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<ShaderLibrary> CreateShaderLibraryDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    std::vector<flatbuffers::Offset<Tempest::Definition::Shader>> *shaders = nullptr) {
+inline ::flatbuffers::Offset<ShaderLibrary> CreateShaderLibraryDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    std::vector<::flatbuffers::Offset<Tempest::Definition::Shader>> *shaders = nullptr) {
   auto shaders__ = shaders ? _fbb.CreateVectorOfSortedTables<Tempest::Definition::Shader>(shaders) : 0;
   return Tempest::Definition::CreateShaderLibrary(
       _fbb,
@@ -200,11 +213,11 @@ inline flatbuffers::Offset<ShaderLibrary> CreateShaderLibraryDirect(
 }
 
 inline const Tempest::Definition::ShaderLibrary *GetShaderLibrary(const void *buf) {
-  return flatbuffers::GetRoot<Tempest::Definition::ShaderLibrary>(buf);
+  return ::flatbuffers::GetRoot<Tempest::Definition::ShaderLibrary>(buf);
 }
 
 inline const Tempest::Definition::ShaderLibrary *GetSizePrefixedShaderLibrary(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Tempest::Definition::ShaderLibrary>(buf);
+  return ::flatbuffers::GetSizePrefixedRoot<Tempest::Definition::ShaderLibrary>(buf);
 }
 
 inline const char *ShaderLibraryIdentifier() {
@@ -212,17 +225,22 @@ inline const char *ShaderLibraryIdentifier() {
 }
 
 inline bool ShaderLibraryBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, ShaderLibraryIdentifier());
 }
 
+inline bool SizePrefixedShaderLibraryBufferHasIdentifier(const void *buf) {
+  return ::flatbuffers::BufferHasIdentifier(
+      buf, ShaderLibraryIdentifier(), true);
+}
+
 inline bool VerifyShaderLibraryBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifyBuffer<Tempest::Definition::ShaderLibrary>(ShaderLibraryIdentifier());
 }
 
 inline bool VerifySizePrefixedShaderLibraryBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifySizePrefixedBuffer<Tempest::Definition::ShaderLibrary>(ShaderLibraryIdentifier());
 }
 
@@ -231,14 +249,14 @@ inline const char *ShaderLibraryExtension() {
 }
 
 inline void FinishShaderLibraryBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::ShaderLibrary> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::ShaderLibrary> root) {
   fbb.Finish(root, ShaderLibraryIdentifier());
 }
 
 inline void FinishSizePrefixedShaderLibraryBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::ShaderLibrary> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::ShaderLibrary> root) {
   fbb.FinishSizePrefixed(root, ShaderLibraryIdentifier());
 }
 

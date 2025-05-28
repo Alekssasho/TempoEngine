@@ -15,10 +15,16 @@ struct MeshData
     primitive_mesh_count: uint;
 }
 
+enum MeshType : uint {
+    StaticMesh = 0,
+    SkeletonMesh = 1,
+}
+
 struct MeshMapping
 {
     index: uint(key);
     mesh_data: MeshData;
+    mesh_type: MeshType;
 }
 
 struct Meshlet
@@ -44,7 +50,8 @@ struct Material
 
 table GeometryDatabase
 {
-    vertex_buffer: [ubyte];
+    static_mesh_vertex_buffer: [ubyte];
+    skeleton_mesh_vertex_buffer: [ubyte];
     meshlet_indices_buffer: [uint8];
 
     meshlet_buffer: [Meshlet];

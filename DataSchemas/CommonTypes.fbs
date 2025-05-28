@@ -6,6 +6,13 @@ struct Vec3 {
     z: float;
 }
 
+struct Quat {
+    x: float;
+    y: float;
+    z: float;
+    w: float;
+}
+
 struct Color {
     r: float;
     g: float;

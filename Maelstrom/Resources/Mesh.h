@@ -1,6 +1,7 @@
 #pragma once
 #include "Resource.h"
 #include "../GLTFScene.h"
+#include <DataDefinitions/GeometryDatabase_generated.h>
 
 #include <EASTL/numeric.h>
 
@@ -25,10 +26,11 @@ struct PrimitiveMeshData
 
 struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 {
-	MeshResource(const Scene& scene, uint32_t sceneIndex, uint32_t meshIndex)
+	MeshResource(const Scene& scene, uint32_t sceneIndex, uint32_t meshIndex, Tempest::Definition::MeshType type)
 		: m_Scene(scene)
 		, m_SceneIndex(sceneIndex)
 		, m_MeshIndex(meshIndex)
+		, m_Type(type)
 	{}
 
 	void Compile() override
@@ -151,4 +153,5 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 	const Scene& m_Scene;
 	uint32_t m_SceneIndex; // This is needed for later remapping of materials
 	uint32_t m_MeshIndex;
+	Tempest::Definition::MeshType m_Type;
 };

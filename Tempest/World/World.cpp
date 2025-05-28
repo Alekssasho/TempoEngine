@@ -13,6 +13,7 @@
 #include <World/GameplayFeatures/SpaceLocation.h>
 #include <World/GameplayFeatures/BattleFeature.h>
 #include <World/GameplayFeatures/HealthManagementFeature.h>
+#include <World/GameplayFeatures/AnimationController.h>
 
 namespace Tempest
 {
@@ -114,6 +115,23 @@ WorldStorage::WorldStorage()
 		.member<float>("y")
 		.member<float>("z")
 		.member<float>("w");
+    m_EntityWorld.component<glm::mat4x4>()
+        .member<float>("x0")
+        .member<float>("y0")
+        .member<float>("z0")
+        .member<float>("w0")
+        .member<float>("x1")
+        .member<float>("y1")
+        .member<float>("z1")
+        .member<float>("w1")
+        .member<float>("x2")
+        .member<float>("y2")
+        .member<float>("z2")
+        .member<float>("w2")
+        .member<float>("x3")
+        .member<float>("y3")
+        .member<float>("z3")
+        .member<float>("w3");
 
 	m_EntityWorld.component<Navigation::LineData>()
 		.member<uint32_t>("StartIndex")
@@ -123,6 +141,8 @@ WorldStorage::WorldStorage()
 		.opaque(std_vector_support<flecs::entity>);
 	m_EntityWorld.component<eastl::vector<glm::vec3>>()
 		.opaque(std_vector_support<glm::vec3>);
+    m_EntityWorld.component<eastl::vector<glm::mat4x4>>()
+        .opaque(std_vector_support<glm::mat4x4>);
 	m_EntityWorld.component<eastl::vector<Navigation::LineData>>()
 		.opaque(std_vector_support<Navigation::LineData>);
 
@@ -138,6 +158,7 @@ World::World()
     m_Features.emplace_back(new GameplayFeatures::SpaceLocation);
     m_Features.emplace_back(new GameplayFeatures::Battle);
     m_Features.emplace_back(new GameplayFeatures::HealthManagement);
+    m_Features.emplace_back(new GameplayFeatures::AnimationController);
 }
 
 World::~World()

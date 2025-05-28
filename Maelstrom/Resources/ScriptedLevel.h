@@ -53,12 +53,13 @@ public:
         meshResources.reserve(m_MeshRequests.size());
 
         eastl::vector<MaterialRequest> materialRequests;
+        eastl::vector<SkeletonRequest> skeletonRequests;
 
         for (const MeshRequest& meshRequest : m_MeshRequests)
         {
             const Scene& scene = loadedScenes[meshRequest.SceneIndex];
             const uint32_t meshIndexInsideScene = scene.MeshIndexFromName(meshRequest.MeshName.c_str());
-            meshResources.emplace_back(scene, meshRequest.SceneIndex, meshIndexInsideScene);
+            meshResources.emplace_back(scene, meshRequest.SceneIndex, meshIndexInsideScene, meshRequest.MeshType);
 
             const uint32_t primitiveCount = scene.MeshPrimitiveCount(meshIndexInsideScene);
             for (uint32_t i = 0; i < primitiveCount; ++i)
@@ -70,6 +71,12 @@ public:
                 {
                     materialRequests.push_back(newRequest);
                 }
+            }
+
+            if (meshRequest.MeshType == Tempest::Definition::MeshType_SkeletonMesh)
+            {
+                uint32_t skeletonIndex = scene.MeshSkeleton(meshIndexInsideScene);
+                skeletonRequests.emplace_back(meshRequest.SceneIndex, skeletonIndex);
             }
         }
 
@@ -86,9 +93,10 @@ public:
         GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialRequests);
         TextureDatabaseResource textureDatabaseResource(loadedScenes, materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource;
+        AnimationDatabaseResource animationDatabaseResource(loadedScenes, skeletonRequests);
 
         Tempest::Job::Counter databaseCounter;
-        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
+        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource, animationDatabaseResource);
 
         // Compile ECS state, while other databases are being compiled
         eastl::vector<uint8_t> ecsState;
@@ -102,8 +110,9 @@ public:
 
         // We are ready with all dependenacies so we just write the data
         auto geometryDatabaseName = WriteFile(Tempest::Definition::GeometryDatabaseExtension(), geometryDatabaseResource.GetCompiledData());
-        auto audioDatabaseName = WriteFile(Tempest::Definition::AudioDatabaseExtension(), audioDatabaseResource.GetCompiledData());
+        auto audioDatabaseName = WriteFile(Tempest::Definition::SoundDatabaseExtension(), audioDatabaseResource.GetCompiledData());
         auto textureDatabaseName = WriteFile(Tempest::Definition::TextureDatabaseExtension(), textureDatabaseResource.GetCompiledData());
+        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData());
 
         flatbuffers::FlatBufferBuilder builder(1024 * 1024);
         auto nameOffset = builder.CreateString(/*m_Name.c_str()*/"");
@@ -112,6 +121,7 @@ public:
         auto geometryDatabaseFileOffset = builder.CreateString(geometryDatabaseName.c_str());
         auto textureDatabaseFileOffset = builder.CreateString(textureDatabaseName.c_str());
         auto audioDatabaseFileOffset = builder.CreateString(audioDatabaseName.c_str());
+        auto animationDatabaseFileOffset = builder.CreateString(animationDatabaseName.c_str());
         auto root = Tempest::Definition::CreateLevel(
             builder,
             nameOffset,
@@ -120,6 +130,7 @@ public:
             geometryDatabaseFileOffset,
             textureDatabaseFileOffset,
             audioDatabaseFileOffset,
+            animationDatabaseFileOffset,
             &m_Camera
         );
 
@@ -138,6 +149,7 @@ protected:
     {
         uint32_t SceneIndex;
         eastl::string MeshName;
+        Tempest::Definition::MeshType MeshType;
     };
 
     Tempest::WorldStorage m_ECS;
@@ -146,7 +158,7 @@ protected:
     eastl::vector<eastl::string> m_SceneRequests;
     eastl::vector<MeshRequest> m_MeshRequests;
 
-    uint32_t AddMeshRequest(eastl::string sceneName, eastl::string meshName)
+    uint32_t AddMeshRequest(eastl::string sceneName, eastl::string meshName, Tempest::Definition::MeshType type = Tempest::Definition::MeshType_StaticMesh)
     {
         // Try to find if the scene is already requested
         auto findItr = eastl::find(m_SceneRequests.begin(), m_SceneRequests.end(), sceneName);
@@ -168,7 +180,7 @@ protected:
             return uint32_t(eastl::distance(m_MeshRequests.begin(), findMeshItr));
         }
 
-        m_MeshRequests.emplace_back(sceneIndex, meshName);
+        m_MeshRequests.emplace_back(sceneIndex, meshName, type);
         return uint32_t(m_MeshRequests.size() - 1);
     }
 };

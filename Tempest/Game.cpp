@@ -41,7 +41,8 @@ void Game::LoadLevel(uint32_t, void* data)
 	const char* levelName = level->name()->c_str();
 	const char* geometryDatabase = level->geometry_database_file()->c_str();
 	const char* textureDatabase = level->texture_database_file()->c_str();
-	const char* audioDatabase = level->audio_database_file()->c_str();
+	const char* audioDatabase = level->sound_database_file()->c_str();
+	const char* animationDatabase = level->animation_database_file()->c_str();
 	FORMAT_LOG(Info, Game, "Loading Level \"%s\".", levelName);
 
 	// Async Load the rendering databases
@@ -70,6 +71,15 @@ void Game::LoadLevel(uint32_t, void* data)
 		}, (void*)audioDatabase };
 		gEngine->GetJobSystem().RunJobs("Load Audio Database", &loadAudioDatabase, 1, &audioDatabaseCounter);
 	}
+
+    // Async Load the animation database
+    Job::Counter animationDatabaseCounter;
+    {
+        Job::JobDecl loadAnimationDatabase{ [](uint32_t, void* animationDatabaseName) {
+            gEngine->GetAnimation().LoadDatabase((const char*)animationDatabaseName);
+        }, (void*)animationDatabase };
+        gEngine->GetJobSystem().RunJobs("Load Animation Database", &loadAnimationDatabase, 1, &animationDatabaseCounter);
+    }
 
 	// Runs async to loading the world
 	// This needs to be on Windows thread so it is a new job
@@ -118,7 +128,8 @@ void Game::LoadLevel(uint32_t, void* data)
 	gEngine->GetJobSystem().WaitForCounter(&renderingDatabasesCounter, 0);
 	gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 
-	// Wait for audio as well
-	gEngine->GetJobSystem().WaitForCounter(&audioDatabaseCounter, 0);
+	// Wait for audio & animation as well
+    gEngine->GetJobSystem().WaitForCounter(&animationDatabaseCounter, 0);
+    gEngine->GetJobSystem().WaitForCounter(&audioDatabaseCounter, 0);
 }
 }

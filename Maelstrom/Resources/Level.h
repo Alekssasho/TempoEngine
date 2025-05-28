@@ -7,6 +7,7 @@
 #include "TextureDatabase.h"
 #include "EntitiesDatabase.h"
 #include "AudioDatabase.h"
+#include "AnimationDatabase.h"
 
 #include "../GLTFScene.h"
 
@@ -46,7 +47,7 @@ public:
 
         for (int meshIndex = 0; meshIndex < scene.m_Meshes.size(); ++meshIndex)
         {
-            meshResources.emplace_back(scene, 0, meshIndex);
+            meshResources.emplace_back(scene, 0, meshIndex, Tempest::Definition::MeshType_StaticMesh);
         }
 
         CompileResourceArray(eastl::span(meshResources), meshJobCounter);
@@ -62,6 +63,7 @@ public:
         GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialDatabaseResource.m_MaterialRequests);
         TextureDatabaseResource textureDatabaseResource(eastl::span(&scene, 1), materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource;
+        AnimationDatabaseResource animationDatabaseResource(scene);
 
         Tempest::Job::Counter databaseCounter;
         CompileResources(databaseCounter, entitiesDatabaseResource, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
@@ -69,8 +71,9 @@ public:
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&databaseCounter, 0);
 
         auto geometryDatabaseName = WriteFile(Tempest::Definition::GeometryDatabaseExtension(), geometryDatabaseResource.GetCompiledData());
-        auto audioDatabaseName = WriteFile(Tempest::Definition::AudioDatabaseExtension(), audioDatabaseResource.GetCompiledData());
+        auto audioDatabaseName = WriteFile(Tempest::Definition::SoundDatabaseExtension(), audioDatabaseResource.GetCompiledData());
         auto textureDatabaseName = WriteFile(Tempest::Definition::TextureDatabaseExtension(), textureDatabaseResource.GetCompiledData());
+        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData());
 
         flatbuffers::FlatBufferBuilder builder(1024 * 1024);
         auto nameOffset = builder.CreateString(m_Name.c_str());
@@ -79,6 +82,7 @@ public:
         auto geometryDatabaseFileOffset = builder.CreateString(geometryDatabaseName.c_str());
         auto textureDatabaseFileOffset = builder.CreateString(textureDatabaseName.c_str());
         auto audioDatabaseFileOffset = builder.CreateString(audioDatabaseName.c_str());
+        auto animationDatabaseFileOffset = builder.CreateString(animationDatabaseName.c_str());
         auto root = Tempest::Definition::CreateLevel(
             builder,
             nameOffset,
@@ -87,6 +91,7 @@ public:
             geometryDatabaseFileOffset,
             textureDatabaseFileOffset,
             audioDatabaseFileOffset,
+            animationDatabaseFileOffset,
             &scene.m_Camera
         );
 

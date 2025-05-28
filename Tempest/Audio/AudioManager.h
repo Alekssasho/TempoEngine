@@ -8,7 +8,7 @@ struct stb_vorbis;
 namespace Tempest
 {
 namespace Definition {
-	struct AudioDatabase;
+	struct SoundDatabase;
 }
 
 class AudioManager
@@ -27,7 +27,7 @@ private:
 
 	//uint32_t m_SampleCount;
 
-	const Definition::AudioDatabase* m_Database;
+	const Definition::SoundDatabase* m_Database;
 	// Background music
 	stb_vorbis* m_VorbisDecoder;
 };

@@ -1,0 +1,10 @@
+namespace Tempest.Definition;
+
+table SoundDatabase
+{
+    background_music : [ubyte];
+}
+
+file_identifier "TSDB";
+file_extension "tsb";
+root_type SoundDatabase;

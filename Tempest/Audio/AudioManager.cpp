@@ -3,7 +3,7 @@
 #include "AudioManager.h"
 
 #include <Engine.h>
-#include <DataDefinitions/AudioDatabase_generated.h>
+#include <DataDefinitions/SoundDatabase_generated.h>
 
 //#define STB_VORBIS_HEADER_ONLY
 #include <stb_vorbis.c>
@@ -132,14 +132,7 @@ void AudioManager::Update()
 
 	auto samples = reinterpret_cast<AudioFrame*>(pData);
 
-	uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
 
-	if(framesDecoded < framesAvailable)
-	{
-		// Loop the background music
-		stb_vorbis_seek_start(m_VorbisDecoder);
-		stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData) + framesDecoded * 2, 2 * (framesAvailable - framesDecoded));
-	}
 
 	//for (uint32_t i = 0; i < framesAvailable; ++i)
 	//{
@@ -159,7 +152,7 @@ void AudioManager::Update()
 
 void AudioManager::LoadDatabase(const char* databaseName)
 {
-	const Definition::AudioDatabase* audioDatabase = gEngine->GetResourceLoader().LoadResource<Definition::AudioDatabase>(databaseName);
+	const Definition::SoundDatabase* audioDatabase = gEngine->GetResourceLoader().LoadResource<Definition::SoundDatabase>(databaseName);
 	if (!audioDatabase)
 	{
 		LOG(Warning, Renderer, "Audio Database is Invalid!");

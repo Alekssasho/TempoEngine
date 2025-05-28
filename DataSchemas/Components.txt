@@ -19,6 +19,14 @@ Component StaticMesh
 	Mesh : MeshHandle;
 }
 
+Component SkeletonMesh
+{
+    [StorageType(uint32_t)]
+	Mesh : MeshHandle;
+
+	BoneTransforms : eastl::vector<glm::mat4x4>;
+}
+
 [NoReflection]
 Component DynamicPhysicsActor
 {

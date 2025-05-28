@@ -180,16 +180,16 @@ void Renderer::UnregisterView(const Camera* camera)
 
 PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescription& description)
 {
-	eastl::string vsName = description.ShaderName;
+	eastl::string vsName = description.ShaderNameGeometry;
 	vsName += "-VS";
 	auto vsShader = m_ShaderLibrary->shaders()->LookupByKey(vsName.c_str());
 
-	eastl::string psName = description.ShaderName;
+	eastl::string psName = description.ShaderNamePixel;
 	psName += "-PS";
 	auto psShader = m_ShaderLibrary->shaders()->LookupByKey(psName.c_str());
 	assert(psShader);
 
-	eastl::string msName = description.ShaderName;
+	eastl::string msName = description.ShaderNameGeometry;
 	msName += "-MS";
 	auto msShader = m_ShaderLibrary->shaders()->LookupByKey(msName.c_str());
 
@@ -292,7 +292,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 		return;
 	}
 
-	uint32_t totalGeometrySize = geometryDatabase->vertex_buffer()->size()
+	uint32_t totalGeometrySize = geometryDatabase->static_mesh_vertex_buffer()->size()
 		+ geometryDatabase->meshlet_buffer()->size() * sizeof(Definition::Meshlet)
 		+ geometryDatabase->meshlet_indices_buffer()->size()
 		+ geometryDatabase->materials()->size() * sizeof(Definition::Material);
@@ -302,8 +302,8 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 	{
 		Dx12::BufferDescription bufferDescription;
 		bufferDescription.Type = Dx12::BufferType::Vertex;
-		bufferDescription.Size = geometryDatabase->vertex_buffer()->size();
-		bufferDescription.Data = geometryDatabase->vertex_buffer()->data();
+		bufferDescription.Size = geometryDatabase->static_mesh_vertex_buffer()->size();
+		bufferDescription.Data = geometryDatabase->static_mesh_vertex_buffer()->data();
 		m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, &uploadData);
 
 		// TODO: Add type for vertex layout

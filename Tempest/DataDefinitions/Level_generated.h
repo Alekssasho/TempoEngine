@@ -6,6 +6,13 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
+              FLATBUFFERS_VERSION_MINOR == 3 &&
+              FLATBUFFERS_VERSION_REVISION == 25,
+             "Non-compatible flatbuffers version included");
+
 #include "CommonTypes_generated.h"
 
 namespace Tempest {
@@ -37,25 +44,25 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
         up_() {
   }
   Camera(float _yfov, float _znear, float _zfar, float _aspect_ratio, const Common::Tempest::Vec3 &_position, const Common::Tempest::Vec3 &_forward, const Common::Tempest::Vec3 &_up)
-      : yfov_(flatbuffers::EndianScalar(_yfov)),
-        znear_(flatbuffers::EndianScalar(_znear)),
-        zfar_(flatbuffers::EndianScalar(_zfar)),
-        aspect_ratio_(flatbuffers::EndianScalar(_aspect_ratio)),
+      : yfov_(::flatbuffers::EndianScalar(_yfov)),
+        znear_(::flatbuffers::EndianScalar(_znear)),
+        zfar_(::flatbuffers::EndianScalar(_zfar)),
+        aspect_ratio_(::flatbuffers::EndianScalar(_aspect_ratio)),
         position_(_position),
         forward_(_forward),
         up_(_up) {
   }
   float yfov() const {
-    return flatbuffers::EndianScalar(yfov_);
+    return ::flatbuffers::EndianScalar(yfov_);
   }
   float znear() const {
-    return flatbuffers::EndianScalar(znear_);
+    return ::flatbuffers::EndianScalar(znear_);
   }
   float zfar() const {
-    return flatbuffers::EndianScalar(zfar_);
+    return ::flatbuffers::EndianScalar(zfar_);
   }
   float aspect_ratio() const {
-    return flatbuffers::EndianScalar(aspect_ratio_);
+    return ::flatbuffers::EndianScalar(aspect_ratio_);
   }
   const Common::Tempest::Vec3 &position() const {
     return position_;
@@ -69,7 +76,7 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Camera FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(Camera, 52);
 
-struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct Level FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef LevelBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_NAME = 4,
@@ -77,31 +84,35 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_PHYSICS_WORLD = 8,
     VT_GEOMETRY_DATABASE_FILE = 10,
     VT_TEXTURE_DATABASE_FILE = 12,
-    VT_AUDIO_DATABASE_FILE = 14,
-    VT_CAMERA = 16
+    VT_SOUND_DATABASE_FILE = 14,
+    VT_ANIMATION_DATABASE_FILE = 16,
+    VT_CAMERA = 18
   };
-  const flatbuffers::String *name() const {
-    return GetPointer<const flatbuffers::String *>(VT_NAME);
+  const ::flatbuffers::String *name() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_NAME);
   }
-  const flatbuffers::Vector<uint8_t> *entities() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_ENTITIES);
+  const ::flatbuffers::Vector<uint8_t> *entities() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_ENTITIES);
   }
-  const flatbuffers::Vector<uint8_t> *physics_world() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_PHYSICS_WORLD);
+  const ::flatbuffers::Vector<uint8_t> *physics_world() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_PHYSICS_WORLD);
   }
-  const flatbuffers::String *geometry_database_file() const {
-    return GetPointer<const flatbuffers::String *>(VT_GEOMETRY_DATABASE_FILE);
+  const ::flatbuffers::String *geometry_database_file() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_GEOMETRY_DATABASE_FILE);
   }
-  const flatbuffers::String *texture_database_file() const {
-    return GetPointer<const flatbuffers::String *>(VT_TEXTURE_DATABASE_FILE);
+  const ::flatbuffers::String *texture_database_file() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_TEXTURE_DATABASE_FILE);
   }
-  const flatbuffers::String *audio_database_file() const {
-    return GetPointer<const flatbuffers::String *>(VT_AUDIO_DATABASE_FILE);
+  const ::flatbuffers::String *sound_database_file() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_SOUND_DATABASE_FILE);
+  }
+  const ::flatbuffers::String *animation_database_file() const {
+    return GetPointer<const ::flatbuffers::String *>(VT_ANIMATION_DATABASE_FILE);
   }
   const Tempest::Definition::Camera *camera() const {
     return GetStruct<const Tempest::Definition::Camera *>(VT_CAMERA);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_NAME) &&
            verifier.VerifyString(name()) &&
@@ -113,8 +124,10 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            verifier.VerifyString(geometry_database_file()) &&
            VerifyOffset(verifier, VT_TEXTURE_DATABASE_FILE) &&
            verifier.VerifyString(texture_database_file()) &&
-           VerifyOffset(verifier, VT_AUDIO_DATABASE_FILE) &&
-           verifier.VerifyString(audio_database_file()) &&
+           VerifyOffset(verifier, VT_SOUND_DATABASE_FILE) &&
+           verifier.VerifyString(sound_database_file()) &&
+           VerifyOffset(verifier, VT_ANIMATION_DATABASE_FILE) &&
+           verifier.VerifyString(animation_database_file()) &&
            VerifyField<Tempest::Definition::Camera>(verifier, VT_CAMERA, 4) &&
            verifier.EndTable();
   }
@@ -122,52 +135,57 @@ struct Level FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct LevelBuilder {
   typedef Level Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_name(flatbuffers::Offset<flatbuffers::String> name) {
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_name(::flatbuffers::Offset<::flatbuffers::String> name) {
     fbb_.AddOffset(Level::VT_NAME, name);
   }
-  void add_entities(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> entities) {
+  void add_entities(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> entities) {
     fbb_.AddOffset(Level::VT_ENTITIES, entities);
   }
-  void add_physics_world(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> physics_world) {
+  void add_physics_world(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> physics_world) {
     fbb_.AddOffset(Level::VT_PHYSICS_WORLD, physics_world);
   }
-  void add_geometry_database_file(flatbuffers::Offset<flatbuffers::String> geometry_database_file) {
+  void add_geometry_database_file(::flatbuffers::Offset<::flatbuffers::String> geometry_database_file) {
     fbb_.AddOffset(Level::VT_GEOMETRY_DATABASE_FILE, geometry_database_file);
   }
-  void add_texture_database_file(flatbuffers::Offset<flatbuffers::String> texture_database_file) {
+  void add_texture_database_file(::flatbuffers::Offset<::flatbuffers::String> texture_database_file) {
     fbb_.AddOffset(Level::VT_TEXTURE_DATABASE_FILE, texture_database_file);
   }
-  void add_audio_database_file(flatbuffers::Offset<flatbuffers::String> audio_database_file) {
-    fbb_.AddOffset(Level::VT_AUDIO_DATABASE_FILE, audio_database_file);
+  void add_sound_database_file(::flatbuffers::Offset<::flatbuffers::String> sound_database_file) {
+    fbb_.AddOffset(Level::VT_SOUND_DATABASE_FILE, sound_database_file);
+  }
+  void add_animation_database_file(::flatbuffers::Offset<::flatbuffers::String> animation_database_file) {
+    fbb_.AddOffset(Level::VT_ANIMATION_DATABASE_FILE, animation_database_file);
   }
   void add_camera(const Tempest::Definition::Camera *camera) {
     fbb_.AddStruct(Level::VT_CAMERA, camera);
   }
-  explicit LevelBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit LevelBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<Level> Finish() {
+  ::flatbuffers::Offset<Level> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<Level>(end);
+    auto o = ::flatbuffers::Offset<Level>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<Level> CreateLevel(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::String> name = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> entities = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> physics_world = 0,
-    flatbuffers::Offset<flatbuffers::String> geometry_database_file = 0,
-    flatbuffers::Offset<flatbuffers::String> texture_database_file = 0,
-    flatbuffers::Offset<flatbuffers::String> audio_database_file = 0,
-    const Tempest::Definition::Camera *camera = 0) {
+inline ::flatbuffers::Offset<Level> CreateLevel(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::String> name = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> entities = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> physics_world = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> geometry_database_file = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> texture_database_file = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> sound_database_file = 0,
+    ::flatbuffers::Offset<::flatbuffers::String> animation_database_file = 0,
+    const Tempest::Definition::Camera *camera = nullptr) {
   LevelBuilder builder_(_fbb);
   builder_.add_camera(camera);
-  builder_.add_audio_database_file(audio_database_file);
+  builder_.add_animation_database_file(animation_database_file);
+  builder_.add_sound_database_file(sound_database_file);
   builder_.add_texture_database_file(texture_database_file);
   builder_.add_geometry_database_file(geometry_database_file);
   builder_.add_physics_world(physics_world);
@@ -176,21 +194,23 @@ inline flatbuffers::Offset<Level> CreateLevel(
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<Level> CreateLevelDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<Level> CreateLevelDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     const char *name = nullptr,
     const std::vector<uint8_t> *entities = nullptr,
     const std::vector<uint8_t> *physics_world = nullptr,
     const char *geometry_database_file = nullptr,
     const char *texture_database_file = nullptr,
-    const char *audio_database_file = nullptr,
-    const Tempest::Definition::Camera *camera = 0) {
+    const char *sound_database_file = nullptr,
+    const char *animation_database_file = nullptr,
+    const Tempest::Definition::Camera *camera = nullptr) {
   auto name__ = name ? _fbb.CreateString(name) : 0;
   auto entities__ = entities ? _fbb.CreateVector<uint8_t>(*entities) : 0;
   auto physics_world__ = physics_world ? _fbb.CreateVector<uint8_t>(*physics_world) : 0;
   auto geometry_database_file__ = geometry_database_file ? _fbb.CreateString(geometry_database_file) : 0;
   auto texture_database_file__ = texture_database_file ? _fbb.CreateString(texture_database_file) : 0;
-  auto audio_database_file__ = audio_database_file ? _fbb.CreateString(audio_database_file) : 0;
+  auto sound_database_file__ = sound_database_file ? _fbb.CreateString(sound_database_file) : 0;
+  auto animation_database_file__ = animation_database_file ? _fbb.CreateString(animation_database_file) : 0;
   return Tempest::Definition::CreateLevel(
       _fbb,
       name__,
@@ -198,16 +218,17 @@ inline flatbuffers::Offset<Level> CreateLevelDirect(
       physics_world__,
       geometry_database_file__,
       texture_database_file__,
-      audio_database_file__,
+      sound_database_file__,
+      animation_database_file__,
       camera);
 }
 
 inline const Tempest::Definition::Level *GetLevel(const void *buf) {
-  return flatbuffers::GetRoot<Tempest::Definition::Level>(buf);
+  return ::flatbuffers::GetRoot<Tempest::Definition::Level>(buf);
 }
 
 inline const Tempest::Definition::Level *GetSizePrefixedLevel(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Tempest::Definition::Level>(buf);
+  return ::flatbuffers::GetSizePrefixedRoot<Tempest::Definition::Level>(buf);
 }
 
 inline const char *LevelIdentifier() {
@@ -215,17 +236,22 @@ inline const char *LevelIdentifier() {
 }
 
 inline bool LevelBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, LevelIdentifier());
 }
 
+inline bool SizePrefixedLevelBufferHasIdentifier(const void *buf) {
+  return ::flatbuffers::BufferHasIdentifier(
+      buf, LevelIdentifier(), true);
+}
+
 inline bool VerifyLevelBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifyBuffer<Tempest::Definition::Level>(LevelIdentifier());
 }
 
 inline bool VerifySizePrefixedLevelBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifySizePrefixedBuffer<Tempest::Definition::Level>(LevelIdentifier());
 }
 
@@ -234,14 +260,14 @@ inline const char *LevelExtension() {
 }
 
 inline void FinishLevelBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::Level> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::Level> root) {
   fbb.Finish(root, LevelIdentifier());
 }
 
 inline void FinishSizePrefixedLevelBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::Level> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::Level> root) {
   fbb.FinishSizePrefixed(root, LevelIdentifier());
 }
 

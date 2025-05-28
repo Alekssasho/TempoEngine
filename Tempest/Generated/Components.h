@@ -24,6 +24,12 @@ struct StaticMesh
     MeshHandle Mesh;
     static constexpr const char* Name = "StaticMesh";
 };
+struct SkeletonMesh
+{
+    MeshHandle Mesh;
+    eastl::vector<glm::mat4x4> BoneTransforms;
+    static constexpr const char* Name = "SkeletonMesh";
+};
 struct DynamicPhysicsActor
 {
     physx::PxRigidBody* Actor;

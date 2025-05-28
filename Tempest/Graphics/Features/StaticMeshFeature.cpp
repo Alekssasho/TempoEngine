@@ -17,12 +17,14 @@ void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
 	m_Query.Init(world);
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
-		"StaticMesh",
+        "StaticMesh",
+        "StaticMesh",
 		RenderPhase::Main
 	});
 
 	m_ShadowHandle = renderer.RequestPipelineState(PipelineStateDescription{
-		"StaticMesh",
+        "StaticMesh",
+        "StaticMesh",
 		RenderPhase::Shadow
 	});
 }

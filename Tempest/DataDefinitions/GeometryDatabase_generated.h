@@ -6,6 +6,13 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
+              FLATBUFFERS_VERSION_MINOR == 3 &&
+              FLATBUFFERS_VERSION_REVISION == 25,
+             "Non-compatible flatbuffers version included");
+
 #include "CommonTypes_generated.h"
 
 namespace Tempest {
@@ -24,6 +31,36 @@ struct Material;
 struct GeometryDatabase;
 struct GeometryDatabaseBuilder;
 
+enum MeshType : uint32_t {
+  MeshType_StaticMesh = 0,
+  MeshType_SkeletonMesh = 1,
+  MeshType_MIN = MeshType_StaticMesh,
+  MeshType_MAX = MeshType_SkeletonMesh
+};
+
+inline const MeshType (&EnumValuesMeshType())[2] {
+  static const MeshType values[] = {
+    MeshType_StaticMesh,
+    MeshType_SkeletonMesh
+  };
+  return values;
+}
+
+inline const char * const *EnumNamesMeshType() {
+  static const char * const names[3] = {
+    "StaticMesh",
+    "SkeletonMesh",
+    nullptr
+  };
+  return names;
+}
+
+inline const char *EnumNameMeshType(MeshType e) {
+  if (::flatbuffers::IsOutRange(e, MeshType_StaticMesh, MeshType_SkeletonMesh)) return "";
+  const size_t index = static_cast<size_t>(e);
+  return EnumNamesMeshType()[index];
+}
+
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) PrimitiveMeshData FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t meshlets_offset_;
@@ -37,18 +74,18 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) PrimitiveMeshData FLATBUFFERS_FINAL_CLASS
         material_index_(0) {
   }
   PrimitiveMeshData(uint32_t _meshlets_offset, uint32_t _meshlets_count, uint32_t _material_index)
-      : meshlets_offset_(flatbuffers::EndianScalar(_meshlets_offset)),
-        meshlets_count_(flatbuffers::EndianScalar(_meshlets_count)),
-        material_index_(flatbuffers::EndianScalar(_material_index)) {
+      : meshlets_offset_(::flatbuffers::EndianScalar(_meshlets_offset)),
+        meshlets_count_(::flatbuffers::EndianScalar(_meshlets_count)),
+        material_index_(::flatbuffers::EndianScalar(_material_index)) {
   }
   uint32_t meshlets_offset() const {
-    return flatbuffers::EndianScalar(meshlets_offset_);
+    return ::flatbuffers::EndianScalar(meshlets_offset_);
   }
   uint32_t meshlets_count() const {
-    return flatbuffers::EndianScalar(meshlets_count_);
+    return ::flatbuffers::EndianScalar(meshlets_count_);
   }
   uint32_t material_index() const {
-    return flatbuffers::EndianScalar(material_index_);
+    return ::flatbuffers::EndianScalar(material_index_);
   }
 };
 FLATBUFFERS_STRUCT_END(PrimitiveMeshData, 12);
@@ -64,14 +101,14 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MeshData FLATBUFFERS_FINAL_CLASS {
         primitive_mesh_count_(0) {
   }
   MeshData(uint32_t _primitive_mesh_offset, uint32_t _primitive_mesh_count)
-      : primitive_mesh_offset_(flatbuffers::EndianScalar(_primitive_mesh_offset)),
-        primitive_mesh_count_(flatbuffers::EndianScalar(_primitive_mesh_count)) {
+      : primitive_mesh_offset_(::flatbuffers::EndianScalar(_primitive_mesh_offset)),
+        primitive_mesh_count_(::flatbuffers::EndianScalar(_primitive_mesh_count)) {
   }
   uint32_t primitive_mesh_offset() const {
-    return flatbuffers::EndianScalar(primitive_mesh_offset_);
+    return ::flatbuffers::EndianScalar(primitive_mesh_offset_);
   }
   uint32_t primitive_mesh_count() const {
-    return flatbuffers::EndianScalar(primitive_mesh_count_);
+    return ::flatbuffers::EndianScalar(primitive_mesh_count_);
   }
 };
 FLATBUFFERS_STRUCT_END(MeshData, 8);
@@ -80,30 +117,36 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) MeshMapping FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t index_;
   Tempest::Definition::MeshData mesh_data_;
+  uint32_t mesh_type_;
 
  public:
   MeshMapping()
       : index_(0),
-        mesh_data_() {
+        mesh_data_(),
+        mesh_type_(0) {
   }
-  MeshMapping(uint32_t _index, const Tempest::Definition::MeshData &_mesh_data)
-      : index_(flatbuffers::EndianScalar(_index)),
-        mesh_data_(_mesh_data) {
+  MeshMapping(uint32_t _index, const Tempest::Definition::MeshData &_mesh_data, Tempest::Definition::MeshType _mesh_type)
+      : index_(::flatbuffers::EndianScalar(_index)),
+        mesh_data_(_mesh_data),
+        mesh_type_(::flatbuffers::EndianScalar(static_cast<uint32_t>(_mesh_type))) {
   }
   uint32_t index() const {
-    return flatbuffers::EndianScalar(index_);
+    return ::flatbuffers::EndianScalar(index_);
   }
-  bool KeyCompareLessThan(const MeshMapping *o) const {
+  bool KeyCompareLessThan(const MeshMapping * const o) const {
     return index() < o->index();
   }
-  int KeyCompareWithValue(uint32_t val) const {
-    return static_cast<int>(index() > val) - static_cast<int>(index() < val);
+  int KeyCompareWithValue(uint32_t _index) const {
+    return static_cast<int>(index() > _index) - static_cast<int>(index() < _index);
   }
   const Tempest::Definition::MeshData &mesh_data() const {
     return mesh_data_;
   }
+  Tempest::Definition::MeshType mesh_type() const {
+    return static_cast<Tempest::Definition::MeshType>(::flatbuffers::EndianScalar(mesh_type_));
+  }
 };
-FLATBUFFERS_STRUCT_END(MeshMapping, 12);
+FLATBUFFERS_STRUCT_END(MeshMapping, 16);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Meshlet FLATBUFFERS_FINAL_CLASS {
  private:
@@ -120,22 +163,22 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Meshlet FLATBUFFERS_FINAL_CLASS {
         triangle_count_(0) {
   }
   Meshlet(uint32_t _vertex_offset, uint32_t _vertex_count, uint32_t _triangle_offset, uint32_t _triangle_count)
-      : vertex_offset_(flatbuffers::EndianScalar(_vertex_offset)),
-        vertex_count_(flatbuffers::EndianScalar(_vertex_count)),
-        triangle_offset_(flatbuffers::EndianScalar(_triangle_offset)),
-        triangle_count_(flatbuffers::EndianScalar(_triangle_count)) {
+      : vertex_offset_(::flatbuffers::EndianScalar(_vertex_offset)),
+        vertex_count_(::flatbuffers::EndianScalar(_vertex_count)),
+        triangle_offset_(::flatbuffers::EndianScalar(_triangle_offset)),
+        triangle_count_(::flatbuffers::EndianScalar(_triangle_count)) {
   }
   uint32_t vertex_offset() const {
-    return flatbuffers::EndianScalar(vertex_offset_);
+    return ::flatbuffers::EndianScalar(vertex_offset_);
   }
   uint32_t vertex_count() const {
-    return flatbuffers::EndianScalar(vertex_count_);
+    return ::flatbuffers::EndianScalar(vertex_count_);
   }
   uint32_t triangle_offset() const {
-    return flatbuffers::EndianScalar(triangle_offset_);
+    return ::flatbuffers::EndianScalar(triangle_offset_);
   }
   uint32_t triangle_count() const {
-    return flatbuffers::EndianScalar(triangle_count_);
+    return ::flatbuffers::EndianScalar(triangle_count_);
   }
 };
 FLATBUFFERS_STRUCT_END(Meshlet, 16);
@@ -158,61 +201,67 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Material FLATBUFFERS_FINAL_CLASS {
   }
   Material(const Common::Tempest::Color &_albedo_color_factor, float _metallic_factor, float _roughness_factor, uint32_t _albedo_color_texture_index, uint32_t _metallic_roughness_texture_index)
       : albedo_color_factor_(_albedo_color_factor),
-        metallic_factor_(flatbuffers::EndianScalar(_metallic_factor)),
-        roughness_factor_(flatbuffers::EndianScalar(_roughness_factor)),
-        albedo_color_texture_index_(flatbuffers::EndianScalar(_albedo_color_texture_index)),
-        metallic_roughness_texture_index_(flatbuffers::EndianScalar(_metallic_roughness_texture_index)) {
+        metallic_factor_(::flatbuffers::EndianScalar(_metallic_factor)),
+        roughness_factor_(::flatbuffers::EndianScalar(_roughness_factor)),
+        albedo_color_texture_index_(::flatbuffers::EndianScalar(_albedo_color_texture_index)),
+        metallic_roughness_texture_index_(::flatbuffers::EndianScalar(_metallic_roughness_texture_index)) {
   }
   const Common::Tempest::Color &albedo_color_factor() const {
     return albedo_color_factor_;
   }
   float metallic_factor() const {
-    return flatbuffers::EndianScalar(metallic_factor_);
+    return ::flatbuffers::EndianScalar(metallic_factor_);
   }
   float roughness_factor() const {
-    return flatbuffers::EndianScalar(roughness_factor_);
+    return ::flatbuffers::EndianScalar(roughness_factor_);
   }
   uint32_t albedo_color_texture_index() const {
-    return flatbuffers::EndianScalar(albedo_color_texture_index_);
+    return ::flatbuffers::EndianScalar(albedo_color_texture_index_);
   }
   uint32_t metallic_roughness_texture_index() const {
-    return flatbuffers::EndianScalar(metallic_roughness_texture_index_);
+    return ::flatbuffers::EndianScalar(metallic_roughness_texture_index_);
   }
 };
 FLATBUFFERS_STRUCT_END(Material, 32);
 
-struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef GeometryDatabaseBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_VERTEX_BUFFER = 4,
-    VT_MESHLET_INDICES_BUFFER = 6,
-    VT_MESHLET_BUFFER = 8,
-    VT_PRIMITIVE_MESHES = 10,
-    VT_MATERIALS = 12,
-    VT_MAPPINGS = 14
+    VT_STATIC_MESH_VERTEX_BUFFER = 4,
+    VT_SKELETON_MESH_VERTEX_BUFFER = 6,
+    VT_MESHLET_INDICES_BUFFER = 8,
+    VT_MESHLET_BUFFER = 10,
+    VT_PRIMITIVE_MESHES = 12,
+    VT_MATERIALS = 14,
+    VT_MAPPINGS = 16
   };
-  const flatbuffers::Vector<uint8_t> *vertex_buffer() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_VERTEX_BUFFER);
+  const ::flatbuffers::Vector<uint8_t> *static_mesh_vertex_buffer() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_STATIC_MESH_VERTEX_BUFFER);
   }
-  const flatbuffers::Vector<uint8_t> *meshlet_indices_buffer() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_MESHLET_INDICES_BUFFER);
+  const ::flatbuffers::Vector<uint8_t> *skeleton_mesh_vertex_buffer() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_SKELETON_MESH_VERTEX_BUFFER);
   }
-  const flatbuffers::Vector<const Tempest::Definition::Meshlet *> *meshlet_buffer() const {
-    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::Meshlet *> *>(VT_MESHLET_BUFFER);
+  const ::flatbuffers::Vector<uint8_t> *meshlet_indices_buffer() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_MESHLET_INDICES_BUFFER);
   }
-  const flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *> *primitive_meshes() const {
-    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *> *>(VT_PRIMITIVE_MESHES);
+  const ::flatbuffers::Vector<const Tempest::Definition::Meshlet *> *meshlet_buffer() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::Meshlet *> *>(VT_MESHLET_BUFFER);
   }
-  const flatbuffers::Vector<const Tempest::Definition::Material *> *materials() const {
-    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::Material *> *>(VT_MATERIALS);
+  const ::flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *> *primitive_meshes() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *> *>(VT_PRIMITIVE_MESHES);
   }
-  const flatbuffers::Vector<const Tempest::Definition::MeshMapping *> *mappings() const {
-    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::MeshMapping *> *>(VT_MAPPINGS);
+  const ::flatbuffers::Vector<const Tempest::Definition::Material *> *materials() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::Material *> *>(VT_MATERIALS);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  const ::flatbuffers::Vector<const Tempest::Definition::MeshMapping *> *mappings() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::MeshMapping *> *>(VT_MAPPINGS);
+  }
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
-           VerifyOffset(verifier, VT_VERTEX_BUFFER) &&
-           verifier.VerifyVector(vertex_buffer()) &&
+           VerifyOffset(verifier, VT_STATIC_MESH_VERTEX_BUFFER) &&
+           verifier.VerifyVector(static_mesh_vertex_buffer()) &&
+           VerifyOffset(verifier, VT_SKELETON_MESH_VERTEX_BUFFER) &&
+           verifier.VerifyVector(skeleton_mesh_vertex_buffer()) &&
            VerifyOffset(verifier, VT_MESHLET_INDICES_BUFFER) &&
            verifier.VerifyVector(meshlet_indices_buffer()) &&
            VerifyOffset(verifier, VT_MESHLET_BUFFER) &&
@@ -229,64 +278,71 @@ struct GeometryDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct GeometryDatabaseBuilder {
   typedef GeometryDatabase Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_vertex_buffer(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> vertex_buffer) {
-    fbb_.AddOffset(GeometryDatabase::VT_VERTEX_BUFFER, vertex_buffer);
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_static_mesh_vertex_buffer(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> static_mesh_vertex_buffer) {
+    fbb_.AddOffset(GeometryDatabase::VT_STATIC_MESH_VERTEX_BUFFER, static_mesh_vertex_buffer);
   }
-  void add_meshlet_indices_buffer(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> meshlet_indices_buffer) {
+  void add_skeleton_mesh_vertex_buffer(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> skeleton_mesh_vertex_buffer) {
+    fbb_.AddOffset(GeometryDatabase::VT_SKELETON_MESH_VERTEX_BUFFER, skeleton_mesh_vertex_buffer);
+  }
+  void add_meshlet_indices_buffer(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> meshlet_indices_buffer) {
     fbb_.AddOffset(GeometryDatabase::VT_MESHLET_INDICES_BUFFER, meshlet_indices_buffer);
   }
-  void add_meshlet_buffer(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer) {
+  void add_meshlet_buffer(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer) {
     fbb_.AddOffset(GeometryDatabase::VT_MESHLET_BUFFER, meshlet_buffer);
   }
-  void add_primitive_meshes(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *>> primitive_meshes) {
+  void add_primitive_meshes(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *>> primitive_meshes) {
     fbb_.AddOffset(GeometryDatabase::VT_PRIMITIVE_MESHES, primitive_meshes);
   }
-  void add_materials(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Material *>> materials) {
+  void add_materials(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Material *>> materials) {
     fbb_.AddOffset(GeometryDatabase::VT_MATERIALS, materials);
   }
-  void add_mappings(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::MeshMapping *>> mappings) {
+  void add_mappings(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::MeshMapping *>> mappings) {
     fbb_.AddOffset(GeometryDatabase::VT_MAPPINGS, mappings);
   }
-  explicit GeometryDatabaseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit GeometryDatabaseBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<GeometryDatabase> Finish() {
+  ::flatbuffers::Offset<GeometryDatabase> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<GeometryDatabase>(end);
+    auto o = ::flatbuffers::Offset<GeometryDatabase>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabase(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> vertex_buffer = 0,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> meshlet_indices_buffer = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *>> primitive_meshes = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::Material *>> materials = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::MeshMapping *>> mappings = 0) {
+inline ::flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabase(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> static_mesh_vertex_buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> skeleton_mesh_vertex_buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> meshlet_indices_buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Meshlet *>> meshlet_buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::PrimitiveMeshData *>> primitive_meshes = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Material *>> materials = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::MeshMapping *>> mappings = 0) {
   GeometryDatabaseBuilder builder_(_fbb);
   builder_.add_mappings(mappings);
   builder_.add_materials(materials);
   builder_.add_primitive_meshes(primitive_meshes);
   builder_.add_meshlet_buffer(meshlet_buffer);
   builder_.add_meshlet_indices_buffer(meshlet_indices_buffer);
-  builder_.add_vertex_buffer(vertex_buffer);
+  builder_.add_skeleton_mesh_vertex_buffer(skeleton_mesh_vertex_buffer);
+  builder_.add_static_mesh_vertex_buffer(static_mesh_vertex_buffer);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabaseDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    const std::vector<uint8_t> *vertex_buffer = nullptr,
+inline ::flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabaseDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<uint8_t> *static_mesh_vertex_buffer = nullptr,
+    const std::vector<uint8_t> *skeleton_mesh_vertex_buffer = nullptr,
     const std::vector<uint8_t> *meshlet_indices_buffer = nullptr,
     const std::vector<Tempest::Definition::Meshlet> *meshlet_buffer = nullptr,
     const std::vector<Tempest::Definition::PrimitiveMeshData> *primitive_meshes = nullptr,
     const std::vector<Tempest::Definition::Material> *materials = nullptr,
     std::vector<Tempest::Definition::MeshMapping> *mappings = nullptr) {
-  auto vertex_buffer__ = vertex_buffer ? _fbb.CreateVector<uint8_t>(*vertex_buffer) : 0;
+  auto static_mesh_vertex_buffer__ = static_mesh_vertex_buffer ? _fbb.CreateVector<uint8_t>(*static_mesh_vertex_buffer) : 0;
+  auto skeleton_mesh_vertex_buffer__ = skeleton_mesh_vertex_buffer ? _fbb.CreateVector<uint8_t>(*skeleton_mesh_vertex_buffer) : 0;
   auto meshlet_indices_buffer__ = meshlet_indices_buffer ? _fbb.CreateVector<uint8_t>(*meshlet_indices_buffer) : 0;
   auto meshlet_buffer__ = meshlet_buffer ? _fbb.CreateVectorOfStructs<Tempest::Definition::Meshlet>(*meshlet_buffer) : 0;
   auto primitive_meshes__ = primitive_meshes ? _fbb.CreateVectorOfStructs<Tempest::Definition::PrimitiveMeshData>(*primitive_meshes) : 0;
@@ -294,7 +350,8 @@ inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabaseDirect(
   auto mappings__ = mappings ? _fbb.CreateVectorOfSortedStructs<Tempest::Definition::MeshMapping>(mappings) : 0;
   return Tempest::Definition::CreateGeometryDatabase(
       _fbb,
-      vertex_buffer__,
+      static_mesh_vertex_buffer__,
+      skeleton_mesh_vertex_buffer__,
       meshlet_indices_buffer__,
       meshlet_buffer__,
       primitive_meshes__,
@@ -303,11 +360,11 @@ inline flatbuffers::Offset<GeometryDatabase> CreateGeometryDatabaseDirect(
 }
 
 inline const Tempest::Definition::GeometryDatabase *GetGeometryDatabase(const void *buf) {
-  return flatbuffers::GetRoot<Tempest::Definition::GeometryDatabase>(buf);
+  return ::flatbuffers::GetRoot<Tempest::Definition::GeometryDatabase>(buf);
 }
 
 inline const Tempest::Definition::GeometryDatabase *GetSizePrefixedGeometryDatabase(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Tempest::Definition::GeometryDatabase>(buf);
+  return ::flatbuffers::GetSizePrefixedRoot<Tempest::Definition::GeometryDatabase>(buf);
 }
 
 inline const char *GeometryDatabaseIdentifier() {
@@ -315,17 +372,22 @@ inline const char *GeometryDatabaseIdentifier() {
 }
 
 inline bool GeometryDatabaseBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, GeometryDatabaseIdentifier());
 }
 
+inline bool SizePrefixedGeometryDatabaseBufferHasIdentifier(const void *buf) {
+  return ::flatbuffers::BufferHasIdentifier(
+      buf, GeometryDatabaseIdentifier(), true);
+}
+
 inline bool VerifyGeometryDatabaseBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifyBuffer<Tempest::Definition::GeometryDatabase>(GeometryDatabaseIdentifier());
 }
 
 inline bool VerifySizePrefixedGeometryDatabaseBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifySizePrefixedBuffer<Tempest::Definition::GeometryDatabase>(GeometryDatabaseIdentifier());
 }
 
@@ -334,14 +396,14 @@ inline const char *GeometryDatabaseExtension() {
 }
 
 inline void FinishGeometryDatabaseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::GeometryDatabase> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::GeometryDatabase> root) {
   fbb.Finish(root, GeometryDatabaseIdentifier());
 }
 
 inline void FinishSizePrefixedGeometryDatabaseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::GeometryDatabase> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::GeometryDatabase> root) {
   fbb.FinishSizePrefixed(root, GeometryDatabaseIdentifier());
 }
 

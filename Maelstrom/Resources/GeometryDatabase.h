@@ -34,7 +34,8 @@ public:
 				Tempest::Definition::MeshData(
 					uint32_t(primitiveMeshes.size()),
 					uint32_t(currentMeshPrimitiveData.size())
-				)
+				),
+				Tempest::Definition::MeshType_StaticMesh
 			);
 
 			primitiveMeshes.reserve(primitiveMeshes.size() + currentMeshPrimitiveData.size());
@@ -80,7 +81,8 @@ public:
 		}
 
 		flatbuffers::FlatBufferBuilder builder(1024 * 1024);
-		auto vertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(vertexBuffer.data()), vertexBuffer.size() * sizeof(VertexLayout));
+		auto staticMeshVertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(vertexBuffer.data()), vertexBuffer.size() * sizeof(VertexLayout));
+		auto skeletonMeshVertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(vertexBuffer.data()), vertexBuffer.size() * sizeof(VertexLayout));
 		auto meshletIndicesBufferOffset = builder.CreateVector<uint8_t>(meshletIndicesBuffer.data(), meshletIndicesBuffer.size());
 		auto meshletBufferOffset = builder.CreateVectorOfStructs<Tempest::Definition::Meshlet>(meshlets.data(), meshlets.size());
 		auto primitiveMeshesOffset = builder.CreateVectorOfStructs<Tempest::Definition::PrimitiveMeshData>(primitiveMeshes.data(), primitiveMeshes.size());
@@ -89,7 +91,8 @@ public:
 
 		auto root = Tempest::Definition::CreateGeometryDatabase(
 			builder,
-			vertexBufferOffset,
+			staticMeshVertexBufferOffset,
+			skeletonMeshVertexBufferOffset,
 			meshletIndicesBufferOffset,
 			meshletBufferOffset,
 			primitiveMeshesOffset,

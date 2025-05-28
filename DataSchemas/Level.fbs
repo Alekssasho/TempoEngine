@@ -19,7 +19,8 @@ table Level
     physics_world: [ubyte];
     geometry_database_file: string;
     texture_database_file: string;
-    audio_database_file: string;
+    sound_database_file: string;
+    animation_database_file: string;
     camera: Camera;
 }
 

@@ -21,6 +21,7 @@ struct FrameData
 
 	// TODO: This is not very good memory wise as it contains pointers. We need a single allocation and just suballocate from it.
 	eastl::vector<DebugRectData> DebugRects;
+	eastl::vector<DebugRectData> DebugCubes;
 	// TODO: This should not be part of this. This class should only be a memory pool in which every feature writes arbitrary data.
 	struct StaticMeshData {
 		MeshHandle Mesh;

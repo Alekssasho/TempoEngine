@@ -6,14 +6,23 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
+              FLATBUFFERS_VERSION_MINOR == 3 &&
+              FLATBUFFERS_VERSION_REVISION == 25,
+             "Non-compatible flatbuffers version included");
+
 namespace Common {
 namespace Tempest {
 
 struct Vec3;
 
+struct Quat;
+
 struct Color;
 
-enum PhysicsShapeFilter {
+enum PhysicsShapeFilter : uint32_t {
   PhysicsShapeFilter_NonDrivableSurface = 65535,
   PhysicsShapeFilter_DrivableSurface = 4294901760,
   PhysicsShapeFilter_MIN = PhysicsShapeFilter_NonDrivableSurface,
@@ -49,21 +58,56 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Vec3 FLATBUFFERS_FINAL_CLASS {
         z_(0) {
   }
   Vec3(float _x, float _y, float _z)
-      : x_(flatbuffers::EndianScalar(_x)),
-        y_(flatbuffers::EndianScalar(_y)),
-        z_(flatbuffers::EndianScalar(_z)) {
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)),
+        z_(::flatbuffers::EndianScalar(_z)) {
   }
   float x() const {
-    return flatbuffers::EndianScalar(x_);
+    return ::flatbuffers::EndianScalar(x_);
   }
   float y() const {
-    return flatbuffers::EndianScalar(y_);
+    return ::flatbuffers::EndianScalar(y_);
   }
   float z() const {
-    return flatbuffers::EndianScalar(z_);
+    return ::flatbuffers::EndianScalar(z_);
   }
 };
 FLATBUFFERS_STRUCT_END(Vec3, 12);
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Quat FLATBUFFERS_FINAL_CLASS {
+ private:
+  float x_;
+  float y_;
+  float z_;
+  float w_;
+
+ public:
+  Quat()
+      : x_(0),
+        y_(0),
+        z_(0),
+        w_(0) {
+  }
+  Quat(float _x, float _y, float _z, float _w)
+      : x_(::flatbuffers::EndianScalar(_x)),
+        y_(::flatbuffers::EndianScalar(_y)),
+        z_(::flatbuffers::EndianScalar(_z)),
+        w_(::flatbuffers::EndianScalar(_w)) {
+  }
+  float x() const {
+    return ::flatbuffers::EndianScalar(x_);
+  }
+  float y() const {
+    return ::flatbuffers::EndianScalar(y_);
+  }
+  float z() const {
+    return ::flatbuffers::EndianScalar(z_);
+  }
+  float w() const {
+    return ::flatbuffers::EndianScalar(w_);
+  }
+};
+FLATBUFFERS_STRUCT_END(Quat, 16);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Color FLATBUFFERS_FINAL_CLASS {
  private:
@@ -80,22 +124,22 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Color FLATBUFFERS_FINAL_CLASS {
         a_(0) {
   }
   Color(float _r, float _g, float _b, float _a)
-      : r_(flatbuffers::EndianScalar(_r)),
-        g_(flatbuffers::EndianScalar(_g)),
-        b_(flatbuffers::EndianScalar(_b)),
-        a_(flatbuffers::EndianScalar(_a)) {
+      : r_(::flatbuffers::EndianScalar(_r)),
+        g_(::flatbuffers::EndianScalar(_g)),
+        b_(::flatbuffers::EndianScalar(_b)),
+        a_(::flatbuffers::EndianScalar(_a)) {
   }
   float r() const {
-    return flatbuffers::EndianScalar(r_);
+    return ::flatbuffers::EndianScalar(r_);
   }
   float g() const {
-    return flatbuffers::EndianScalar(g_);
+    return ::flatbuffers::EndianScalar(g_);
   }
   float b() const {
-    return flatbuffers::EndianScalar(b_);
+    return ::flatbuffers::EndianScalar(b_);
   }
   float a() const {
-    return flatbuffers::EndianScalar(a_);
+    return ::flatbuffers::EndianScalar(a_);
   }
 };
 FLATBUFFERS_STRUCT_END(Color, 16);

@@ -38,10 +38,19 @@ public:
 	void Compile() override
 	{
 		const cgltf_texture& texture = m_Scene.m_Data->textures[m_TextureRequest.TextureIndex];
-		const uint8_t* data = cgltf_buffer_view_data(texture.image->buffer_view);
-
         int width, height, components;
-        uint8_t* decompressedImage = stbi_load_from_memory(data, int(texture.image->buffer_view->size), &width, &height, &components, 4);
+		uint8_t* decompressedImage = nullptr;
+		if (texture.image->buffer_view)
+		{
+			const uint8_t* data = cgltf_buffer_view_data(texture.image->buffer_view);
+
+			decompressedImage = stbi_load_from_memory(data, int(texture.image->buffer_view->size), &width, &height, &components, 4);
+		}
+		else
+		{
+			std::filesystem::path texturePath((gCompilerOptions->InputFolder + texture.image->uri).c_str());
+			decompressedImage = stbi_load(texturePath.string().c_str(), &width, &height, &components, 4);
+		}
 
 		// Convert RGBA -> BGRA
 		for (size_t pixel = 0; pixel < (width * height); pixel++)

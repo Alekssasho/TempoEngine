@@ -17,10 +17,19 @@ namespace GraphicsFeature
 
 void Debug::Initialize(const World& world, Renderer& renderer)
 {
-	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
-		"DebugShape",
+	m_HandleRect = renderer.RequestPipelineState(PipelineStateDescription{
+        "DebugShapeRect",
+        "DebugShapePixelShader",
 		RenderPhase::Main
 	});
+
+    m_HandleCube = renderer.RequestPipelineState(PipelineStateDescription{
+        "DebugShapeCube",
+        "DebugShapePixelShader",
+        RenderPhase::Main
+    });
+
+	m_SkeletonQuery = world.m_EntityWorld.query<const Components::SkeletonMesh, const Components::Transform>("Debug Skeleton Query");
 }
 
 void Debug::GatherData(const World& world, FrameData& frameData)
@@ -46,6 +55,27 @@ void Debug::GatherData(const World& world, FrameData& frameData)
 			}
 		}
 	}
+
+	if (gEngine->GetDebug().ShowSkeletons)
+	{
+		m_SkeletonQuery.each([&](const Components::SkeletonMesh& mesh, const Components::Transform& transform)
+		{
+            const glm::mat4x4 scale = glm::scale(transform.Scale);
+            const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
+            const glm::mat4x4 translate = glm::translate(transform.Position);
+			const glm::mat4x4 meshMatrix = translate * rotate * scale;
+
+			const float colorStep = 1.0f / mesh.BoneTransforms.size();
+
+			for (uint32_t boneIndex = 0; boneIndex < mesh.BoneTransforms.size(); ++boneIndex)
+			{
+				frameData.DebugCubes.emplace_back(
+					meshMatrix * mesh.BoneTransforms[boneIndex] * glm::scale(glm::vec3(0.05f, 0.05f, 0.05f)),
+					glm::vec4(0.0f, colorStep * boneIndex, 0.0f, 1.0f)
+				);
+			}
+		});
+	}
 }
 
 void Debug::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
@@ -60,12 +90,22 @@ void Debug::GenerateCommands(const FrameData& data, RendererCommandList& command
 	for (const auto& rect : data.DebugRects)
 	{
 		RendererCommandDrawMeshlet command;
-		command.Pipeline = m_Handle;
+		command.Pipeline = m_HandleRect;
 		command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
 		command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(rect);
 		command.MeshletCount = 1;
 		commandList.AddCommand(command);
 	}
+
+    for (const auto& rect : data.DebugCubes)
+    {
+        RendererCommandDrawMeshlet command;
+        command.Pipeline = m_HandleCube;
+        command.ParameterViews[size_t(ShaderParameterType::Scene)].ConstantDataOffset = blackboard.GetConstantDataOffset(BlackboardIdentifier{ "SceneData" });
+        command.ParameterViews[size_t(ShaderParameterType::Geometry)].ConstantDataOffset = constantDataManager.AddData(rect);
+        command.MeshletCount = 1;
+        commandList.AddCommand(command);
+    }
 }
 }
 }

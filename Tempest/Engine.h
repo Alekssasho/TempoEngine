@@ -8,6 +8,7 @@
 #include <World/Camera.h>
 #include <Audio/AudioManager.h>
 #include <Physics/PhysicsManager.h>
+#include <Animation/AnimationManager.h>
 
 namespace Tempest
 {
@@ -48,6 +49,11 @@ public:
 		return m_Physics;
 	}
 
+    AnimationManager& GetAnimation()
+    {
+        return m_Animation;
+    }
+
     InputManager& GetInput()
     {
         return m_Input;
@@ -80,6 +86,7 @@ private:
 	Camera m_Camera;
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
+	AnimationManager m_Animation;
 
 	DebugOptions m_DebugOptions;
 

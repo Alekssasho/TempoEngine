@@ -5,7 +5,7 @@
 
 #include "../GLTFScene.h"
 
-#include <DataDefinitions/AudioDatabase_generated.h>
+#include <DataDefinitions/SoundDatabase_generated.h>
 
 struct AudioDatabaseResource : Resource<eastl::vector<uint8_t>>
 {
@@ -28,8 +28,8 @@ public:
 		file.read((char*)data.data(), size);
 
 		flatbuffers::FlatBufferBuilder builder(1024 * 1024);
-		auto root = Tempest::Definition::CreateAudioDatabaseDirect(builder, &data);
-		Tempest::Definition::FinishAudioDatabaseBuffer(builder, root);
+		auto root = Tempest::Definition::CreateSoundDatabaseDirect(builder, &data);
+		Tempest::Definition::FinishSoundDatabaseBuffer(builder, root);
 
 		m_CompiledData.resize(builder.GetSize());
 		memcpy(m_CompiledData.data(), builder.GetBufferPointer(), m_CompiledData.size());

@@ -1,15 +1,9 @@
-#include "Common.hlsl"
+#include "DebugShapeCommon.hlsl"
 
 struct DebugRectShapeData
 {
 	float4x4 Transform;
 	float4 Color;
-};
-
-struct VertexOutput
-{
-	float4 pos : SV_POSITION;
-	float4 color : COLOR0;
 };
 
 ConstantBuffer<DebugRectShapeData> g_Geometry : register(b0, space1);
@@ -45,9 +39,4 @@ void MeshShaderMain(
 		tris[0] = uint3(0, 2, 1);
 		tris[1] = uint3(0, 3, 2);
 	}
-}
-
-float4 PixelShaderMain(VertexOutput data) : SV_TARGET
-{
-	return data.color;
 }

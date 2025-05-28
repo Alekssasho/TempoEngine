@@ -6,6 +6,13 @@
 
 #include "flatbuffers/flatbuffers.h"
 
+// Ensure the included flatbuffers.h is the same version as when this file was
+// generated, otherwise it may not be compatible.
+static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
+              FLATBUFFERS_VERSION_MINOR == 3 &&
+              FLATBUFFERS_VERSION_REVISION == 25,
+             "Non-compatible flatbuffers version included");
+
 namespace Tempest {
 namespace Definition {
 
@@ -16,7 +23,7 @@ struct TextureMapping;
 struct TextureDatabase;
 struct TextureDatabaseBuilder;
 
-enum TextureFormat {
+enum TextureFormat : int8_t {
   TextureFormat_RGBA8 = 0,
   TextureFormat_BC1_RGB = 1,
   TextureFormat_BC7_RGBA = 2,
@@ -44,12 +51,12 @@ inline const char * const *EnumNamesTextureFormat() {
 }
 
 inline const char *EnumNameTextureFormat(TextureFormat e) {
-  if (flatbuffers::IsOutRange(e, TextureFormat_RGBA8, TextureFormat_BC7_RGBA)) return "";
+  if (::flatbuffers::IsOutRange(e, TextureFormat_RGBA8, TextureFormat_BC7_RGBA)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesTextureFormat()[index];
 }
 
-enum ColorSpace {
+enum ColorSpace : int8_t {
   ColorSpace_Linear = 0,
   ColorSpace_sRGB = 1,
   ColorSpace_MIN = ColorSpace_Linear,
@@ -74,7 +81,7 @@ inline const char * const *EnumNamesColorSpace() {
 }
 
 inline const char *EnumNameColorSpace(ColorSpace e) {
-  if (flatbuffers::IsOutRange(e, ColorSpace_Linear, ColorSpace_sRGB)) return "";
+  if (::flatbuffers::IsOutRange(e, ColorSpace_Linear, ColorSpace_sRGB)) return "";
   const size_t index = static_cast<size_t>(e);
   return EnumNamesColorSpace()[index];
 }
@@ -97,23 +104,24 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureData FLATBUFFERS_FINAL_CLASS {
     (void)padding0__;
   }
   TextureData(uint32_t _width, uint32_t _height, Tempest::Definition::TextureFormat _format, Tempest::Definition::ColorSpace _color_space)
-      : width_(flatbuffers::EndianScalar(_width)),
-        height_(flatbuffers::EndianScalar(_height)),
-        format_(flatbuffers::EndianScalar(static_cast<int8_t>(_format))),
-        color_space_(flatbuffers::EndianScalar(static_cast<int8_t>(_color_space))),
+      : width_(::flatbuffers::EndianScalar(_width)),
+        height_(::flatbuffers::EndianScalar(_height)),
+        format_(::flatbuffers::EndianScalar(static_cast<int8_t>(_format))),
+        color_space_(::flatbuffers::EndianScalar(static_cast<int8_t>(_color_space))),
         padding0__(0) {
+    (void)padding0__;
   }
   uint32_t width() const {
-    return flatbuffers::EndianScalar(width_);
+    return ::flatbuffers::EndianScalar(width_);
   }
   uint32_t height() const {
-    return flatbuffers::EndianScalar(height_);
+    return ::flatbuffers::EndianScalar(height_);
   }
   Tempest::Definition::TextureFormat format() const {
-    return static_cast<Tempest::Definition::TextureFormat>(flatbuffers::EndianScalar(format_));
+    return static_cast<Tempest::Definition::TextureFormat>(::flatbuffers::EndianScalar(format_));
   }
   Tempest::Definition::ColorSpace color_space() const {
-    return static_cast<Tempest::Definition::ColorSpace>(flatbuffers::EndianScalar(color_space_));
+    return static_cast<Tempest::Definition::ColorSpace>(::flatbuffers::EndianScalar(color_space_));
   }
 };
 FLATBUFFERS_STRUCT_END(TextureData, 12);
@@ -133,25 +141,25 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureMapping FLATBUFFERS_FINAL_CLASS {
         texture_data_() {
   }
   TextureMapping(uint32_t _index, uint32_t _texture_buffer_offset, uint32_t _texture_buffer_byte_count, const Tempest::Definition::TextureData &_texture_data)
-      : index_(flatbuffers::EndianScalar(_index)),
-        texture_buffer_offset_(flatbuffers::EndianScalar(_texture_buffer_offset)),
-        texture_buffer_byte_count_(flatbuffers::EndianScalar(_texture_buffer_byte_count)),
+      : index_(::flatbuffers::EndianScalar(_index)),
+        texture_buffer_offset_(::flatbuffers::EndianScalar(_texture_buffer_offset)),
+        texture_buffer_byte_count_(::flatbuffers::EndianScalar(_texture_buffer_byte_count)),
         texture_data_(_texture_data) {
   }
   uint32_t index() const {
-    return flatbuffers::EndianScalar(index_);
+    return ::flatbuffers::EndianScalar(index_);
   }
-  bool KeyCompareLessThan(const TextureMapping *o) const {
+  bool KeyCompareLessThan(const TextureMapping * const o) const {
     return index() < o->index();
   }
-  int KeyCompareWithValue(uint32_t val) const {
-    return static_cast<int>(index() > val) - static_cast<int>(index() < val);
+  int KeyCompareWithValue(uint32_t _index) const {
+    return static_cast<int>(index() > _index) - static_cast<int>(index() < _index);
   }
   uint32_t texture_buffer_offset() const {
-    return flatbuffers::EndianScalar(texture_buffer_offset_);
+    return ::flatbuffers::EndianScalar(texture_buffer_offset_);
   }
   uint32_t texture_buffer_byte_count() const {
-    return flatbuffers::EndianScalar(texture_buffer_byte_count_);
+    return ::flatbuffers::EndianScalar(texture_buffer_byte_count_);
   }
   const Tempest::Definition::TextureData &texture_data() const {
     return texture_data_;
@@ -159,19 +167,19 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) TextureMapping FLATBUFFERS_FINAL_CLASS {
 };
 FLATBUFFERS_STRUCT_END(TextureMapping, 24);
 
-struct TextureDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+struct TextureDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef TextureDatabaseBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
     VT_TEXTURE_DATA_BUFFER = 4,
     VT_MAPPINGS = 6
   };
-  const flatbuffers::Vector<uint8_t> *texture_data_buffer() const {
-    return GetPointer<const flatbuffers::Vector<uint8_t> *>(VT_TEXTURE_DATA_BUFFER);
+  const ::flatbuffers::Vector<uint8_t> *texture_data_buffer() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_TEXTURE_DATA_BUFFER);
   }
-  const flatbuffers::Vector<const Tempest::Definition::TextureMapping *> *mappings() const {
-    return GetPointer<const flatbuffers::Vector<const Tempest::Definition::TextureMapping *> *>(VT_MAPPINGS);
+  const ::flatbuffers::Vector<const Tempest::Definition::TextureMapping *> *mappings() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::TextureMapping *> *>(VT_MAPPINGS);
   }
-  bool Verify(flatbuffers::Verifier &verifier) const {
+  bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_TEXTURE_DATA_BUFFER) &&
            verifier.VerifyVector(texture_data_buffer()) &&
@@ -183,37 +191,37 @@ struct TextureDatabase FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
 
 struct TextureDatabaseBuilder {
   typedef TextureDatabase Table;
-  flatbuffers::FlatBufferBuilder &fbb_;
-  flatbuffers::uoffset_t start_;
-  void add_texture_data_buffer(flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texture_data_buffer) {
+  ::flatbuffers::FlatBufferBuilder &fbb_;
+  ::flatbuffers::uoffset_t start_;
+  void add_texture_data_buffer(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> texture_data_buffer) {
     fbb_.AddOffset(TextureDatabase::VT_TEXTURE_DATA_BUFFER, texture_data_buffer);
   }
-  void add_mappings(flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::TextureMapping *>> mappings) {
+  void add_mappings(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::TextureMapping *>> mappings) {
     fbb_.AddOffset(TextureDatabase::VT_MAPPINGS, mappings);
   }
-  explicit TextureDatabaseBuilder(flatbuffers::FlatBufferBuilder &_fbb)
+  explicit TextureDatabaseBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
   }
-  flatbuffers::Offset<TextureDatabase> Finish() {
+  ::flatbuffers::Offset<TextureDatabase> Finish() {
     const auto end = fbb_.EndTable(start_);
-    auto o = flatbuffers::Offset<TextureDatabase>(end);
+    auto o = ::flatbuffers::Offset<TextureDatabase>(end);
     return o;
   }
 };
 
-inline flatbuffers::Offset<TextureDatabase> CreateTextureDatabase(
-    flatbuffers::FlatBufferBuilder &_fbb,
-    flatbuffers::Offset<flatbuffers::Vector<uint8_t>> texture_data_buffer = 0,
-    flatbuffers::Offset<flatbuffers::Vector<const Tempest::Definition::TextureMapping *>> mappings = 0) {
+inline ::flatbuffers::Offset<TextureDatabase> CreateTextureDatabase(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> texture_data_buffer = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::TextureMapping *>> mappings = 0) {
   TextureDatabaseBuilder builder_(_fbb);
   builder_.add_mappings(mappings);
   builder_.add_texture_data_buffer(texture_data_buffer);
   return builder_.Finish();
 }
 
-inline flatbuffers::Offset<TextureDatabase> CreateTextureDatabaseDirect(
-    flatbuffers::FlatBufferBuilder &_fbb,
+inline ::flatbuffers::Offset<TextureDatabase> CreateTextureDatabaseDirect(
+    ::flatbuffers::FlatBufferBuilder &_fbb,
     const std::vector<uint8_t> *texture_data_buffer = nullptr,
     std::vector<Tempest::Definition::TextureMapping> *mappings = nullptr) {
   auto texture_data_buffer__ = texture_data_buffer ? _fbb.CreateVector<uint8_t>(*texture_data_buffer) : 0;
@@ -225,11 +233,11 @@ inline flatbuffers::Offset<TextureDatabase> CreateTextureDatabaseDirect(
 }
 
 inline const Tempest::Definition::TextureDatabase *GetTextureDatabase(const void *buf) {
-  return flatbuffers::GetRoot<Tempest::Definition::TextureDatabase>(buf);
+  return ::flatbuffers::GetRoot<Tempest::Definition::TextureDatabase>(buf);
 }
 
 inline const Tempest::Definition::TextureDatabase *GetSizePrefixedTextureDatabase(const void *buf) {
-  return flatbuffers::GetSizePrefixedRoot<Tempest::Definition::TextureDatabase>(buf);
+  return ::flatbuffers::GetSizePrefixedRoot<Tempest::Definition::TextureDatabase>(buf);
 }
 
 inline const char *TextureDatabaseIdentifier() {
@@ -237,17 +245,22 @@ inline const char *TextureDatabaseIdentifier() {
 }
 
 inline bool TextureDatabaseBufferHasIdentifier(const void *buf) {
-  return flatbuffers::BufferHasIdentifier(
+  return ::flatbuffers::BufferHasIdentifier(
       buf, TextureDatabaseIdentifier());
 }
 
+inline bool SizePrefixedTextureDatabaseBufferHasIdentifier(const void *buf) {
+  return ::flatbuffers::BufferHasIdentifier(
+      buf, TextureDatabaseIdentifier(), true);
+}
+
 inline bool VerifyTextureDatabaseBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifyBuffer<Tempest::Definition::TextureDatabase>(TextureDatabaseIdentifier());
 }
 
 inline bool VerifySizePrefixedTextureDatabaseBuffer(
-    flatbuffers::Verifier &verifier) {
+    ::flatbuffers::Verifier &verifier) {
   return verifier.VerifySizePrefixedBuffer<Tempest::Definition::TextureDatabase>(TextureDatabaseIdentifier());
 }
 
@@ -256,14 +269,14 @@ inline const char *TextureDatabaseExtension() {
 }
 
 inline void FinishTextureDatabaseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::TextureDatabase> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::TextureDatabase> root) {
   fbb.Finish(root, TextureDatabaseIdentifier());
 }
 
 inline void FinishSizePrefixedTextureDatabaseBuffer(
-    flatbuffers::FlatBufferBuilder &fbb,
-    flatbuffers::Offset<Tempest::Definition::TextureDatabase> root) {
+    ::flatbuffers::FlatBufferBuilder &fbb,
+    ::flatbuffers::Offset<Tempest::Definition::TextureDatabase> root) {
   fbb.FinishSizePrefixed(root, TextureDatabaseIdentifier());
 }
 

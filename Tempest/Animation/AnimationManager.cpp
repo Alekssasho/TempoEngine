@@ -39,6 +39,52 @@ void AnimationManager::InitializeBoneTransforms(uint32_t skeletonIndex, eastl::v
     }
 }
 
+void AnimationManager::ApplyFrameFromAnimation(uint32_t animationIndex, uint32_t frameIndex, eastl::vector<glm::mat4x4>& transforms)
+{
+    const Definition::Animation* animation = (*m_Database->animations())[animationIndex];
+    const Definition::Skeleton* skeleton = (*m_Database->skeletons())[animation->skeleton_index()];
+    const auto& bonesArray = *m_Database->bones();
+
+    assert(transforms.size() == skeleton->count());
+
+    struct BoneFrameData
+    {
+        glm::vec3 Translation;
+        glm::quat Rotation;
+    };
+    const uint8_t* data = m_Database->anim_data()->Data();
+
+    const BoneFrameData* frameData = reinterpret_cast<const BoneFrameData*>(data + animation->start_index()) + (frameIndex * skeleton->count());
+
+    for (uint32_t boneIndex = 0; boneIndex < skeleton->count(); ++boneIndex)
+    {
+        const Definition::Bone* bone = bonesArray[skeleton->start_index() + boneIndex];
+
+        const BoneFrameData* currentBoneFrameData = frameData + boneIndex;
+
+        const glm::mat4x4 boneRotation = glm::toMat4(currentBoneFrameData->Rotation);
+        const glm::mat4x4 bonePosition = glm::translate(currentBoneFrameData->Translation);
+
+        glm::mat4x4 finalTransform;
+        if (bone->parent() == -1)
+        {
+            finalTransform = bonePosition * boneRotation;
+        }
+        else
+        {
+            finalTransform = transforms[bone->parent() - skeleton->start_index()] * bonePosition * boneRotation;
+        }
+
+        transforms[boneIndex] = finalTransform;
+    }
+}
+
+uint32_t AnimationManager::GetNumFramesForAnimation(uint32_t animationIndex)
+{
+    const Definition::Animation* animation = (*m_Database->animations())[animationIndex];
+    return animation->num_frames();
+}
+
 void AnimationManager::LoadDatabase(const char* databaseName)
 {
     const Definition::AnimationDatabase* animationDatabase = gEngine->GetResourceLoader().LoadResource<Definition::AnimationDatabase>(databaseName);

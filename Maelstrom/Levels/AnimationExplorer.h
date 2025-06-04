@@ -46,7 +46,8 @@ public:
         const uint32_t meshIndex = AddMeshRequest("Paladin_Anim", "Paladin_J_Nordstrom_Body", Tempest::Definition::MeshType_SkeletonMesh);
         m_ECS.m_EntityWorld.entity("Paladin")
             .set(Tempest::Components::SkeletonMesh{ meshIndex })
-            .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)});
+            .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)})
+            .set(Tempest::Components::AnimationController{ 0, 0 });
     }
 
 private:

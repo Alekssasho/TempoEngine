@@ -6,8 +6,8 @@
 #include "Levels/CastleFightLevel.h"
 #include "Levels/AnimationExplorer.h"
 
-#define COMPILE_SCRIPTED_LEVEL_NAME CastleFightLevel
-//#define COMPILE_SCRIPTED_LEVEL_NAME AnimationExplorerLevel
+//#define COMPILE_SCRIPTED_LEVEL_NAME CastleFightLevel
+#define COMPILE_SCRIPTED_LEVEL_NAME AnimationExplorerLevel
 
 int main()
 {

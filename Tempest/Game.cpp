@@ -101,6 +101,8 @@ void Game::LoadLevel(uint32_t, void* data)
 	//	gEngine->GetJobSystem().RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
 	//}
 
+	gEngine->GetJobSystem().WaitForCounter(&animationDatabaseCounter, 0);
+
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 	const eastl::vector<flecs::entity_t>& newlyCreatedEntities = gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
 
@@ -128,8 +130,8 @@ void Game::LoadLevel(uint32_t, void* data)
 	gEngine->GetJobSystem().WaitForCounter(&renderingDatabasesCounter, 0);
 	gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 
-	// Wait for audio & animation as well
-    gEngine->GetJobSystem().WaitForCounter(&animationDatabaseCounter, 0);
+	// Wait for audio as well
+
     gEngine->GetJobSystem().WaitForCounter(&audioDatabaseCounter, 0);
 }
 }

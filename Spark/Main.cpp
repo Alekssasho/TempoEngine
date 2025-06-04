@@ -21,7 +21,7 @@ int WinMain(HINSTANCE hInst, HINSTANCE hInstPrev, PSTR cmdline, int cmdshow)
 	//gameOptions.LevelToLoad = "Level_village.tlb";
     //gameOptions.LevelToLoad = "Level_car3.tlb";
     gameOptions.LevelToLoad = "Level_CastleFight.tlb";
-	//gameOptions.LevelToLoad = "Level_AnimationExplorer.tlb";
+	gameOptions.LevelToLoad = "Level_AnimationExplorer.tlb";
 
 	{
 		Tempest::Game game(gameOptions, options);

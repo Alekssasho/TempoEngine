@@ -37,6 +37,14 @@ void SkeletonMeshImGuiDebug(void* data)
     ImGuiDebugRender(&comp->BoneTransforms, "BoneTransforms");
     
 }
+void AnimationControllerImGuiDebug(void* data)
+{
+    auto comp = (Components::AnimationController*)data;
+    ImGui::Text("AnimationController");
+    ImGuiDebugRender(&comp->AnimationIndex, "AnimationIndex");
+    ImGuiDebugRender(&comp->FrameIndex, "FrameIndex");
+    
+}
 void DynamicPhysicsActorImGuiDebug(void* data)
 {
     auto comp = (Components::DynamicPhysicsActor*)data;
@@ -192,6 +200,13 @@ void RegisterComponents(flecs::world& world)
             .member<eastl::vector<glm::mat4x4>>("BoneTransforms")
             ;
         g_CompIdToImGuiFunc[componentId] = &SkeletonMeshImGuiDebug;
+    }
+    {
+        auto componentId = world.component<Components::AnimationController>(Components::AnimationController::Name)
+            .member<uint32_t>("AnimationIndex")
+            .member<uint32_t>("FrameIndex")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &AnimationControllerImGuiDebug;
     }
     {
         auto componentId = world.component<Components::DynamicPhysicsActor>(Components::DynamicPhysicsActor::Name)

@@ -30,6 +30,12 @@ struct SkeletonMesh
     eastl::vector<glm::mat4x4> BoneTransforms;
     static constexpr const char* Name = "SkeletonMesh";
 };
+struct AnimationController
+{
+    uint32_t AnimationIndex;
+    uint32_t FrameIndex;
+    static constexpr const char* Name = "AnimationController";
+};
 struct DynamicPhysicsActor
 {
     physx::PxRigidBody* Actor;

@@ -27,6 +27,12 @@ Component SkeletonMesh
 	BoneTransforms : eastl::vector<glm::mat4x4>;
 }
 
+Component AnimationController
+{
+	AnimationIndex : uint32_t;
+	FrameIndex : uint32_t;
+}
+
 [NoReflection]
 Component DynamicPhysicsActor
 {

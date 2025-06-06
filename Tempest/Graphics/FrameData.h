@@ -23,11 +23,12 @@ struct FrameData
 	eastl::vector<DebugRectData> DebugRects;
 	eastl::vector<DebugRectData> DebugCubes;
 	// TODO: This should not be part of this. This class should only be a memory pool in which every feature writes arbitrary data.
-	struct StaticMeshData {
+	struct MeshData {
 		MeshHandle Mesh;
 		glm::mat4x4 Transform;
 	};
-	eastl::vector<StaticMeshData> StaticMeshes;
+    eastl::vector<MeshData> StaticMeshes;
+    eastl::vector<MeshData> SkeletonMeshes;
 
 	struct DirectionalLight
 	{

@@ -14,10 +14,16 @@ struct VertexLayout
 	glm::vec2 UV;
 };
 
+struct SkeletonVertexLayout : VertexLayout
+{
+	glm::u8vec4 Joints;
+	glm::vec4 Weights;
+};
+
 struct PrimitiveMeshData
 {
 	eastl::vector<meshopt_Meshlet> Meshlets;
-	eastl::vector<VertexLayout> Vertices;
+	eastl::vector<uint8_t> Vertices;
 	eastl::vector<uint8_t> MeshletIndices;
 	eastl::vector<uint32_t> WholeMeshIndices;
 	eastl::vector<uint32_t> SimplyfiedMeshIndices;
@@ -38,10 +44,13 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 		auto perPrimitivePositionCounts = m_Scene.MeshPositionCountPerPrimitive(m_MeshIndex);
 		auto primitiveCount = m_Scene.MeshPrimitiveCount(m_MeshIndex);
 
+		const bool isStaticMesh = m_Type == Tempest::Definition::MeshType_StaticMesh;
+		const auto vertexLayoutSize = isStaticMesh ? sizeof(VertexLayout) : sizeof(SkeletonVertexLayout);
+
 		eastl::vector<PrimitiveMeshData> primitiveMeshes(primitiveCount);
 		for (int prim = 0; prim < int(primitiveCount); ++prim)
 		{
-			eastl::vector<VertexLayout> vertices;
+			eastl::vector<uint8_t> vertices;
 			eastl::vector<uint32_t> indices;
 			auto gltfIndicesData = m_Scene.MeshIndices(m_MeshIndex, prim);
 			if (gltfIndicesData.has_value())
@@ -63,27 +72,46 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 			auto positions = m_Scene.MeshPositions(m_MeshIndex, prim);
 			auto normals = m_Scene.MeshNormals(m_MeshIndex, prim);
 			auto uvs = m_Scene.MeshUVs(m_MeshIndex, prim);
+			auto joints = m_Scene.MeshSkinJoints(m_MeshIndex, prim);
+			auto weights = m_Scene.MeshSkinWeights(m_MeshIndex, prim);
 			assert(positions.size() == normals.size() && normals.size() == uvs.size());
+			assert(joints.size() == weights.size());
 
-			vertices.resize(positions.size());
+			vertices.resize(positions.size() * vertexLayoutSize);
 			for (int i = 0; i < positions.size(); ++i)
 			{
-				vertices[i] = VertexLayout{
-					.Position = glm::vec3(positions[i].x, positions[i].y, -positions[i].z),
-					.Normal = glm::vec3(normals[i].x, normals[i].y, -normals[i].z),
-					.UV = uvs[i]
-				};
+				if (isStaticMesh)
+				{
+					VertexLayout vertex{
+						.Position = glm::vec3(positions[i].x, positions[i].y, -positions[i].z),
+						.Normal = glm::vec3(normals[i].x, normals[i].y, -normals[i].z),
+						.UV = uvs[i]
+					};
+					memcpy(&vertices[i * vertexLayoutSize], &vertex, vertexLayoutSize);
+				}
+				else
+				{
+					SkeletonVertexLayout vertex{
+						glm::vec3(positions[i].x, positions[i].y, -positions[i].z),
+						glm::vec3(normals[i].x, normals[i].y, -normals[i].z),
+						uvs[i],
+						joints[i],
+						weights[i]
+					};
+					memcpy(&vertices[i * vertexLayoutSize], &vertex, vertexLayoutSize);
+				}
 			}
+			auto vertexCount = positions.size();
 
 			eastl::vector<uint32_t> remapTable(vertices.size());
-			meshopt_generateVertexRemap(remapTable.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(VertexLayout));
+			meshopt_generateVertexRemap(remapTable.data(), indices.data(), indices.size(), vertices.data(), vertexCount, vertexLayoutSize);
 
 			meshopt_remapIndexBuffer(indices.data(), indices.data(), indices.size(), remapTable.data());
 
-			meshopt_remapVertexBuffer(vertices.data(), vertices.data(), vertices.size(), sizeof(VertexLayout), remapTable.data());
+			meshopt_remapVertexBuffer(vertices.data(), vertices.data(), vertexCount, vertexLayoutSize, remapTable.data());
 
-			meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), vertices.size());
-			meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(VertexLayout));
+			meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), vertexCount);
+			meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(), vertices.data(), vertexCount, vertexLayoutSize);
 
 			const uint32_t maxTriangles = 128;
 			const uint32_t maxVertices = 128;
@@ -96,7 +124,7 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 				meshletVertices.data(),
 				meshletIndices.data(),
 				indices.data(), indices.size(),
-				reinterpret_cast<const float*>(vertices.data()), vertices.size(), sizeof(VertexLayout),
+				reinterpret_cast<const float*>(vertices.data()), vertexCount, vertexLayoutSize,
 				maxVertices,
 				maxTriangles,
 				0.0f
@@ -106,14 +134,17 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 			meshletIndices.resize(meshlets.back().triangle_offset + (meshlets.back().triangle_count * 3));
 
 			{
-				eastl::vector<VertexLayout> orderedVertices;
-				orderedVertices.reserve(vertices.size());
-				for (uint32_t vertexIndex : meshletVertices)
+				eastl::vector<uint8_t> orderedVertices;
+				orderedVertices.resize(meshletVertices.size() * vertexLayoutSize);
+				for (uint32_t i = 0; i < meshletVertices.size(); ++i)
 				{
-					orderedVertices.push_back(vertices[vertexIndex]);
+					uint32_t vertexIndex = meshletVertices[i];
+					memcpy(&orderedVertices[i * vertexLayoutSize], &vertices[vertexIndex * vertexLayoutSize], vertexLayoutSize);
 				}
 				vertices.swap(orderedVertices);
 			}
+
+			vertexCount = vertices.size() / vertexLayoutSize;
 
 			eastl::vector<uint32_t> wholeMeshIndices;
 			wholeMeshIndices.reserve(meshletIndices.size());
@@ -131,8 +162,8 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 				wholeMeshIndices.data(),
 				wholeMeshIndices.size(),
 				reinterpret_cast<const float*>(vertices.data()),
-				vertices.size(),
-				sizeof(VertexLayout),
+				vertexCount,
+				vertexLayoutSize,
 				std::min(size_t(256), wholeMeshIndices.size()),
 				1.0,
 				nullptr

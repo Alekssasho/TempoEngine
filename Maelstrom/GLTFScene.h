@@ -189,6 +189,52 @@ public:
         return outData;
     }
 
+    eastl::vector<glm::u8vec4> MeshSkinJoints(int meshIndex, int primIndex) const
+    {
+        eastl::vector<glm::u8vec4> outData;
+        cgltf_primitive* primitive = m_Meshes[meshIndex]->primitives + primIndex;
+        for (int attribute = 0; attribute < primitive->attributes_count; ++attribute)
+        {
+            if (primitive->attributes[attribute].type == cgltf_attribute_type_joints && primitive->attributes[attribute].index == 0)
+            {
+                cgltf_accessor* acc = primitive->attributes[attribute].data;
+                outData.resize(acc->count);
+                for (int i = 0; i < acc->count; ++i)
+                {
+                    uint8_t joints[4];
+                    cgltf_accessor_read_uint(acc, i, reinterpret_cast<cgltf_uint*>(joints), 4);
+                    outData[i] = glm::u8vec4(joints[0], joints[1], joints[2], joints[3]);
+                }
+                break;
+            }
+        }
+
+        return outData;
+    }
+
+    eastl::vector<glm::vec4> MeshSkinWeights(int meshIndex, int primIndex) const
+    {
+        eastl::vector<glm::vec4> outData;
+        cgltf_primitive* primitive = m_Meshes[meshIndex]->primitives + primIndex;
+        for (int attribute = 0; attribute < primitive->attributes_count; ++attribute)
+        {
+            if (primitive->attributes[attribute].type == cgltf_attribute_type_weights && primitive->attributes[attribute].index == 0)
+            {
+                cgltf_accessor* acc = primitive->attributes[attribute].data;
+                outData.resize(acc->count);
+                for (int i = 0; i < acc->count; ++i)
+                {
+                    float weights[4];
+                    cgltf_accessor_read_float(acc, i, weights, 4);
+                    outData[i] = glm::vec4(weights[0], weights[1], weights[2], weights[3]);
+                }
+                break;
+            }
+        }
+
+        return outData;
+    }
+
 	uint32_t MeshMaterialIndex(int meshIndex, int primIndex) const
 	{
 		cgltf_primitive* primitive = m_Meshes[meshIndex]->primitives + primIndex;

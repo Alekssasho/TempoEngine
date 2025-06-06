@@ -52,6 +52,7 @@ public:
 		Meshlets,
 		MeshletIndices,
 		MeshletVertices,
+		MeshletSkeletonVertices,
 		Materials,
 		TextureStart,
 		NonTextureCount = TextureStart

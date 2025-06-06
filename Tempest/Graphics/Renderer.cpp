@@ -10,6 +10,7 @@
 // TODO: Find a better way than just to include them
 #include <Graphics/Features/DebugFeature.h>
 #include <Graphics/Features/StaticMeshFeature.h>
+#include <Graphics/Features/SkeletonMeshFeature.h>
 #include <Graphics/Features/LightsFeature.h>
 
 #include <DataDefinitions/ShaderLibrary_generated.h>
@@ -23,7 +24,8 @@ Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
 {
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Debug);
-	m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
+    m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
+    m_RenderFeatures.emplace_back(new GraphicsFeature::SkeletonMesh);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Lights);
 }
 
@@ -293,6 +295,7 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 	}
 
 	uint32_t totalGeometrySize = geometryDatabase->static_mesh_vertex_buffer()->size()
+		+ geometryDatabase->skeleton_mesh_vertex_buffer()->size()
 		+ geometryDatabase->meshlet_buffer()->size() * sizeof(Definition::Meshlet)
 		+ geometryDatabase->meshlet_indices_buffer()->size()
 		+ geometryDatabase->materials()->size() * sizeof(Definition::Material);
@@ -300,15 +303,31 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 
 	// TODO: This should not be here
 	{
-		Dx12::BufferDescription bufferDescription;
-		bufferDescription.Type = Dx12::BufferType::Vertex;
-		bufferDescription.Size = geometryDatabase->static_mesh_vertex_buffer()->size();
-		bufferDescription.Data = geometryDatabase->static_mesh_vertex_buffer()->data();
-		m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, &uploadData);
+		if (geometryDatabase->static_mesh_vertex_buffer()->size())
+		{
+			Dx12::BufferDescription bufferDescription;
+			bufferDescription.Type = Dx12::BufferType::Vertex;
+			bufferDescription.Size = geometryDatabase->static_mesh_vertex_buffer()->size();
+			bufferDescription.Data = geometryDatabase->static_mesh_vertex_buffer()->data();
+			m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, &uploadData);
 
-		// TODO: Add type for vertex layout
-		const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2 + sizeof(glm::vec2);
-		m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
+			// TODO: Add type for vertex layout
+			const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2 + sizeof(glm::vec2);
+			m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletVertices);
+		}
+
+		if (geometryDatabase->skeleton_mesh_vertex_buffer()->size())
+		{
+			Dx12::BufferDescription bufferDescription;
+			bufferDescription.Type = Dx12::BufferType::Vertex;
+			bufferDescription.Size = geometryDatabase->skeleton_mesh_vertex_buffer()->size();
+			bufferDescription.Data = geometryDatabase->skeleton_mesh_vertex_buffer()->data();
+			m_VertexData = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, &uploadData);
+
+			// TODO: Add type for vertex layout
+			const uint32_t vertexLayoutStride = sizeof(glm::vec3) * 2 + sizeof(glm::vec2) + sizeof(glm::vec4) + sizeof(glm::u8vec4);
+			m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_VertexData), uint32_t(bufferDescription.Size) / vertexLayoutStride, vertexLayoutStride, Dx12::Dx12Device::ShaderResourceSlot::MeshletSkeletonVertices);
+		}
 
 		Dx12::BufferDescription bufferDescription2;
 		bufferDescription2.Type = Dx12::BufferType::Vertex;

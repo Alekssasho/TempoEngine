@@ -1,6 +1,6 @@
 #include <CommonIncludes.h>
 
-#include <Graphics/Features/StaticMeshFeature.h>
+#include <Graphics/Features/SkeletonMeshFeature.h>
 #include <Graphics/RendererCommandList.h>
 #include <Graphics/Renderer.h>
 #include <Graphics/FrameData.h>
@@ -13,37 +13,37 @@ namespace Tempest
 namespace GraphicsFeature
 {
 
-void StaticMesh::Initialize(const World& world, Renderer& renderer)
+void SkeletonMesh::Initialize(const World& world, Renderer& renderer)
 {
-	m_Query.Init(world);
+	m_Query = world.m_EntityWorld.query<const Components::Transform, const Components::SkeletonMesh>("Skeleton Mesh Feature Query");
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
-        "StaticMesh",
+        "SkeletonMesh",
         "MeshPixel",
 		RenderPhase::Main
 	});
 
 	m_ShadowHandle = renderer.RequestPipelineState(PipelineStateDescription{
-        "StaticMesh",
+        "SkeletonMesh",
         "MeshPixel",
 		RenderPhase::Shadow
 	});
 }
 
-void StaticMesh::GatherData(const World& world, FrameData& frameData)
+void SkeletonMesh::GatherData(const World& world, FrameData& frameData)
 {
-	m_Query.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::StaticMesh& staticMesh) {
+	m_Query.each([&frameData](const Components::Transform& transform, const Components::SkeletonMesh& SkeletonMesh) {
 		const glm::mat4x4 scale = glm::scale(transform.Scale);
 		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
 		const glm::mat4x4 translate = glm::translate(transform.Position);
 
-		frameData.StaticMeshes.push_back(FrameData::MeshData{
-			staticMesh.Mesh,
+		frameData.SkeletonMeshes.push_back(FrameData::MeshData{
+			SkeletonMesh.Mesh,
 			translate * rotate * scale
 		});
 	});
 }
 
-void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
+void SkeletonMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
 {
 	struct GeometryConstants
 	{
@@ -53,9 +53,9 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 	};
 	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 
-	for (const auto& mesh : data.StaticMeshes)
+	for (const auto& mesh : data.SkeletonMeshes)
 	{
-		auto primitiveMeshes = blackboard.GetRenderer().Meshes.GetMeshData(mesh.Mesh, Definition::MeshType_StaticMesh);
+		auto primitiveMeshes = blackboard.GetRenderer().Meshes.GetMeshData(mesh.Mesh, Definition::MeshType_SkeletonMesh);
 		for(const auto& meshData : primitiveMeshes)
 		{
 			GeometryConstants constants;

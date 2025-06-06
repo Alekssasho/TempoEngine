@@ -28,3 +28,15 @@ struct ShadingSurfaceInfo
 	float NdotV;
 	float VdotH;
 };
+
+// Keep the same as one in C++
+// TODO: make shared header with this
+enum ShaderResourceSlot
+{
+	Meshlets,
+	MeshletIndices,
+	MeshletVertices,
+	MeshletSkeletonVertices,
+	Materials,
+	TextureStart,
+};

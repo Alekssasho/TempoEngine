@@ -19,23 +19,26 @@ public:
 	void Compile() override
 	{
 		eastl::vector<VertexLayout> vertexBuffer;
+		eastl::vector<SkeletonVertexLayout> skeletonVertexBuffer;
 		eastl::vector<uint8_t> meshletIndicesBuffer;
 		eastl::vector<Tempest::Definition::Meshlet> meshlets;
 		eastl::vector<Tempest::Definition::PrimitiveMeshData> primitiveMeshes;
 		eastl::vector<Tempest::Definition::MeshMapping> mappings;
 
-		uint32_t currentVertexBufferOffset = 0;
+		uint32_t currentVertexBufferOffset[2] = { 0, 0 };
 		uint32_t currentIndicesBufferOffset = 0;
 		uint32_t currentMeshletBufferOffset = 0;
 		for (uint32_t index = 0; index < m_Meshes.size(); ++index)
 		{
 			const auto& currentMeshPrimitiveData = m_Meshes[index].GetCompiledData();
+			const auto meshType = m_Meshes[index].m_Type;
+			const auto isStaticMesh = meshType == Tempest::Definition::MeshType_StaticMesh;
 			mappings.emplace_back(index,
 				Tempest::Definition::MeshData(
 					uint32_t(primitiveMeshes.size()),
 					uint32_t(currentMeshPrimitiveData.size())
 				),
-				Tempest::Definition::MeshType_StaticMesh
+				meshType
 			);
 
 			primitiveMeshes.reserve(primitiveMeshes.size() + currentMeshPrimitiveData.size());
@@ -45,18 +48,29 @@ public:
 				for (const auto& meshlet : primitiveMesh.Meshlets)
 				{
 					meshlets.emplace_back(
-						currentVertexBufferOffset + meshlet.vertex_offset,
+						currentVertexBufferOffset[meshType] + meshlet.vertex_offset,
 						meshlet.vertex_count,
 						currentIndicesBufferOffset + meshlet.triangle_offset,
 						meshlet.triangle_count
 					);
 				}
 
-				vertexBuffer.insert(
-					vertexBuffer.end(),
-					primitiveMesh.Vertices.begin(),
-					primitiveMesh.Vertices.end()
-				);
+				if (isStaticMesh)
+				{
+					vertexBuffer.insert(
+						vertexBuffer.end(),
+						reinterpret_cast<const VertexLayout*>(primitiveMesh.Vertices.begin()),
+						reinterpret_cast<const VertexLayout*>(primitiveMesh.Vertices.end())
+					);
+				}
+				else
+				{
+					skeletonVertexBuffer.insert(
+						skeletonVertexBuffer.end(),
+						reinterpret_cast<const SkeletonVertexLayout*>(primitiveMesh.Vertices.begin()),
+						reinterpret_cast<const SkeletonVertexLayout*>(primitiveMesh.Vertices.end())
+					);
+				}
 
 				meshletIndicesBuffer.insert(
 					meshletIndicesBuffer.end(),
@@ -75,14 +89,14 @@ public:
 				);
 
 				currentMeshletBufferOffset += uint32_t(primitiveMesh.Meshlets.size());
-				currentVertexBufferOffset += uint32_t(primitiveMesh.Vertices.size());
+				currentVertexBufferOffset[meshType] += uint32_t(primitiveMesh.Vertices.size() / (isStaticMesh ? sizeof(VertexLayout) : sizeof(SkeletonVertexLayout)));
 				currentIndicesBufferOffset += uint32_t(primitiveMesh.MeshletIndices.size());
 			}
 		}
 
 		flatbuffers::FlatBufferBuilder builder(1024 * 1024);
 		auto staticMeshVertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(vertexBuffer.data()), vertexBuffer.size() * sizeof(VertexLayout));
-		auto skeletonMeshVertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(vertexBuffer.data()), vertexBuffer.size() * sizeof(VertexLayout));
+		auto skeletonMeshVertexBufferOffset = builder.CreateVector<uint8_t>(reinterpret_cast<const uint8_t*>(skeletonVertexBuffer.data()), skeletonVertexBuffer.size() * sizeof(SkeletonVertexLayout));
 		auto meshletIndicesBufferOffset = builder.CreateVector<uint8_t>(meshletIndicesBuffer.data(), meshletIndicesBuffer.size());
 		auto meshletBufferOffset = builder.CreateVectorOfStructs<Tempest::Definition::Meshlet>(meshlets.data(), meshlets.size());
 		auto primitiveMeshesOffset = builder.CreateVectorOfStructs<Tempest::Definition::PrimitiveMeshData>(primitiveMeshes.data(), primitiveMeshes.size());

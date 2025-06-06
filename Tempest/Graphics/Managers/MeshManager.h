@@ -14,11 +14,12 @@ namespace Definition {
 class MeshManager : Utils::NonCopyable
 {
 public:
-	eastl::span<const Definition::PrimitiveMeshData> GetMeshData(MeshHandle handle) const;
+	eastl::span<const Definition::PrimitiveMeshData> GetMeshData(MeshHandle handle, Definition::MeshType type) const;
 	void LoadFromDatabase(const Definition::GeometryDatabase* database);
 private:
 	MeshHandle m_Handle = 0;
-	eastl::unordered_map<MeshHandle, Definition::MeshData> m_StaticMeshes;
+    eastl::unordered_map<MeshHandle, Definition::MeshData> m_StaticMeshes;
+    eastl::unordered_map<MeshHandle, Definition::MeshData> m_SkeletonMeshes;
 	eastl::vector<Definition::PrimitiveMeshData> m_PrimitiveMeshes;
 };
 }

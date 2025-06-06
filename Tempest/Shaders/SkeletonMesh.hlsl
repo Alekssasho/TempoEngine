@@ -6,6 +6,8 @@ struct VertexLayout
 	float3 Position;
 	float3 Normal;
 	float2 UV;
+	uint Joints;
+	float4 Weights;
 };
 
 ConstantBuffer<GeometryConstants> g_Geometry : register(b0, space1);
@@ -20,7 +22,7 @@ void MeshShaderMain(
 {
 	StructuredBuffer<Meshlet> meshlets = ResourceDescriptorHeap[ShaderResourceSlot::Meshlets];
 	Buffer<uint> meshletsIndices = ResourceDescriptorHeap[ShaderResourceSlot::MeshletIndices];
-	StructuredBuffer<VertexLayout> meshletsVertices = ResourceDescriptorHeap[ShaderResourceSlot::MeshletVertices];
+	StructuredBuffer<VertexLayout> meshletsVertices = ResourceDescriptorHeap[ShaderResourceSlot::MeshletSkeletonVertices];
 
 	Meshlet meshlet = meshlets[gid + g_Geometry.meshletOffset];
 	SetMeshOutputCounts(meshlet.vertex_count, meshlet.triangle_count);

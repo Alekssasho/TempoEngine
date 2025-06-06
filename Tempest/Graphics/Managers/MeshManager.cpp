@@ -4,10 +4,12 @@
 
 namespace Tempest
 {
-eastl::span<const Definition::PrimitiveMeshData> MeshManager::GetMeshData(MeshHandle handle) const
+eastl::span<const Definition::PrimitiveMeshData> MeshManager::GetMeshData(MeshHandle handle, Definition::MeshType type) const
 {
-	auto findItr = m_StaticMeshes.find(handle);
-	if(findItr != m_StaticMeshes.end())
+	auto map = type == Definition::MeshType_StaticMesh ? &m_StaticMeshes : &m_SkeletonMeshes;
+
+	auto findItr = map->find(handle);
+	if(findItr != map->end())
 	{
 		return eastl::span<const Definition::PrimitiveMeshData>(
 			&m_PrimitiveMeshes[findItr->second.primitive_mesh_offset()],
@@ -30,12 +32,14 @@ void MeshManager::LoadFromDatabase(const Definition::GeometryDatabase* database)
 	{
 		// All static meshes should have the vertex buffer from the geometry database
 		MeshHandle handle(meshMapping->index());
-		if(m_StaticMeshes.find(handle) != m_StaticMeshes.end())
+		auto map = meshMapping->mesh_type() == Definition::MeshType_StaticMesh ? &m_StaticMeshes : &m_SkeletonMeshes;
+
+		if(map->find(handle) != map->end())
 		{
-			LOG(Error, StaticMeshes, "Trying to insert a static mesh which is already registered!");
+			LOG(Error, Meshes, "Trying to insert a mesh which is already registered!");
 			assert(false);
 		}
-		m_StaticMeshes.emplace(eastl::make_pair(handle, meshMapping->mesh_data()));
+		map->emplace(eastl::make_pair(handle, meshMapping->mesh_data()));
 	}
 }
 }

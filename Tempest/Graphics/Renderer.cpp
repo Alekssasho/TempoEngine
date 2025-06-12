@@ -23,10 +23,10 @@ namespace Tempest
 Renderer::Renderer()
 	: m_Backend(new Dx12::Backend)
 {
-	m_RenderFeatures.emplace_back(new GraphicsFeature::Debug);
     m_RenderFeatures.emplace_back(new GraphicsFeature::StaticMesh);
     m_RenderFeatures.emplace_back(new GraphicsFeature::SkeletonMesh);
 	m_RenderFeatures.emplace_back(new GraphicsFeature::Lights);
+	m_RenderFeatures.emplace_back(new GraphicsFeature::Debug);
 }
 
 Renderer::~Renderer()
@@ -41,16 +41,17 @@ void Renderer::InitializeAfterLevelLoad(const World& world)
 		feature->Initialize(world, *this);
 	}
 
-	//m_ShadowTexture = m_Backend->Managers.Texture.CreateTexture(Dx12::TextureDescription{
-	//		Dx12::TextureType::Texture2D,
-	//		DXGI_FORMAT_D32_FLOAT,
-	//		2048,
-	//		2048,
-	//		0,
-	//		nullptr
-	//	},
-	//	D3D12_RESOURCE_STATE_DEPTH_WRITE,
-	//	nullptr);
+	const uint32_t ExtraBufferSize = 32 * 1024 * 1024;
+	Dx12::BufferDescription bufferDescription;
+	bufferDescription.Type = Dx12::BufferType::Constant;
+	bufferDescription.Size = ExtraBufferSize;
+	bufferDescription.Data = nullptr;
+
+	m_ExtraDataBuffer[0] = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, nullptr);
+	m_ExtraDataBuffer[1] = m_Backend->Managers.Buffer.CreateBuffer(bufferDescription, nullptr);
+
+	m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_ExtraDataBuffer[0]), ExtraBufferSize / sizeof(glm::mat4x4), sizeof(glm::mat4x4), Dx12::Dx12Device::ShaderResourceSlot::ExtraDataEvenFrame);
+	m_Backend->GetDevice()->AddStaticBufferDescriptor(m_Backend->Managers.Buffer.GetBuffer(m_ExtraDataBuffer[1]), ExtraBufferSize / sizeof(glm::mat4x4), sizeof(glm::mat4x4), Dx12::Dx12Device::ShaderResourceSlot::ExtraDataOddFrame);
 }
 
 bool Renderer::CreateWindowSurface(WindowHandle handle)
@@ -207,7 +208,7 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 		desc.MSCodeSize = msShader->code()->size();
 	}
 	// Shadow phase does not use Pixel Shaders
-	if (description.Phase == RenderPhase::Main)
+	if (description.Phase != RenderPhase::Shadow)
 	{
 		desc.PSCode = psShader->code()->Data();
 		desc.PSCodeSize = psShader->code()->size();
@@ -217,6 +218,11 @@ PipelineStateHandle Renderer::RequestPipelineState(const PipelineStateDescriptio
 	{
 		// TODO: When we switch to reverse Z this needs to be reversed as well
 		desc.DepthBias = 0.001f;
+	}
+
+	if (description.Phase == RenderPhase::Debug)
+	{
+		desc.EnableDepth = false;
 	}
 
 	return m_Backend->Managers.Pipeline.CreateGraphicsPipeline(desc);
@@ -357,6 +363,15 @@ void Renderer::LoadGeometryDatabase(const char* geometryDatabaseName)
 	m_Backend->ExecuteUpload(uploadData);
 
 	Meshes.LoadFromDatabase(geometryDatabase);
+}
+
+uint32_t Renderer::WriteExtraData(uint32_t frameIndex, const void* data, uint32_t size) const
+{
+	uint32_t index = frameIndex % 2;
+
+	m_Backend->Managers.Buffer.MapWriteData(m_ExtraDataBuffer[index], data, size);
+
+	return uint32_t(index == 0 ? Dx12::Dx12Device::ShaderResourceSlot::ExtraDataEvenFrame : Dx12::Dx12Device::ShaderResourceSlot::ExtraDataOddFrame);
 }
 }
 

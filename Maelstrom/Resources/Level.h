@@ -58,12 +58,12 @@ public:
 
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&meshJobCounter, 0);
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&materialDatabaseCounter, 0);
+        AnimationDatabaseResource animationDatabaseResource(scene);
 
         EntitiesDatabaseResource entitiesDatabaseResource(scene);
-        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialDatabaseResource.m_MaterialRequests);
+        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialDatabaseResource.m_MaterialRequests, animationDatabaseResource.GetCompiledData().SkeletonJointsMapping);
         TextureDatabaseResource textureDatabaseResource(eastl::span(&scene, 1), materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource;
-        AnimationDatabaseResource animationDatabaseResource(scene);
 
         Tempest::Job::Counter databaseCounter;
         CompileResources(databaseCounter, entitiesDatabaseResource, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
@@ -73,7 +73,7 @@ public:
         auto geometryDatabaseName = WriteFile(Tempest::Definition::GeometryDatabaseExtension(), geometryDatabaseResource.GetCompiledData());
         auto audioDatabaseName = WriteFile(Tempest::Definition::SoundDatabaseExtension(), audioDatabaseResource.GetCompiledData());
         auto textureDatabaseName = WriteFile(Tempest::Definition::TextureDatabaseExtension(), textureDatabaseResource.GetCompiledData());
-        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData());
+        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData().CompiledData);
 
         flatbuffers::FlatBufferBuilder builder(1024 * 1024);
         auto nameOffset = builder.CreateString(m_Name.c_str());

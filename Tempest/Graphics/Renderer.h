@@ -39,6 +39,10 @@ public:
 	// TODO: potentially this could be moved someplace else
 	PipelineStateHandle RequestPipelineState(const PipelineStateDescription& description);
 
+	// TODO: move this to some manager
+	// TODO: this currently can be called only once per frame
+	uint32_t WriteExtraData(uint32_t frameIndex, const void* data, uint32_t size) const;
+
 	// Managers
 	MeshManager Meshes;
 	// TODO: Hide this
@@ -53,6 +57,8 @@ private:
 	BufferHandle m_MeshletData;
 	BufferHandle m_MeshletIndicesData;
 	BufferHandle m_MaterialData;
+
+	eastl::array<BufferHandle, 2> m_ExtraDataBuffer;
 };
 }
 

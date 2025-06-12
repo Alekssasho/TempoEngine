@@ -13,6 +13,7 @@ struct Skeleton
 {
     start_index: uint32;
     count: uint32;
+    inverse_bind_matrices_start_index: uint32;
 }
 
 struct Animation
@@ -29,6 +30,7 @@ table AnimationDatabase
     bones: [Bone];
     animations: [Animation];
     anim_data: [ubyte];
+    inverse_bind_matrices: [ubyte];
 }
 
 file_identifier "TADB";

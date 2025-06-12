@@ -50,6 +50,8 @@ void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& co
 		glm::mat4x4 worldMatrix;
 		uint32_t meshletOffset;
 		uint32_t materialIndex;
+		uint32_t extraDataIndex_unused = 0;
+		uint32_t extraDataStartIndex_unused = 0;
 	};
 	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
 

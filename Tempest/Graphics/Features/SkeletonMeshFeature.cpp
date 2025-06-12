@@ -8,6 +8,8 @@
 #include <Graphics/Dx12/Managers/ConstantBufferDataManager.h>
 #include <Graphics/RenderGraph.h>
 
+#include <Engine.h>
+
 namespace Tempest
 {
 namespace GraphicsFeature
@@ -31,15 +33,24 @@ void SkeletonMesh::Initialize(const World& world, Renderer& renderer)
 
 void SkeletonMesh::GatherData(const World& world, FrameData& frameData)
 {
-	m_Query.each([&frameData](const Components::Transform& transform, const Components::SkeletonMesh& SkeletonMesh) {
+	m_Query.each([&frameData](const Components::Transform& transform, const Components::SkeletonMesh& skeletonMesh) {
 		const glm::mat4x4 scale = glm::scale(transform.Scale);
 		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
 		const glm::mat4x4 translate = glm::translate(transform.Position);
 
-		frameData.SkeletonMeshes.push_back(FrameData::MeshData{
-			SkeletonMesh.Mesh,
-			translate * rotate * scale
+		frameData.SkeletonMeshes.push_back(FrameData::SkeletonMeshData{
+			skeletonMesh.Mesh,
+			translate * rotate * scale,
+			uint32_t(frameData.BoneMatrices.size())
 		});
+
+		AnimationManager& anim = gEngine->GetAnimation();
+		eastl::vector<glm::mat4x4> boneMatrices = skeletonMesh.BoneTransforms;
+
+		// TODO: add proper skeleton index and add start of bone matrices data
+		anim.ApplyInverseBindMatrices(0, boneMatrices);
+
+		frameData.BoneMatrices.insert(frameData.BoneMatrices.end(), boneMatrices.begin(), boneMatrices.end());
 	});
 }
 
@@ -50,8 +61,12 @@ void SkeletonMesh::GenerateCommands(const FrameData& data, RendererCommandList& 
 		glm::mat4x4 worldMatrix;
 		uint32_t meshletOffset;
 		uint32_t materialIndex;
+		uint32_t extraDataIndex;
+		uint32_t extraDataStartIndex;
 	};
 	Dx12::ConstantBufferDataManager& constantDataManager = blackboard.GetConstantDataManager();
+
+	uint32_t extraDataIndex = blackboard.GetRenderer().WriteExtraData(uint32_t(data.FrameIndex), data.BoneMatrices.data(), uint32_t(data.BoneMatrices.size()) * sizeof(glm::mat4x4));
 
 	for (const auto& mesh : data.SkeletonMeshes)
 	{
@@ -62,6 +77,8 @@ void SkeletonMesh::GenerateCommands(const FrameData& data, RendererCommandList& 
 			constants.worldMatrix = mesh.Transform;
 			constants.meshletOffset = meshData.meshlets_offset();
 			constants.materialIndex = meshData.material_index();
+			constants.extraDataIndex = extraDataIndex;
+			constants.extraDataStartIndex = mesh.StartIndexBoneMatrices;
 
 			RendererCommandDrawMeshlet command;
 			command.Pipeline = blackboard.GetRenderPhase() == RenderPhase::Main ? m_Handle : m_ShadowHandle;

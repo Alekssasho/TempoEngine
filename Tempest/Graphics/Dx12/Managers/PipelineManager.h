@@ -18,6 +18,7 @@ struct GraphicsPipelineStateDescription
 	size_t PSCodeSize = 0;
 	size_t MSCodeSize = 0;
 	float DepthBias = 0.0f;
+	bool EnableDepth = true;
 };
 
 class PipelineManager : Utils::NonCopyable

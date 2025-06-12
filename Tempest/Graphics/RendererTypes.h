@@ -10,7 +10,8 @@ using PipelineStateHandle = uint32_t;
 enum class RenderPhase : uint8_t
 {
 	Main,
-	Shadow
+	Shadow,
+	Debug
 };
 
 class World;

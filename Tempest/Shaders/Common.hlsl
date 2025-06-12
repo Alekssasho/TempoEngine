@@ -38,5 +38,7 @@ enum ShaderResourceSlot
 	MeshletVertices,
 	MeshletSkeletonVertices,
 	Materials,
+	ExtraDataEvenFrame,
+	ExtraDataOddFrame,
 	TextureStart,
 };

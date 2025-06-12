@@ -124,7 +124,7 @@ void PipelineManager::PrepareDefaultPipelineStateDesc(PipelineStreamBuilder& bui
 		blendState.RenderTarget[i] = defaultRenderTargetBlendDesc;
 
 	D3D12_DEPTH_STENCIL_DESC1 depthStencilState = { 0 };
-	depthStencilState.DepthEnable = TRUE;
+	depthStencilState.DepthEnable = description.EnableDepth;
 	depthStencilState.StencilEnable = FALSE;
 	depthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	depthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;

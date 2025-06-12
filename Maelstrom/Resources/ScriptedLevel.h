@@ -90,13 +90,18 @@ public:
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&meshJobCounter, 0);
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&materialDatabaseCounter, 0);
 
-        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialRequests);
+        AnimationDatabaseResource animationDatabaseResource(loadedScenes, skeletonRequests);
+        Tempest::Job::Counter animationDatabaseCounter;
+        CompileResources(animationDatabaseCounter, animationDatabaseResource);
+
+        Tempest::gEngineCore->GetJobSystem().WaitForCounter(&animationDatabaseCounter, 0);
+
+        GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialRequests, animationDatabaseResource.GetCompiledData().SkeletonJointsMapping);
         TextureDatabaseResource textureDatabaseResource(loadedScenes, materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource;
-        AnimationDatabaseResource animationDatabaseResource(loadedScenes, skeletonRequests);
 
         Tempest::Job::Counter databaseCounter;
-        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource, animationDatabaseResource);
+        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
 
         // Compile ECS state, while other databases are being compiled
         eastl::vector<uint8_t> ecsState;
@@ -112,7 +117,7 @@ public:
         auto geometryDatabaseName = WriteFile(Tempest::Definition::GeometryDatabaseExtension(), geometryDatabaseResource.GetCompiledData());
         auto audioDatabaseName = WriteFile(Tempest::Definition::SoundDatabaseExtension(), audioDatabaseResource.GetCompiledData());
         auto textureDatabaseName = WriteFile(Tempest::Definition::TextureDatabaseExtension(), textureDatabaseResource.GetCompiledData());
-        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData());
+        auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData().CompiledData);
 
         flatbuffers::FlatBufferBuilder builder(1024 * 1024);
         auto nameOffset = builder.CreateString(/*m_Name.c_str()*/"");

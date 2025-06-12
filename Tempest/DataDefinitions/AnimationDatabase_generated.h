@@ -60,15 +60,18 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Skeleton FLATBUFFERS_FINAL_CLASS {
  private:
   uint32_t start_index_;
   uint32_t count_;
+  uint32_t inverse_bind_matrices_start_index_;
 
  public:
   Skeleton()
       : start_index_(0),
-        count_(0) {
+        count_(0),
+        inverse_bind_matrices_start_index_(0) {
   }
-  Skeleton(uint32_t _start_index, uint32_t _count)
+  Skeleton(uint32_t _start_index, uint32_t _count, uint32_t _inverse_bind_matrices_start_index)
       : start_index_(::flatbuffers::EndianScalar(_start_index)),
-        count_(::flatbuffers::EndianScalar(_count)) {
+        count_(::flatbuffers::EndianScalar(_count)),
+        inverse_bind_matrices_start_index_(::flatbuffers::EndianScalar(_inverse_bind_matrices_start_index)) {
   }
   uint32_t start_index() const {
     return ::flatbuffers::EndianScalar(start_index_);
@@ -76,8 +79,11 @@ FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Skeleton FLATBUFFERS_FINAL_CLASS {
   uint32_t count() const {
     return ::flatbuffers::EndianScalar(count_);
   }
+  uint32_t inverse_bind_matrices_start_index() const {
+    return ::flatbuffers::EndianScalar(inverse_bind_matrices_start_index_);
+  }
 };
-FLATBUFFERS_STRUCT_END(Skeleton, 8);
+FLATBUFFERS_STRUCT_END(Skeleton, 12);
 
 FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) Animation FLATBUFFERS_FINAL_CLASS {
  private:
@@ -120,7 +126,8 @@ struct AnimationDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
     VT_SKELETONS = 4,
     VT_BONES = 6,
     VT_ANIMATIONS = 8,
-    VT_ANIM_DATA = 10
+    VT_ANIM_DATA = 10,
+    VT_INVERSE_BIND_MATRICES = 12
   };
   const ::flatbuffers::Vector<const Tempest::Definition::Skeleton *> *skeletons() const {
     return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::Skeleton *> *>(VT_SKELETONS);
@@ -134,6 +141,9 @@ struct AnimationDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
   const ::flatbuffers::Vector<uint8_t> *anim_data() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_ANIM_DATA);
   }
+  const ::flatbuffers::Vector<uint8_t> *inverse_bind_matrices() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_INVERSE_BIND_MATRICES);
+  }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyOffset(verifier, VT_SKELETONS) &&
@@ -144,6 +154,8 @@ struct AnimationDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table 
            verifier.VerifyVector(animations()) &&
            VerifyOffset(verifier, VT_ANIM_DATA) &&
            verifier.VerifyVector(anim_data()) &&
+           VerifyOffset(verifier, VT_INVERSE_BIND_MATRICES) &&
+           verifier.VerifyVector(inverse_bind_matrices()) &&
            verifier.EndTable();
   }
 };
@@ -164,6 +176,9 @@ struct AnimationDatabaseBuilder {
   void add_anim_data(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> anim_data) {
     fbb_.AddOffset(AnimationDatabase::VT_ANIM_DATA, anim_data);
   }
+  void add_inverse_bind_matrices(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> inverse_bind_matrices) {
+    fbb_.AddOffset(AnimationDatabase::VT_INVERSE_BIND_MATRICES, inverse_bind_matrices);
+  }
   explicit AnimationDatabaseBuilder(::flatbuffers::FlatBufferBuilder &_fbb)
         : fbb_(_fbb) {
     start_ = fbb_.StartTable();
@@ -180,8 +195,10 @@ inline ::flatbuffers::Offset<AnimationDatabase> CreateAnimationDatabase(
     ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Skeleton *>> skeletons = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Bone *>> bones = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::Animation *>> animations = 0,
-    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> anim_data = 0) {
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> anim_data = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> inverse_bind_matrices = 0) {
   AnimationDatabaseBuilder builder_(_fbb);
+  builder_.add_inverse_bind_matrices(inverse_bind_matrices);
   builder_.add_anim_data(anim_data);
   builder_.add_animations(animations);
   builder_.add_bones(bones);
@@ -194,17 +211,20 @@ inline ::flatbuffers::Offset<AnimationDatabase> CreateAnimationDatabaseDirect(
     const std::vector<Tempest::Definition::Skeleton> *skeletons = nullptr,
     const std::vector<Tempest::Definition::Bone> *bones = nullptr,
     const std::vector<Tempest::Definition::Animation> *animations = nullptr,
-    const std::vector<uint8_t> *anim_data = nullptr) {
+    const std::vector<uint8_t> *anim_data = nullptr,
+    const std::vector<uint8_t> *inverse_bind_matrices = nullptr) {
   auto skeletons__ = skeletons ? _fbb.CreateVectorOfStructs<Tempest::Definition::Skeleton>(*skeletons) : 0;
   auto bones__ = bones ? _fbb.CreateVectorOfStructs<Tempest::Definition::Bone>(*bones) : 0;
   auto animations__ = animations ? _fbb.CreateVectorOfStructs<Tempest::Definition::Animation>(*animations) : 0;
   auto anim_data__ = anim_data ? _fbb.CreateVector<uint8_t>(*anim_data) : 0;
+  auto inverse_bind_matrices__ = inverse_bind_matrices ? _fbb.CreateVector<uint8_t>(*inverse_bind_matrices) : 0;
   return Tempest::Definition::CreateAnimationDatabase(
       _fbb,
       skeletons__,
       bones__,
       animations__,
-      anim_data__);
+      anim_data__,
+      inverse_bind_matrices__);
 }
 
 inline const Tempest::Definition::AnimationDatabase *GetAnimationDatabase(const void *buf) {

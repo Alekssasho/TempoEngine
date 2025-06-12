@@ -20,7 +20,7 @@ void Debug::Initialize(const World& world, Renderer& renderer)
 	m_HandleRect = renderer.RequestPipelineState(PipelineStateDescription{
         "DebugShapeRect",
         "DebugShapePixelShader",
-		RenderPhase::Main
+		RenderPhase::Debug
 	});
 
     m_HandleCube = renderer.RequestPipelineState(PipelineStateDescription{
@@ -30,6 +30,14 @@ void Debug::Initialize(const World& world, Renderer& renderer)
     });
 
 	m_SkeletonQuery = world.m_EntityWorld.query<const Components::SkeletonMesh, const Components::Transform>("Debug Skeleton Query");
+}
+
+glm::vec3 getColorFromID(uint32_t id) {
+    uint32_t hash = id * 2654435761u; // Knuth's multiplicative hash
+    float r = ((hash >> 16) & 0xFF) / 255.0f;
+    float g = ((hash >> 8) & 0xFF) / 255.0f;
+    float b = ((hash >> 0) & 0xFF) / 255.0f;
+    return glm::vec3(r, g, b);
 }
 
 void Debug::GatherData(const World& world, FrameData& frameData)
@@ -71,7 +79,7 @@ void Debug::GatherData(const World& world, FrameData& frameData)
 			{
 				frameData.DebugCubes.emplace_back(
 					meshMatrix * mesh.BoneTransforms[boneIndex] * glm::scale(glm::vec3(0.05f, 0.05f, 0.05f)),
-					glm::vec4(0.0f, colorStep * boneIndex, 0.0f, 1.0f)
+					glm::vec4(getColorFromID(boneIndex), 1.0f)
 				);
 			}
 		});

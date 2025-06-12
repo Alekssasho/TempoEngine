@@ -28,7 +28,12 @@ struct FrameData
 		glm::mat4x4 Transform;
 	};
     eastl::vector<MeshData> StaticMeshes;
-    eastl::vector<MeshData> SkeletonMeshes;
+	struct SkeletonMeshData : MeshData
+	{
+		uint32_t StartIndexBoneMatrices;
+	};
+    eastl::vector<SkeletonMeshData> SkeletonMeshes;
+	eastl::vector<glm::mat4x4> BoneMatrices;
 
 	struct DirectionalLight
 	{

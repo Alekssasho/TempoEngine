@@ -10,10 +10,16 @@
 struct GeometryDatabaseResource : Resource<eastl::vector<uint8_t>>
 {
 public:
-	GeometryDatabaseResource(const eastl::vector<MeshResource>& meshes, const eastl::vector<Tempest::Definition::Material>& materials, const eastl::vector<MaterialRequest>& materialRequests)
+	GeometryDatabaseResource(
+		const eastl::vector<MeshResource>& meshes,
+		const eastl::vector<Tempest::Definition::Material>& materials,
+		const eastl::vector<MaterialRequest>& materialRequests,
+		const eastl::vector<eastl::unordered_map<uint32_t, uint32_t>>& skeletonBoneMappings
+	)
         : m_Meshes(meshes)
 		, m_Materials(materials)
 		, m_MaterialRequests(materialRequests)
+		, m_SkeletonBoneMappings(skeletonBoneMappings)
     {}
 
 	void Compile() override
@@ -65,11 +71,18 @@ public:
 				}
 				else
 				{
-					skeletonVertexBuffer.insert(
-						skeletonVertexBuffer.end(),
-						reinterpret_cast<const SkeletonVertexLayout*>(primitiveMesh.Vertices.begin()),
-						reinterpret_cast<const SkeletonVertexLayout*>(primitiveMesh.Vertices.end())
-					);
+					auto verticesArray = reinterpret_cast<const SkeletonVertexLayout*>(primitiveMesh.Vertices.begin());
+					auto vertexCount = primitiveMesh.Vertices.size() / sizeof(SkeletonVertexLayout);
+					for (uint32_t i = 0; i < vertexCount; ++i)
+					{
+						SkeletonVertexLayout vertex = verticesArray[i];
+                        vertex.Joints[0] = m_SkeletonBoneMappings[0].find(vertex.Joints[0])->second;
+                        vertex.Joints[1] = m_SkeletonBoneMappings[0].find(vertex.Joints[1])->second;
+                        vertex.Joints[2] = m_SkeletonBoneMappings[0].find(vertex.Joints[2])->second;
+                        vertex.Joints[3] = m_SkeletonBoneMappings[0].find(vertex.Joints[3])->second;
+
+						skeletonVertexBuffer.push_back(vertex);
+					}
 				}
 
 				meshletIndicesBuffer.insert(
@@ -124,4 +137,5 @@ private:
 	const eastl::vector<MeshResource>& m_Meshes;
 	const eastl::vector<Tempest::Definition::Material>& m_Materials;
 	const eastl::vector<MaterialRequest>& m_MaterialRequests;
+	const eastl::vector<eastl::unordered_map<uint32_t, uint32_t>>& m_SkeletonBoneMappings;
 };

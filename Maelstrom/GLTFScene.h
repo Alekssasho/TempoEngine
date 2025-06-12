@@ -25,8 +25,8 @@ struct TRS
         glm::vec4 perspective;
         glm::decompose(mat, scale, rotation, translation, skew, perspective);
 
-		Rotation = glm::quat::wxyz(rotation.w, rotation.x, -rotation.y, -rotation.z);
-		Translation = glm::vec3(-translation.x, translation.y, translation.z);
+		Rotation = glm::quat::wxyz(-rotation.w, rotation.x, rotation.y, -rotation.z);
+		Translation = glm::vec3(translation.x, translation.y, -translation.z);
 		Scale = scale;
 	}
 };
@@ -201,7 +201,7 @@ public:
                 outData.resize(acc->count);
                 for (int i = 0; i < acc->count; ++i)
                 {
-                    uint8_t joints[4];
+                    uint32_t joints[4];
                     cgltf_accessor_read_uint(acc, i, reinterpret_cast<cgltf_uint*>(joints), 4);
                     outData[i] = glm::u8vec4(joints[0], joints[1], joints[2], joints[3]);
                 }

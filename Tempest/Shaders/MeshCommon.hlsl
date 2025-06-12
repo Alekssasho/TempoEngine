@@ -14,6 +14,8 @@ struct GeometryConstants
 	float4x4 WorldMatrix;
 	uint meshletOffset;
 	uint materialIndex;
+	uint extraDataIndex;
+	uint extraDataStartIndex;
 };
 
 struct Meshlet

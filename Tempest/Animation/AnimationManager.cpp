@@ -79,6 +79,21 @@ void AnimationManager::ApplyFrameFromAnimation(uint32_t animationIndex, uint32_t
     }
 }
 
+void AnimationManager::ApplyInverseBindMatrices(uint32_t skeletonIndex, eastl::vector<glm::mat4x4>& transforms)
+{
+    const Definition::Skeleton* skeleton = (*m_Database->skeletons())[skeletonIndex];
+    const auto& bonesArray = *m_Database->bones();
+    const auto& inverseBindMatricesArray = *m_Database->inverse_bind_matrices();
+    const auto& inverseBoneMatrices = reinterpret_cast<const glm::mat4x4*>(inverseBindMatricesArray.data() + skeleton->inverse_bind_matrices_start_index());
+
+    assert(transforms.size() == skeleton->count());
+
+    for (uint32_t boneIndex = 0; boneIndex < skeleton->count(); ++boneIndex)
+    {
+        transforms[boneIndex] = transforms[boneIndex] * inverseBoneMatrices[boneIndex];
+    }
+}
+
 uint32_t AnimationManager::GetNumFramesForAnimation(uint32_t animationIndex)
 {
     const Definition::Animation* animation = (*m_Database->animations())[animationIndex];

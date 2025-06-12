@@ -12,7 +12,13 @@ struct SkeletonRequest
     uint32_t SkeletonIndex;
 };
 
-struct AnimationDatabaseResource : Resource<eastl::vector<uint8_t>>
+struct AnimationDatabaseResult
+{
+    eastl::vector<uint8_t> CompiledData;
+    eastl::vector<eastl::unordered_map<uint32_t, uint32_t>> SkeletonJointsMapping;
+};
+
+struct AnimationDatabaseResource : Resource<AnimationDatabaseResult>
 {
 public:
 	AnimationDatabaseResource(const Scene& scene)
@@ -33,13 +39,17 @@ public:
         eastl::vector<Tempest::Definition::Bone> bones;
         eastl::vector<uint8_t> animationDataArray;
         eastl::vector<Tempest::Definition::Animation> animationsArray;
+        eastl::vector<uint8_t> inverseBindMatrices;
 
         for (const auto& request : m_Requests)
         {
+            eastl::unordered_map<uint32_t, uint32_t> boneMapping;
+
             const Scene& scene = m_Scenes[request.SceneIndex];
             cgltf_skin* skin = scene.m_SkeletonIndices[request.SkeletonIndex];
             uint32_t startBoneIndex = uint32_t(bones.size());
             uint32_t boneCount = uint32_t(skin->joints_count);
+            uint32_t inverseBindMatricesStartIndex = uint32_t(inverseBindMatrices.size());
 
             eastl::unordered_map<cgltf_node*, uint32_t> nodeToBoneIndex;
 
@@ -58,6 +68,15 @@ public:
             bones.emplace_back(Common::Tempest::Quat(0.0f, 0.0f, 0.0f, 1.0f), Common::Tempest::Vec3(0.0f, 0.0f, 0.0f), uint32_t(-1));
             nodeToBoneIndex.emplace(rootNode, uint32_t(bones.size() - 1));
 
+            {
+                auto inverseBindMatricesIndex = eastl::find(skin->joints, skin->joints + skin->joints_count, rootNode) - skin->joints;
+                float matrix[16];
+                cgltf_accessor_read_float(skin->inverse_bind_matrices, inverseBindMatricesIndex, matrix, 16);
+                TRS trsMatrix(glm::mat4(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]));
+                glm::mat4x4 properMatrix = glm::translate(trsMatrix.Translation) * glm::toMat4(trsMatrix.Rotation) * glm::scale(trsMatrix.Scale);
+                inverseBindMatrices.insert(inverseBindMatrices.end(), reinterpret_cast<uint8_t*>(&properMatrix), reinterpret_cast<uint8_t*>(&properMatrix) + 16 * sizeof(float));
+            }
+
             uint32_t currentBonesAdded = 1;
 
             eastl::deque<eastl::pair<cgltf_node*, uint32_t>> nodeStack;
@@ -71,10 +90,20 @@ public:
                 assert(node->has_rotation);
                 assert(node->has_translation);
 
+                glm::vec3 translation(node->translation[0], node->translation[1], -node->translation[2]);
+                glm::quat rotation = glm::quat::wxyz(-node->rotation[3], node->rotation[0], node->rotation[1], -node->rotation[2]);
+
                 bones.emplace_back(
-                   Common::Tempest::Quat(node->rotation[0], -node->rotation[1], -node->rotation[2], node->rotation[3]),
-                   Common::Tempest::Vec3(-node->translation[0], node->translation[1], node->translation[2]),
+                   Common::Tempest::Quat(rotation.x, rotation.y, rotation.z, rotation.w),
+                   Common::Tempest::Vec3(translation.x, translation.y, translation.z),
                    nodePair.second);
+
+                auto inverseBindMatricesIndex = eastl::find(skin->joints, skin->joints + skin->joints_count, node) - skin->joints;
+                float matrix[16];
+                cgltf_accessor_read_float(skin->inverse_bind_matrices, inverseBindMatricesIndex, matrix, 16);
+                TRS trsMatrix(glm::mat4(matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6], matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13], matrix[14], matrix[15]));
+                glm::mat4x4 properMatrix = glm::translate(trsMatrix.Translation) * glm::toMat4(trsMatrix.Rotation) * glm::scale(trsMatrix.Scale);
+                inverseBindMatrices.insert(inverseBindMatrices.end(), reinterpret_cast<uint8_t*>(&properMatrix), reinterpret_cast<uint8_t*>(&properMatrix) + 16 * sizeof(float));
 
                 nodeToBoneIndex.emplace(node, uint32_t(bones.size() - 1));
 
@@ -85,8 +114,15 @@ public:
                 ++currentBonesAdded;
             }
 
+            for (uint32_t jointIndex = 0; jointIndex < skin->joints_count; ++jointIndex)
+            {
+                boneMapping[jointIndex] = nodeToBoneIndex[skin->joints[jointIndex]];
+            }
+
+            m_CompiledData.SkeletonJointsMapping.push_back(boneMapping);
+
             assert(currentBonesAdded == boneCount);
-            skeletons.emplace_back(startBoneIndex, boneCount);
+            skeletons.emplace_back(startBoneIndex, boneCount, inverseBindMatricesStartIndex);
 
             struct NodeAnimationChannel
             {
@@ -220,8 +256,10 @@ public:
                     const float currentTime = frameIndex * TimePerFrame;
                     for (uint32_t boneIndex = 0; boneIndex < boneCount; ++boneIndex)
                     {
-                        animFrame[boneIndex].Rotation = sampleRotationChannel(currentTime, anim.NodeAnims[boneIndex].Channels[0]);
-                        animFrame[boneIndex].Translation = sampleTranslationChannel(currentTime, anim.NodeAnims[boneIndex].Channels[1]);
+                        auto rot = sampleRotationChannel(currentTime, anim.NodeAnims[boneIndex].Channels[0]);
+                        auto translate = sampleTranslationChannel(currentTime, anim.NodeAnims[boneIndex].Channels[1]);
+                        animFrame[boneIndex].Rotation = glm::quat(-rot.w, rot.x, rot.y, -rot.z);
+                        animFrame[boneIndex].Translation = glm::vec3(translate.x, translate.y, -translate.z);
                     }
 
                     uint8_t* startDataPtr = reinterpret_cast<uint8_t*>(animFrame.data());
@@ -238,19 +276,21 @@ public:
         auto skeletonsData = builder.CreateVectorOfStructs<Tempest::Definition::Skeleton>(skeletons.data(), skeletons.size());
         auto bonesData = builder.CreateVectorOfStructs<Tempest::Definition::Bone>(bones.data(), bones.size());
         auto animations = builder.CreateVectorOfStructs<Tempest::Definition::Animation>(animationsArray.data(), animationsArray.size());
+        auto inverseBindMatricesData = builder.CreateVector<uint8_t>(inverseBindMatrices.data(), inverseBindMatrices.size());
 
         auto root = Tempest::Definition::CreateAnimationDatabase(
             builder,
             skeletonsData,
             bonesData,
             animations,
-            animationData
+            animationData,
+            inverseBindMatricesData
         );
 
         Tempest::Definition::FinishAnimationDatabaseBuffer(builder, root);
 
-        m_CompiledData.resize(builder.GetSize());
-        memcpy(m_CompiledData.data(), builder.GetBufferPointer(), m_CompiledData.size());
+        m_CompiledData.CompiledData.resize(builder.GetSize());
+        memcpy(m_CompiledData.CompiledData.data(), builder.GetBufferPointer(), m_CompiledData.CompiledData.size());
 	}
 
 private:

@@ -54,6 +54,8 @@ public:
 		MeshletVertices,
 		MeshletSkeletonVertices,
 		Materials,
+		ExtraDataEvenFrame,
+		ExtraDataOddFrame,
 		TextureStart,
 		NonTextureCount = TextureStart
 	};

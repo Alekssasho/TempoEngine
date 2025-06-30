@@ -71,6 +71,10 @@ struct SoldierMovementController : public GameplayFeature
 				auto deltaTime = it.delta_time();
 
 				transform.Position += movement.Velocity * movementInfo.Speed * deltaTime;
+				if (glm::length2(movement.Velocity) != 0.0f)
+				{
+					transform.Rotation = glm::rotation(sForwardDirection, movement.Velocity);
+				}
 			});
 	}
 

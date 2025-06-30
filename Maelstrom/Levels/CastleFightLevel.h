@@ -35,11 +35,12 @@ public:
         eastl::string suffix = GetSuffixPerFaction(faction);
 
         {
-            const uint32_t meshIndex = AddMeshRequest("Soldier", "Warrior" + suffix);
+            const uint32_t meshIndex = AddMeshRequest("Paladin_Anim", "Paladin_J_Nordstrom_Body", Tempest::Definition::MeshType_SkeletonMesh);
             m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab(("Soldier_Prefab" + suffix).c_str())
                 .is_a(m_BasePrefabs[Prefabs::Soldier])
-                .set(Tempest::Components::StaticMesh{ meshIndex })
-                .set(Tempest::Components::Faction{ faction });
+                .set(Tempest::Components::SkeletonMesh{ meshIndex })
+                .set(Tempest::Components::Faction{ faction })
+                .set(Tempest::Components::AnimationController{ 42, 0 });
         }
 
         {

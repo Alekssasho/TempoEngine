@@ -57,7 +57,7 @@ public:
             cgltf_node* rootNode = skin->joints[0];
             assert(strcmp(rootNode->name, "Root") == 0);
             assert(!rootNode->has_matrix);
-            assert(!rootNode->has_rotation);
+            //assert(!rootNode->has_rotation);
             assert(!rootNode->has_translation);
             assert(!rootNode->has_scale);
             assert(rootNode->children_count == 1);
@@ -65,7 +65,8 @@ public:
             bones.reserve(bones.size() + boneCount);
 
             // add root bone, with -1 as parent
-            bones.emplace_back(Common::Tempest::Quat(0.0f, 0.0f, 0.0f, 1.0f), Common::Tempest::Vec3(0.0f, 0.0f, 0.0f), uint32_t(-1));
+            glm::quat rootRotation = glm::quat::wxyz(-rootNode->rotation[3], rootNode->rotation[0], rootNode->rotation[1], -rootNode->rotation[2]);
+            bones.emplace_back(Common::Tempest::Quat(rootRotation.x, rootRotation.y, rootRotation.z, rootRotation.w), Common::Tempest::Vec3(0.0f, 0.0f, 0.0f), uint32_t(-1));
             nodeToBoneIndex.emplace(rootNode, uint32_t(bones.size() - 1));
 
             {

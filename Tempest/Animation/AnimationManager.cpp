@@ -14,6 +14,7 @@ AnimationManager::AnimationManager()
 
 void AnimationManager::InitializeBoneTransforms(uint32_t skeletonIndex, eastl::vector<glm::mat4x4>& transforms)
 {
+    assert(transforms.size() == 0);
     const Definition::Skeleton* skeleton = (*m_Database->skeletons())[skeletonIndex];
     const auto& bonesArray = *m_Database->bones();
 
@@ -66,9 +67,9 @@ void AnimationManager::ApplyFrameFromAnimation(uint32_t animationIndex, uint32_t
         const glm::mat4x4 bonePosition = glm::translate(currentBoneFrameData->Translation);
 
         glm::mat4x4 finalTransform;
-        if (bone->parent() == -1)
+        if (bone->parent() == -1) // Only root has no parent, as we don't have root motion only use rotation data
         {
-            finalTransform = bonePosition * boneRotation;
+            finalTransform = boneRotation;
         }
         else
         {
@@ -81,6 +82,8 @@ void AnimationManager::ApplyFrameFromAnimation(uint32_t animationIndex, uint32_t
 
 void AnimationManager::ApplyInverseBindMatrices(uint32_t skeletonIndex, eastl::vector<glm::mat4x4>& transforms)
 {
+    if (transforms.size() == 0)
+        return;
     const Definition::Skeleton* skeleton = (*m_Database->skeletons())[skeletonIndex];
     const auto& bonesArray = *m_Database->bones();
     const auto& inverseBindMatricesArray = *m_Database->inverse_bind_matrices();

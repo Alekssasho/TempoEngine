@@ -13,7 +13,7 @@ struct AnimationController : public GameplayFeature
 	virtual void PrepareSystems(class World& world) override
 	{
         world.m_EntityWorld.observer<Components::SkeletonMesh>("Init Skeleton Meshes")
-            .event(flecs::OnSet)
+            .event(flecs::OnAdd)
             .each([](flecs::iter& itr, size_t row, Components::SkeletonMesh& mesh) {
                 AnimationManager& anim = gEngine->GetAnimation();
                 // TODO: Get actual skeleton index

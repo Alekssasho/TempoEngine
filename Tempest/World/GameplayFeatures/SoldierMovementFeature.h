@@ -33,10 +33,10 @@ struct SoldierMovementController : public GameplayFeature
 			});
 
 
-		world.m_EntityWorld.system<const Components::Transform, Components::Movement, Components::LaneMovement, const Components::Attacking, const Components::AttackInfo>("SoldierMovementController")
+		world.m_EntityWorld.system<const Components::Transform, Components::Movement, Components::LaneMovement, const Components::Attacking, const Components::AttackInfo, Components::AnimationController>("SoldierMovementController")
 			.kind(flecs::PreUpdate)
 			.with<Tags::SimpleMovement>()
-			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo) {
+			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo, Components::AnimationController& animController) {
 				if (laneMovement.Itr.IsValid())
 				{
 					auto navData = itr.world().get<Components::NavigationData>();
@@ -50,6 +50,7 @@ struct SoldierMovementController : public GameplayFeature
 
 				if (att.Target.is_valid() && att.Target.is_alive())
 				{
+
 					const auto& targetPos = att.Target.get<Components::Transform>()->Position;
 					if (glm::distance2(transform.Position, targetPos) > attackInfo.Range * attackInfo.Range)
 					{
@@ -61,6 +62,20 @@ struct SoldierMovementController : public GameplayFeature
 					}
 				}
 
+				if (glm::length2(movement.Velocity) == 0.0f)
+				{
+					if (animController.State == AnimationState::Move)
+					{
+						animController.State = AnimationState::Idle;
+					}
+				}
+				else
+				{
+					if (animController.State == AnimationState::Idle)
+					{
+						animController.State = AnimationState::Move;
+					}
+				}
 			});
 
 

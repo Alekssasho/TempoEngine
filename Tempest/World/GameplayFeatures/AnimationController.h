@@ -22,12 +22,13 @@ struct AnimationController : public GameplayFeature
                 //itr.entity(row).set(Components::AnimationController{ 0, 0 });
             });
 
-        world.m_EntityWorld.system<Components::SkeletonMesh, Components::AnimationController>("Animation Controller System")
+        world.m_EntityWorld.system<Components::SkeletonMesh, Components::AnimationController, const Components::AnimationInfo>("Animation Controller System")
             .kind(flecs::OnUpdate)
-            .each([](flecs::iter& itr, size_t, Components::SkeletonMesh& mesh, Components::AnimationController& controller) {
+            .each([](flecs::iter& itr, size_t, Components::SkeletonMesh& mesh, Components::AnimationController& controller, const Components::AnimationInfo& animInfo) {
                 AnimationManager& anim = gEngine->GetAnimation();
 
-                auto animTime = anim.GetFrameTimeForAnimation(controller.AnimationIndex);
+                const uint32_t animIndex = animInfo.AnimationIndices[uint32_t(controller.State)];
+                auto animTime = anim.GetFrameTimeForAnimation(animIndex);
                 controller.CurrentTime += itr.delta_time();
 
                 if (controller.CurrentTime > animTime)
@@ -35,7 +36,7 @@ struct AnimationController : public GameplayFeature
                     controller.CurrentTime -= animTime;
                 }
 
-                anim.ApplyAnimtionWithTime(controller.AnimationIndex, controller.CurrentTime, mesh.BoneTransforms);
+                anim.ApplyAnimtionWithTime(animIndex, controller.CurrentTime, mesh.BoneTransforms);
             });
 	}
 

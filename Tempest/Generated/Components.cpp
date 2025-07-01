@@ -37,11 +37,18 @@ void SkeletonMeshImGuiDebug(void* data)
     ImGuiDebugRender(&comp->BoneTransforms, "BoneTransforms");
     
 }
+void AnimationInfoImGuiDebug(void* data)
+{
+    auto comp = (Components::AnimationInfo*)data;
+    ImGui::Text("AnimationInfo");
+    ImGuiDebugRender(&comp->AnimationIndices, "AnimationIndices");
+    
+}
 void AnimationControllerImGuiDebug(void* data)
 {
     auto comp = (Components::AnimationController*)data;
     ImGui::Text("AnimationController");
-    ImGuiDebugRender(&comp->AnimationIndex, "AnimationIndex");
+    ImGuiDebugRender(&comp->State, "State");
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
     
 }
@@ -202,8 +209,14 @@ void RegisterComponents(flecs::world& world)
         g_CompIdToImGuiFunc[componentId] = &SkeletonMeshImGuiDebug;
     }
     {
+        auto componentId = world.component<Components::AnimationInfo>(Components::AnimationInfo::Name)
+            .member<eastl::vector<uint32_t>>("AnimationIndices")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &AnimationInfoImGuiDebug;
+    }
+    {
         auto componentId = world.component<Components::AnimationController>(Components::AnimationController::Name)
-            .member<uint32_t>("AnimationIndex")
+            .member<uint32_t>("State")
             .member<float>("CurrentTime")
             ;
         g_CompIdToImGuiFunc[componentId] = &AnimationControllerImGuiDebug;

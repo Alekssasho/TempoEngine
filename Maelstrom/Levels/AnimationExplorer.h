@@ -47,7 +47,7 @@ public:
         m_ECS.m_EntityWorld.entity("Paladin")
             .set(Tempest::Components::SkeletonMesh{ meshIndex })
             .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 1.0f, 1.0f)})
-            .set(Tempest::Components::AnimationController{ 0, 0 });
+            .set(Tempest::Components::AnimationController{ Tempest::AnimationState::Idle, 0.0f });
     }
 
 private:

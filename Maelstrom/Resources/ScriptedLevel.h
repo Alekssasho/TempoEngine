@@ -90,7 +90,7 @@ public:
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&meshJobCounter, 0);
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&materialDatabaseCounter, 0);
 
-        AnimationDatabaseResource animationDatabaseResource(loadedScenes, skeletonRequests);
+        AnimationDatabaseResource animationDatabaseResource(loadedScenes, skeletonRequests, m_RequestedAnimations);
         Tempest::Job::Counter animationDatabaseCounter;
         CompileResources(animationDatabaseCounter, animationDatabaseResource);
 
@@ -187,5 +187,19 @@ protected:
 
         m_MeshRequests.emplace_back(sceneIndex, meshName, type);
         return uint32_t(m_MeshRequests.size() - 1);
+    }
+
+    eastl::vector<eastl::string> m_RequestedAnimations;
+
+    uint32_t RequestAnimation(eastl::string animName)
+    {
+        auto findItr = eastl::find(m_RequestedAnimations.begin(), m_RequestedAnimations.end(), animName);
+        if (findItr != m_RequestedAnimations.end())
+        {
+            return uint32_t(eastl::distance(m_RequestedAnimations.begin(), findItr));
+        }
+
+        m_RequestedAnimations.emplace_back(eastl::move(animName));
+        return uint32_t(m_RequestedAnimations.size() - 1);
     }
 };

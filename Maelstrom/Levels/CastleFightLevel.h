@@ -30,6 +30,18 @@ public:
         return "";
     }
 
+    eastl::vector<uint32_t> GetAnimationStates()
+    {
+        eastl::vector<uint32_t> result;
+        result.resize(uint32_t(Tempest::AnimationState::Count));
+
+        result[uint32_t(Tempest::AnimationState::Idle)] = RequestAnimation("sword and shield idle");
+        result[uint32_t(Tempest::AnimationState::Move)] = RequestAnimation("sword and shield walk");
+        result[uint32_t(Tempest::AnimationState::Attack)] = RequestAnimation("sword and shield slash");
+
+        return result;
+    }
+
     void AddPrefabsPerFaction(Tempest::CastleFight::Faction faction)
     {
         eastl::string suffix = GetSuffixPerFaction(faction);
@@ -40,7 +52,8 @@ public:
                 .is_a(m_BasePrefabs[Prefabs::Soldier])
                 .set(Tempest::Components::SkeletonMesh{ meshIndex })
                 .set(Tempest::Components::Faction{ faction })
-                .set(Tempest::Components::AnimationController{ 42, 0.0f });
+                .set(Tempest::Components::AnimationController{ Tempest::AnimationState::Idle, 0.0f })
+                .set(Tempest::Components::AnimationInfo{ GetAnimationStates() });
         }
 
         {

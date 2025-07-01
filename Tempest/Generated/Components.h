@@ -30,9 +30,14 @@ struct SkeletonMesh
     eastl::vector<glm::mat4x4> BoneTransforms;
     static constexpr const char* Name = "SkeletonMesh";
 };
+struct AnimationInfo
+{
+    eastl::vector<uint32_t> AnimationIndices;
+    static constexpr const char* Name = "AnimationInfo";
+};
 struct AnimationController
 {
-    uint32_t AnimationIndex;
+    AnimationState State;
     float CurrentTime;
     static constexpr const char* Name = "AnimationController";
 };

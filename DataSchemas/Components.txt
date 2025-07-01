@@ -27,9 +27,16 @@ Component SkeletonMesh
 	BoneTransforms : eastl::vector<glm::mat4x4>;
 }
 
+Component AnimationInfo
+{
+	AnimationIndices : eastl::vector<uint32_t>;
+}
+
 Component AnimationController
 {
-	AnimationIndex : uint32_t;
+	[StorageType(uint32_t)]
+	State : AnimationState;
+
 	CurrentTime : float;
 }
 

@@ -145,6 +145,8 @@ WorldStorage::WorldStorage()
         .opaque(std_vector_support<glm::mat4x4>);
 	m_EntityWorld.component<eastl::vector<Navigation::LineData>>()
 		.opaque(std_vector_support<Navigation::LineData>);
+    m_EntityWorld.component<eastl::vector<uint32_t>>()
+        .opaque(std_vector_support<uint32_t>);
 
 	RegisterComponents(m_EntityWorld);
 }

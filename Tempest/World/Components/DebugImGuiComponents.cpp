@@ -59,6 +59,24 @@ void ImGuiDebugRender(CastleFight::Faction* v, const char* nameOfMember)
 }
 
 template<>
+void ImGuiDebugRender(AnimationState* v, const char* nameOfMember)
+{
+    ImGui::SameLine();
+    switch (*v)
+    {
+    case AnimationState::Idle:
+        ImGui::Text("Idle");
+        return;
+    case AnimationState::Move:
+        ImGui::Text("Move");
+        return;
+    case AnimationState::Attack:
+        ImGui::Text("Attack");
+        return;
+    }
+}
+
+template<>
 void ImGuiDebugRender(flecs::entity* v, const char* nameOfMember)
 {
 

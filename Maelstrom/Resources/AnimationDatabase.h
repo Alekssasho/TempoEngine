@@ -27,8 +27,9 @@ public:
 		//TODO:
     }
 
-	AnimationDatabaseResource(eastl::span<const Scene> scenes, eastl::span<SkeletonRequest> requests)
+	AnimationDatabaseResource(eastl::span<const Scene> scenes, eastl::span<SkeletonRequest> requests, eastl::span<eastl::string> animationRequests)
 		: m_Scenes(scenes)
+        , m_AnimationRequests(animationRequests)
 	{
 		m_Requests.assign(requests.begin(), requests.end());
 	}
@@ -146,9 +147,20 @@ public:
             eastl::vector<Animation> loadedAnimations;
 
             uint32_t animCount = uint32_t(scene.m_Data->animations_count);
-            for (uint32_t animIndex = 0; animIndex < animCount; ++animIndex)
+            for(const eastl::string& requestedAnimation : m_AnimationRequests)
             {
-                cgltf_animation* anim = scene.m_Data->animations + animIndex;
+                cgltf_animation* anim = nullptr;
+                for (uint32_t animIndex = 0; animIndex < animCount; ++animIndex)
+                {
+                    if (requestedAnimation == (scene.m_Data->animations + animIndex)->name)
+                    {
+                        anim = scene.m_Data->animations + animIndex;
+                    }
+                }
+
+                // Make sure we did find this animation
+                assert(anim);
+
                 Animation& newAnimationData = loadedAnimations.emplace_back();
                 newAnimationData.Name = anim->name;
 
@@ -297,4 +309,6 @@ public:
 private:
 	eastl::span<const Scene> m_Scenes;
 	eastl::vector<SkeletonRequest> m_Requests;
+
+    eastl::span<eastl::string> m_AnimationRequests;
 };

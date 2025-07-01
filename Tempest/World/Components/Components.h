@@ -21,6 +21,14 @@ enum class Faction : uint32_t
 	Count
 };
 }
+
+enum class AnimationState : uint32_t
+{
+	Idle,
+	Move,
+	Attack,
+	Count
+};
 }
 
 #include "Generated/Components.h"

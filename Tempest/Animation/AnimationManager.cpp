@@ -80,6 +80,52 @@ void AnimationManager::ApplyFrameFromAnimation(uint32_t animationIndex, uint32_t
     }
 }
 
+void AnimationManager::ApplyAnimtionWithTime(uint32_t animationIndex, float time, eastl::vector<glm::mat4x4>& transforms)
+{
+    const Definition::Animation* animation = (*m_Database->animations())[animationIndex];
+    const Definition::Skeleton* skeleton = (*m_Database->skeletons())[animation->skeleton_index()];
+    const auto& bonesArray = *m_Database->bones();
+
+    assert(transforms.size() == skeleton->count());
+
+    const uint32_t firstFrameIndex = uint32_t(floor(time / TimePerFrame));
+    const uint32_t secondFrameIndex = firstFrameIndex == animation->num_frames() - 1 ? 0 : firstFrameIndex + 1;
+    const float t = (time - (firstFrameIndex * TimePerFrame)) / TimePerFrame;
+
+    struct BoneFrameData
+    {
+        glm::vec3 Translation;
+        glm::quat Rotation;
+    };
+    const uint8_t* data = m_Database->anim_data()->Data();
+
+    const BoneFrameData* firstFrameData = reinterpret_cast<const BoneFrameData*>(data + animation->start_index()) + (firstFrameIndex * skeleton->count());
+    const BoneFrameData* secondFrameData = reinterpret_cast<const BoneFrameData*>(data + animation->start_index()) + (secondFrameIndex * skeleton->count());
+
+    for (uint32_t boneIndex = 0; boneIndex < skeleton->count(); ++boneIndex)
+    {
+        const Definition::Bone* bone = bonesArray[skeleton->start_index() + boneIndex];
+
+        const BoneFrameData* currentFirstBoneFrameData = firstFrameData + boneIndex;
+        const BoneFrameData* currentSecondBoneFrameData = secondFrameData + boneIndex;
+
+        const glm::mat4x4 boneRotation = glm::toMat4(glm::slerp(currentFirstBoneFrameData->Rotation, currentSecondBoneFrameData->Rotation, t));
+        const glm::mat4x4 bonePosition = glm::translate(currentFirstBoneFrameData->Translation + t * (currentSecondBoneFrameData->Translation - currentFirstBoneFrameData->Translation));
+
+        glm::mat4x4 finalTransform;
+        if (bone->parent() == -1) // Only root has no parent, as we don't have root motion only use rotation data
+        {
+            finalTransform = boneRotation;
+        }
+        else
+        {
+            finalTransform = transforms[bone->parent() - skeleton->start_index()] * bonePosition * boneRotation;
+        }
+
+        transforms[boneIndex] = finalTransform;
+    }
+}
+
 void AnimationManager::ApplyInverseBindMatrices(uint32_t skeletonIndex, eastl::vector<glm::mat4x4>& transforms)
 {
     if (transforms.size() == 0)
@@ -101,6 +147,11 @@ uint32_t AnimationManager::GetNumFramesForAnimation(uint32_t animationIndex)
 {
     const Definition::Animation* animation = (*m_Database->animations())[animationIndex];
     return animation->num_frames();
+}
+
+float AnimationManager::GetFrameTimeForAnimation(uint32_t animationIndex)
+{
+    return GetNumFramesForAnimation(animationIndex) * TimePerFrame;
 }
 
 void AnimationManager::LoadDatabase(const char* databaseName)

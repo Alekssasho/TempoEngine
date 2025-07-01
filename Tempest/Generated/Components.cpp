@@ -42,7 +42,7 @@ void AnimationControllerImGuiDebug(void* data)
     auto comp = (Components::AnimationController*)data;
     ImGui::Text("AnimationController");
     ImGuiDebugRender(&comp->AnimationIndex, "AnimationIndex");
-    ImGuiDebugRender(&comp->FrameIndex, "FrameIndex");
+    ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
     
 }
 void DynamicPhysicsActorImGuiDebug(void* data)
@@ -204,7 +204,7 @@ void RegisterComponents(flecs::world& world)
     {
         auto componentId = world.component<Components::AnimationController>(Components::AnimationController::Name)
             .member<uint32_t>("AnimationIndex")
-            .member<uint32_t>("FrameIndex")
+            .member<float>("CurrentTime")
             ;
         g_CompIdToImGuiFunc[componentId] = &AnimationControllerImGuiDebug;
     }

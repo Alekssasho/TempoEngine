@@ -30,7 +30,7 @@ Component SkeletonMesh
 Component AnimationController
 {
 	AnimationIndex : uint32_t;
-	FrameIndex : uint32_t;
+	CurrentTime : float;
 }
 
 [NoReflection]

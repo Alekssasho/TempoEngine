@@ -27,18 +27,15 @@ struct AnimationController : public GameplayFeature
             .each([](flecs::iter& itr, size_t, Components::SkeletonMesh& mesh, Components::AnimationController& controller) {
                 AnimationManager& anim = gEngine->GetAnimation();
 
-                auto numFrames = anim.GetNumFramesForAnimation(controller.AnimationIndex);
+                auto animTime = anim.GetFrameTimeForAnimation(controller.AnimationIndex);
+                controller.CurrentTime += itr.delta_time();
 
-                constexpr uint32_t FramesPerSecond = 30;
-                constexpr float TimePerFrame = 1.0f / FramesPerSecond;
-
-                ++controller.FrameIndex;
-                if (controller.FrameIndex >= numFrames)
+                if (controller.CurrentTime > animTime)
                 {
-                    controller.FrameIndex = 0;
+                    controller.CurrentTime -= animTime;
                 }
 
-                anim.ApplyFrameFromAnimation(controller.AnimationIndex, controller.FrameIndex, mesh.BoneTransforms);
+                anim.ApplyAnimtionWithTime(controller.AnimationIndex, controller.CurrentTime, mesh.BoneTransforms);
             });
 	}
 

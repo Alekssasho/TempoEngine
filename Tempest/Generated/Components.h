@@ -33,7 +33,7 @@ struct SkeletonMesh
 struct AnimationController
 {
     uint32_t AnimationIndex;
-    uint32_t FrameIndex;
+    float CurrentTime;
     static constexpr const char* Name = "AnimationController";
 };
 struct DynamicPhysicsActor

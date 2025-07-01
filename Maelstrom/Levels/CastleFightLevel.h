@@ -40,7 +40,7 @@ public:
                 .is_a(m_BasePrefabs[Prefabs::Soldier])
                 .set(Tempest::Components::SkeletonMesh{ meshIndex })
                 .set(Tempest::Components::Faction{ faction })
-                .set(Tempest::Components::AnimationController{ 42, 0 });
+                .set(Tempest::Components::AnimationController{ 42, 0.0f });
         }
 
         {

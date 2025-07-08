@@ -1,7 +1,17 @@
 namespace Tempest.Definition;
 
+struct SoundClip
+{
+    duration : float;
+    start_index : uint32;
+    count : uint32;
+}
+
 table SoundDatabase
 {
+    sound_clips : [SoundClip];
+    sound_clip_data : [ubyte];
+
     background_music : [ubyte];
 }
 

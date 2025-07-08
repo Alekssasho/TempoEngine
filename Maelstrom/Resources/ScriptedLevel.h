@@ -98,7 +98,7 @@ public:
 
         GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialRequests, animationDatabaseResource.GetCompiledData().SkeletonJointsMapping);
         TextureDatabaseResource textureDatabaseResource(loadedScenes, materialDatabaseResource.GetCompiledData().TextureRequests);
-        AudioDatabaseResource audioDatabaseResource;
+        AudioDatabaseResource audioDatabaseResource(m_RequestedSoundClips);
 
         Tempest::Job::Counter databaseCounter;
         CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
@@ -201,5 +201,19 @@ protected:
 
         m_RequestedAnimations.emplace_back(eastl::move(animName));
         return uint32_t(m_RequestedAnimations.size() - 1);
+    }
+
+    eastl::vector<eastl::string> m_RequestedSoundClips;
+
+    uint32_t RequestSoundClip(eastl::string clipName)
+    {
+        auto findItr = eastl::find(m_RequestedSoundClips.begin(), m_RequestedSoundClips.end(), clipName);
+        if (findItr != m_RequestedSoundClips.end())
+        {
+            return uint32_t(eastl::distance(m_RequestedSoundClips.begin(), findItr));
+        }
+
+        m_RequestedSoundClips.emplace_back(eastl::move(clipName));
+        return uint32_t(m_RequestedSoundClips.size() - 1);
     }
 };

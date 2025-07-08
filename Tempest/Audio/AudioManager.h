@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <Audio/AudioConfig.h>
 
 struct IAudioClient;
 struct IAudioRenderClient;
@@ -11,6 +12,13 @@ namespace Definition {
 	struct SoundDatabase;
 }
 
+struct PlayingSoundEffect
+{
+	uint32_t SoundEffectIndex;
+	uint32_t CurrentSample;
+	float Volume;
+};
+
 class AudioManager
 {
 public:
@@ -19,17 +27,19 @@ public:
 
 	void Update();
 	void LoadDatabase(const char* databaseName);
+	void PlaySoundEffect(uint32_t soundEffectIndex, float volume);
+	eastl::vector<PlayingSoundEffect> m_CurrentPlayingSounds;
 private:
 	IAudioClient* m_AudioClient;
 	IAudioRenderClient* m_RenderClient;
 	uint32_t m_MaxFramesInBuffer = 0;
-	uint32_t m_SampleRate;
 
 	//uint32_t m_SampleCount;
 
 	const Definition::SoundDatabase* m_Database;
 	// Background music
 	stb_vorbis* m_VorbisDecoder;
+
 };
 }
 

@@ -16,19 +16,62 @@ static_assert(FLATBUFFERS_VERSION_MAJOR == 24 &&
 namespace Tempest {
 namespace Definition {
 
+struct SoundClip;
+
 struct SoundDatabase;
 struct SoundDatabaseBuilder;
+
+FLATBUFFERS_MANUALLY_ALIGNED_STRUCT(4) SoundClip FLATBUFFERS_FINAL_CLASS {
+ private:
+  float duration_;
+  uint32_t start_index_;
+  uint32_t count_;
+
+ public:
+  SoundClip()
+      : duration_(0),
+        start_index_(0),
+        count_(0) {
+  }
+  SoundClip(float _duration, uint32_t _start_index, uint32_t _count)
+      : duration_(::flatbuffers::EndianScalar(_duration)),
+        start_index_(::flatbuffers::EndianScalar(_start_index)),
+        count_(::flatbuffers::EndianScalar(_count)) {
+  }
+  float duration() const {
+    return ::flatbuffers::EndianScalar(duration_);
+  }
+  uint32_t start_index() const {
+    return ::flatbuffers::EndianScalar(start_index_);
+  }
+  uint32_t count() const {
+    return ::flatbuffers::EndianScalar(count_);
+  }
+};
+FLATBUFFERS_STRUCT_END(SoundClip, 12);
 
 struct SoundDatabase FLATBUFFERS_FINAL_CLASS : private ::flatbuffers::Table {
   typedef SoundDatabaseBuilder Builder;
   enum FlatBuffersVTableOffset FLATBUFFERS_VTABLE_UNDERLYING_TYPE {
-    VT_BACKGROUND_MUSIC = 4
+    VT_SOUND_CLIPS = 4,
+    VT_SOUND_CLIP_DATA = 6,
+    VT_BACKGROUND_MUSIC = 8
   };
+  const ::flatbuffers::Vector<const Tempest::Definition::SoundClip *> *sound_clips() const {
+    return GetPointer<const ::flatbuffers::Vector<const Tempest::Definition::SoundClip *> *>(VT_SOUND_CLIPS);
+  }
+  const ::flatbuffers::Vector<uint8_t> *sound_clip_data() const {
+    return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_SOUND_CLIP_DATA);
+  }
   const ::flatbuffers::Vector<uint8_t> *background_music() const {
     return GetPointer<const ::flatbuffers::Vector<uint8_t> *>(VT_BACKGROUND_MUSIC);
   }
   bool Verify(::flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
+           VerifyOffset(verifier, VT_SOUND_CLIPS) &&
+           verifier.VerifyVector(sound_clips()) &&
+           VerifyOffset(verifier, VT_SOUND_CLIP_DATA) &&
+           verifier.VerifyVector(sound_clip_data()) &&
            VerifyOffset(verifier, VT_BACKGROUND_MUSIC) &&
            verifier.VerifyVector(background_music()) &&
            verifier.EndTable();
@@ -39,6 +82,12 @@ struct SoundDatabaseBuilder {
   typedef SoundDatabase Table;
   ::flatbuffers::FlatBufferBuilder &fbb_;
   ::flatbuffers::uoffset_t start_;
+  void add_sound_clips(::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::SoundClip *>> sound_clips) {
+    fbb_.AddOffset(SoundDatabase::VT_SOUND_CLIPS, sound_clips);
+  }
+  void add_sound_clip_data(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> sound_clip_data) {
+    fbb_.AddOffset(SoundDatabase::VT_SOUND_CLIP_DATA, sound_clip_data);
+  }
   void add_background_music(::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> background_music) {
     fbb_.AddOffset(SoundDatabase::VT_BACKGROUND_MUSIC, background_music);
   }
@@ -55,18 +104,28 @@ struct SoundDatabaseBuilder {
 
 inline ::flatbuffers::Offset<SoundDatabase> CreateSoundDatabase(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    ::flatbuffers::Offset<::flatbuffers::Vector<const Tempest::Definition::SoundClip *>> sound_clips = 0,
+    ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> sound_clip_data = 0,
     ::flatbuffers::Offset<::flatbuffers::Vector<uint8_t>> background_music = 0) {
   SoundDatabaseBuilder builder_(_fbb);
   builder_.add_background_music(background_music);
+  builder_.add_sound_clip_data(sound_clip_data);
+  builder_.add_sound_clips(sound_clips);
   return builder_.Finish();
 }
 
 inline ::flatbuffers::Offset<SoundDatabase> CreateSoundDatabaseDirect(
     ::flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<Tempest::Definition::SoundClip> *sound_clips = nullptr,
+    const std::vector<uint8_t> *sound_clip_data = nullptr,
     const std::vector<uint8_t> *background_music = nullptr) {
+  auto sound_clips__ = sound_clips ? _fbb.CreateVectorOfStructs<Tempest::Definition::SoundClip>(*sound_clips) : 0;
+  auto sound_clip_data__ = sound_clip_data ? _fbb.CreateVector<uint8_t>(*sound_clip_data) : 0;
   auto background_music__ = background_music ? _fbb.CreateVector<uint8_t>(*background_music) : 0;
   return Tempest::Definition::CreateSoundDatabase(
       _fbb,
+      sound_clips__,
+      sound_clip_data__,
       background_music__);
 }
 

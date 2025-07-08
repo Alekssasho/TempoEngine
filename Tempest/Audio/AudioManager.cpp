@@ -48,13 +48,10 @@ AudioManager::AudioManager()
 		return;
 	}
 
-	const int numChannels = 2;
-	m_SampleRate = 48000;
-
 	WAVEFORMATEX mixFormat = {};
 	mixFormat.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-	mixFormat.nChannels = numChannels;
-	mixFormat.nSamplesPerSec = m_SampleRate;
+	mixFormat.nChannels = sAudioNumChannels;
+	mixFormat.nSamplesPerSec = sAudioSampleRate;
 	mixFormat.wBitsPerSample = 32;
 	mixFormat.nBlockAlign = (mixFormat.nChannels * mixFormat.wBitsPerSample) / 8;
 	mixFormat.nAvgBytesPerSec = mixFormat.nSamplesPerSec * mixFormat.nBlockAlign;
@@ -69,7 +66,7 @@ AudioManager::AudioManager()
 	if (FAILED(hr = m_AudioClient->Initialize(
 		AUDCLNT_SHAREMODE_SHARED,
 		AUDCLNT_STREAMFLAGS_RATEADJUST | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
-		4238,
+		0,
 		0,
 		(const WAVEFORMATEX*)&extFormat,
 		nullptr)))
@@ -109,6 +106,16 @@ AudioManager::~AudioManager()
 	m_AudioClient->Release();
 }
 
+void AudioManager::PlaySoundEffect(uint32_t soundEffectIndex, float volume)
+{
+	m_CurrentPlayingSounds.emplace_back(soundEffectIndex, 0, volume);
+}
+
+
+float ConvertPCM16ToFloat(const int16_t* input) {
+    return static_cast<float>(*input) / 32768.0f;
+}
+
 struct AudioFrame
 {
 	float leftSample;
@@ -131,6 +138,36 @@ void AudioManager::Update()
 	}
 
 	auto samples = reinterpret_cast<AudioFrame*>(pData);
+
+    for (uint32_t i = 0; i < framesAvailable; ++i)
+    {
+        samples[i].leftSample = 0.0f;
+        samples[i].rightSample = 0.0f;
+    }
+
+	eastl::vector<PlayingSoundEffect> currentEffects;
+	currentEffects.swap(m_CurrentPlayingSounds);
+
+	for (auto& playingEffect : currentEffects)
+	{
+		const auto& effect = (*m_Database->sound_clips())[playingEffect.SoundEffectIndex];
+		const auto& totalFrames = (effect->count() / (sAudioClipBitDepth / 8)) / sAudioNumChannels;
+		const auto& effectFramesAvailable = totalFrames - playingEffect.CurrentSample;
+		const auto& effectSamplesHalf = reinterpret_cast<const uint32_t*>(m_Database->sound_clip_data()->data() + effect->start_index());
+
+		for (uint32_t i = 0; i < std::min(framesAvailable, effectFramesAvailable); ++i)
+		{
+			const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
+			samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.Volume;
+			samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.Volume;
+		}
+
+		playingEffect.CurrentSample += framesAvailable;
+		if (playingEffect.CurrentSample < totalFrames)
+		{
+			m_CurrentPlayingSounds.emplace_back(playingEffect);
+		}
+	}
 
 	//uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
 
@@ -159,7 +196,7 @@ void AudioManager::Update()
 
 void AudioManager::LoadDatabase(const char* databaseName)
 {
-	const Definition::SoundDatabase* audioDatabase = gEngine->GetResourceLoader().LoadResource<Definition::SoundDatabase>(databaseName);
+	const Definition::SoundDatabase* audioDatabase = gEngineCore->GetResourceLoader().LoadResource<Definition::SoundDatabase>(databaseName);
 	if (!audioDatabase)
 	{
 		LOG(Warning, Renderer, "Audio Database is Invalid!");

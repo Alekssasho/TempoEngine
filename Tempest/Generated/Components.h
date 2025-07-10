@@ -125,6 +125,7 @@ struct AttackInfo
     float Range;
     float Speed;
     float AwarenessRadius;
+    uint32_t ClashSoundEffect;
     static constexpr const char* Name = "AttackInfo";
 };
 struct Attacking
@@ -132,6 +133,11 @@ struct Attacking
     flecs::entity Target;
     float CurrentTime;
     static constexpr const char* Name = "Attacking";
+};
+struct SoundSource
+{
+    uint32_t RequestedSoundEffect;
+    static constexpr const char* Name = "SoundSource";
 };
 }
 }
@@ -160,6 +166,10 @@ struct DirectionalLight
 struct SimpleMovement
 {
     static constexpr const char* Name = "SimpleMovement";
+};
+struct SoundListener
+{
+    static constexpr const char* Name = "SoundListener";
 };
 }
 }

@@ -52,9 +52,9 @@ struct Battle : public GameplayFeature
 			});
 
 
-		world.m_EntityWorld.system<const Components::Transform, const Components::AttackInfo, Components::Attacking, Components::AnimationController>("Battle Initial")
+		world.m_EntityWorld.system<const Components::Transform, const Components::AttackInfo, Components::Attacking, Components::AnimationController, Components::SoundSource>("Battle Initial")
 			.kind(flecs::OnUpdate)
-			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, Components::Attacking& att, Components::AnimationController& animController) {
+			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, Components::Attacking& att, Components::AnimationController& animController, Components::SoundSource& soundSource) {
 				auto spaceData = itr.world().get<SpaceLocation::SpaceData>();
 
 				auto currentEntity = itr.entity(row);
@@ -83,6 +83,8 @@ struct Battle : public GameplayFeature
 							//currentEntity.get_mut<Components::Health>()->CurrentHealth = 0;
 
 							animController.State = AnimationState::Attack;
+
+							soundSource.RequestedSoundEffect = attackInfo.ClashSoundEffect;
 						}
 					}
 				}

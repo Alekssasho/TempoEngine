@@ -133,6 +133,8 @@ Component AttackInfo
 	Range : float;
 	Speed : float;
 	AwarenessRadius : float;
+
+	ClashSoundEffect : uint32_t;
 }
 
 Component Attacking
@@ -141,8 +143,14 @@ Component Attacking
 	CurrentTime : float;
 }
 
+Component SoundSource
+{
+	RequestedSoundEffect : uint32_t;
+}
+
 Tag Attacks;
 Tag Castle;
 Tag Boids;
 Tag DirectionalLight;
 Tag SimpleMovement;
+Tag SoundListener;

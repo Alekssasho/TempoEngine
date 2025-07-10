@@ -14,6 +14,7 @@
 #include <World/GameplayFeatures/BattleFeature.h>
 #include <World/GameplayFeatures/HealthManagementFeature.h>
 #include <World/GameplayFeatures/AnimationController.h>
+#include <World/GameplayFeatures/SoundFeature.h>
 
 namespace Tempest
 {
@@ -161,6 +162,7 @@ World::World()
     m_Features.emplace_back(new GameplayFeatures::Battle);
     m_Features.emplace_back(new GameplayFeatures::HealthManagement);
     m_Features.emplace_back(new GameplayFeatures::AnimationController);
+    m_Features.emplace_back(new GameplayFeatures::Sound);
 }
 
 World::~World()

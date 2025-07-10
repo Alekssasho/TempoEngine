@@ -115,7 +115,8 @@ void Game::LoadLevel(uint32_t, void* data)
 
 	auto cameraController = gEngine->GetWorld().m_EntityWorld.entity("MainCameraController")
 		.set<Components::CameraController>({ gEngine->GetCamera(), 0})
-		.set<Components::VehicleController>({ 1 });
+		.set<Components::VehicleController>({ 1 })
+		.add<Tags::SoundListener>();
 
 	const Components::CameraController* controller = cameraController.get<Components::CameraController>();
 	gEngine->GetRenderer().RegisterView(&controller->CameraData);

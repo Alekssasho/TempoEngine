@@ -106,9 +106,9 @@ AudioManager::~AudioManager()
 	m_AudioClient->Release();
 }
 
-void AudioManager::PlaySoundEffect(uint32_t soundEffectIndex, float volume)
+void AudioManager::PlaySoundEffect(uint32_t soundEffectIndex, float volumeLeft, float volumeRight)
 {
-	m_CurrentPlayingSounds.emplace_back(soundEffectIndex, 0, volume);
+	m_CurrentPlayingSounds.emplace_back(soundEffectIndex, 0, volumeLeft, volumeRight);
 }
 
 
@@ -158,8 +158,8 @@ void AudioManager::Update()
 		for (uint32_t i = 0; i < std::min(framesAvailable, effectFramesAvailable); ++i)
 		{
 			const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
-			samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.Volume;
-			samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.Volume;
+			samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.VolumeLeft;
+			samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.VolumeRight;
 		}
 
 		playingEffect.CurrentSample += framesAvailable;

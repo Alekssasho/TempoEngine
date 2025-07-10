@@ -16,7 +16,8 @@ struct PlayingSoundEffect
 {
 	uint32_t SoundEffectIndex;
 	uint32_t CurrentSample;
-	float Volume;
+	float VolumeLeft;
+	float VolumeRight;
 };
 
 class AudioManager
@@ -27,7 +28,7 @@ public:
 
 	void Update();
 	void LoadDatabase(const char* databaseName);
-	void PlaySoundEffect(uint32_t soundEffectIndex, float volume);
+	void PlaySoundEffect(uint32_t soundEffectIndex, float volumeLeft, float volumeRight);
 	eastl::vector<PlayingSoundEffect> m_CurrentPlayingSounds;
 private:
 	IAudioClient* m_AudioClient;

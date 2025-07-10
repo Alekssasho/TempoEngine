@@ -166,6 +166,7 @@ void AttackInfoImGuiDebug(void* data)
     ImGuiDebugRender(&comp->Range, "Range");
     ImGuiDebugRender(&comp->Speed, "Speed");
     ImGuiDebugRender(&comp->AwarenessRadius, "AwarenessRadius");
+    ImGuiDebugRender(&comp->ClashSoundEffect, "ClashSoundEffect");
     
 }
 void AttackingImGuiDebug(void* data)
@@ -174,6 +175,13 @@ void AttackingImGuiDebug(void* data)
     ImGui::Text("Attacking");
     ImGuiDebugRender(&comp->Target, "Target");
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
+    
+}
+void SoundSourceImGuiDebug(void* data)
+{
+    auto comp = (Components::SoundSource*)data;
+    ImGui::Text("SoundSource");
+    ImGuiDebugRender(&comp->RequestedSoundEffect, "RequestedSoundEffect");
     
 }
 
@@ -313,6 +321,7 @@ void RegisterComponents(flecs::world& world)
             .member<float>("Range")
             .member<float>("Speed")
             .member<float>("AwarenessRadius")
+            .member<uint32_t>("ClashSoundEffect")
             ;
         g_CompIdToImGuiFunc[componentId] = &AttackInfoImGuiDebug;
     }
@@ -323,11 +332,18 @@ void RegisterComponents(flecs::world& world)
             ;
         g_CompIdToImGuiFunc[componentId] = &AttackingImGuiDebug;
     }
+    {
+        auto componentId = world.component<Components::SoundSource>(Components::SoundSource::Name)
+            .member<uint32_t>("RequestedSoundEffect")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &SoundSourceImGuiDebug;
+    }
     world.component<Tags::Attacks>(Tags::Attacks::Name);
     world.component<Tags::Castle>(Tags::Castle::Name);
     world.component<Tags::Boids>(Tags::Boids::Name);
     world.component<Tags::DirectionalLight>(Tags::DirectionalLight::Name);
     world.component<Tags::SimpleMovement>(Tags::SimpleMovement::Name);
+    world.component<Tags::SoundListener>(Tags::SoundListener::Name);
     
 }
 }

@@ -61,19 +61,19 @@ struct InputController : public GameplayFeature
 				}
 			});
 
-        world.m_EntityWorld.system<const Components::VehicleController>("VehicleControllerSystem")
-            .kind(flecs::PreUpdate)
-            .each([](flecs::entity, const Components::VehicleController& vehicleController) {
-				auto& inputMap = *gEngine->GetInput().m_InputMaps[vehicleController.InputMapIndex].get();
-				auto& physics = gEngine->GetPhysics();
+    //    world.m_EntityWorld.system<const Components::VehicleController>("VehicleControllerSystem")
+    //        .kind(flecs::PreUpdate)
+    //        .each([](flecs::entity, const Components::VehicleController& vehicleController) {
+				//auto& inputMap = *gEngine->GetInput().m_InputMaps[vehicleController.InputMapIndex].get();
+				//auto& physics = gEngine->GetPhysics();
 
-				// Vehicle
-				physics.VehicleInputData.setDigitalAccel(inputMap.GetBool(Accelerate));
-				physics.VehicleInputData.setDigitalBrake(inputMap.GetBool(Brake));
-				physics.VehicleInputData.setDigitalHandbrake(inputMap.GetBool(Handbrake));
-				physics.VehicleInputData.setDigitalSteerLeft(inputMap.GetBool(SteerLeft));
-				physics.VehicleInputData.setDigitalSteerRight(inputMap.GetBool(SteerRight));
-             });
+				//// Vehicle
+				//physics.VehicleInputData.setDigitalAccel(inputMap.GetBool(Accelerate));
+				//physics.VehicleInputData.setDigitalBrake(inputMap.GetBool(Brake));
+				//physics.VehicleInputData.setDigitalHandbrake(inputMap.GetBool(Handbrake));
+				//physics.VehicleInputData.setDigitalSteerLeft(inputMap.GetBool(SteerLeft));
+				//physics.VehicleInputData.setDigitalSteerRight(inputMap.GetBool(SteerRight));
+    //         });
 	}
 
 };

@@ -86,24 +86,24 @@ namespace TempoEngine
         }
     }
 
-    [Sharpmake.Export]
-    public class PhysX : ThirdPartyProject
-    {
-        public override void ConfigureAll(Project.Configuration conf, Target target)
-        {
-            base.ConfigureAll(conf, target);
+    // [Sharpmake.Export]
+    // public class PhysX : ThirdPartyProject
+    // {
+    //     public override void ConfigureAll(Project.Configuration conf, Target target)
+    //     {
+    //         base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\include");
+    //         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\include");
 
-            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\lib\[target.Name]");
-            conf.LibraryFiles.Add("PhysXFoundation_64");
-            conf.LibraryFiles.Add("PhysXCommon_64");
-            conf.LibraryFiles.Add("PhysX_64");
-            conf.LibraryFiles.Add("PhysXExtensions_static_64");
-            conf.LibraryFiles.Add("PhysXPvdSDK_static_64");
-            conf.LibraryFiles.Add("PhysXVehicle_static_64");
-        }
-    }
+    //         conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\lib\[target.Name]");
+    //         conf.LibraryFiles.Add("PhysXFoundation_64");
+    //         conf.LibraryFiles.Add("PhysXCommon_64");
+    //         conf.LibraryFiles.Add("PhysX_64");
+    //         conf.LibraryFiles.Add("PhysXExtensions_static_64");
+    //         conf.LibraryFiles.Add("PhysXPvdSDK_static_64");
+    //         conf.LibraryFiles.Add("PhysXVehicle_static_64");
+    //     }
+    // }
 
     [Sharpmake.Export]
     public class ImGUI : ThirdPartyVcpkgProject

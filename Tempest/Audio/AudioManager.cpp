@@ -91,6 +91,11 @@ AudioManager::AudioManager()
 
 	defaultDevice->Release();
 	pEnumerator->Release();
+
+	m_RingBuffer.ReadIndex.store(0);
+	m_RingBuffer.WriteIndex.store(sAudioSamplesForFrame * 3); // Start with 10 frames data for start
+	m_RingBuffer.Samples.resize(sAudioSampleRate, AudioFrame{0.0f, 0.0f}); // 1 second of data
+	m_RingBuffer.Size = sAudioSampleRate;
 }
 
 AudioManager::~AudioManager()
@@ -116,19 +121,88 @@ float ConvertPCM16ToFloat(const int16_t* input) {
     return static_cast<float>(*input) / 32768.0f;
 }
 
-struct AudioFrame
+void AudioManager::PrepareNextFrameAudio()
 {
-	float leftSample;
-	float rightSample;
-};
+	// Write only data for 0.33ms
+	constexpr uint32_t desiredSamplesToWrite = sAudioSamplesForFrame * 2;
+	uint32_t writeIndex = m_RingBuffer.WriteIndex.load();
 
-void AudioManager::Update()
+	bool writeInBeginning = false;
+	uint32_t samplesToWrite = desiredSamplesToWrite;
+	if (writeIndex + samplesToWrite > m_RingBuffer.Size)
+	{
+		samplesToWrite = m_RingBuffer.Size - writeIndex;
+		writeInBeginning = true;
+	}
+	AudioFrame* samples = m_RingBuffer.Samples.data() + writeIndex;
+
+    for (uint32_t i = 0; i < samplesToWrite; ++i)
+    {
+        samples[i].leftSample = 0.0f;
+        samples[i].rightSample = 0.0f;
+    }
+
+    eastl::vector<PlayingSoundEffect> currentEffects;
+    currentEffects.swap(m_CurrentPlayingSounds);
+
+    for (auto& playingEffect : currentEffects)
+    {
+        const auto& effect = (*m_Database->sound_clips())[playingEffect.SoundEffectIndex];
+        const auto& totalFrames = (effect->count() / (sAudioClipBitDepth / 8)) / sAudioNumChannels;
+        const auto& effectFramesAvailable = totalFrames - playingEffect.CurrentSample;
+        const auto& effectSamplesHalf = reinterpret_cast<const uint32_t*>(m_Database->sound_clip_data()->data() + effect->start_index());
+
+        for (uint32_t i = 0; i < std::min(samplesToWrite, effectFramesAvailable); ++i)
+        {
+            const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
+            samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.VolumeLeft;
+            samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.VolumeRight;
+        }
+
+        playingEffect.CurrentSample += samplesToWrite;
+        if (playingEffect.CurrentSample < totalFrames)
+        {
+            m_CurrentPlayingSounds.emplace_back(playingEffect);
+        }
+    }
+
+    //uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
+
+    //if(framesDecoded < framesAvailable)
+    //{
+    //	// Loop the background music
+    //	stb_vorbis_seek_start(m_VorbisDecoder);
+    //	stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData) + framesDecoded * 2, 2 * (framesAvailable - framesDecoded));
+    //}
+
+    //for (uint32_t i = 0; i < framesAvailable; ++i)
+    //{
+    //	//float sineWave = sinf(m_SampleCount * 2.0f * glm::pi<float>() * 110.0f / float(m_SampleRate));
+    //	//sineWave *= 0.1f;
+    //	//samples[i].leftSample = sineWave;
+    //	//samples[i].rightSample = sineWave;
+    //	//++m_SampleCount;
+    //}
+
+	// TODO: Make writing to the beginning as well
+
+    if (writeIndex + samplesToWrite >= m_RingBuffer.Size)
+    {
+        m_RingBuffer.WriteIndex.store(0);
+    }
+    else
+    {
+        m_RingBuffer.WriteIndex.fetch_add(samplesToWrite);
+    }
+}
+
+void AudioManager::WriteToAudioBuffer()
 {
 	HRESULT hr = S_OK;
 
 	uint32_t padding = 0;
 	m_AudioClient->GetCurrentPadding(&padding);
-	const uint32_t framesAvailable = m_MaxFramesInBuffer - padding;
+	uint32_t framesAvailable = m_MaxFramesInBuffer - padding;
 
 	BYTE* pData = nullptr;
 	if (FAILED(hr = m_RenderClient->GetBuffer(framesAvailable, &pData)))
@@ -137,61 +211,85 @@ void AudioManager::Update()
 		return;
 	}
 
+	FORMAT_LOG(Trace, Audio, "Write to Audio Buffer with %d available", framesAvailable);
+
 	auto samples = reinterpret_cast<AudioFrame*>(pData);
 
-    for (uint32_t i = 0; i < framesAvailable; ++i)
-    {
-        samples[i].leftSample = 0.0f;
-        samples[i].rightSample = 0.0f;
-    }
+	auto readIndex = m_RingBuffer.ReadIndex.load();
+	auto writeIndex = m_RingBuffer.WriteIndex.load();
 
-	eastl::vector<PlayingSoundEffect> currentEffects;
-	currentEffects.swap(m_CurrentPlayingSounds);
-
-	for (auto& playingEffect : currentEffects)
+	bool readFromBegining = false;
+	uint32_t availableSamples = 0;
+	if (writeIndex > readIndex)
 	{
-		const auto& effect = (*m_Database->sound_clips())[playingEffect.SoundEffectIndex];
-		const auto& totalFrames = (effect->count() / (sAudioClipBitDepth / 8)) / sAudioNumChannels;
-		const auto& effectFramesAvailable = totalFrames - playingEffect.CurrentSample;
-		const auto& effectSamplesHalf = reinterpret_cast<const uint32_t*>(m_Database->sound_clip_data()->data() + effect->start_index());
+		availableSamples = writeIndex - readIndex;
+	}
+	else
+	{
+		availableSamples = m_RingBuffer.Size - readIndex;
+		readFromBegining = true;
+	}
 
-		for (uint32_t i = 0; i < std::min(framesAvailable, effectFramesAvailable); ++i)
-		{
-			const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
-			samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.VolumeLeft;
-			samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.VolumeRight;
-		}
+	auto totalNumberOfSamplesWritten = 0;
+	auto samplesToCopy = std::min(availableSamples, framesAvailable);
+	memcpy(samples, m_RingBuffer.Samples.data() + readIndex, samplesToCopy * sizeof(AudioFrame));
+	framesAvailable -= samplesToCopy;
+	samples += samplesToCopy;
+	m_RingBuffer.ReadIndex.fetch_add(samplesToCopy);
+	totalNumberOfSamplesWritten += samplesToCopy;
 
-		playingEffect.CurrentSample += framesAvailable;
-		if (playingEffect.CurrentSample < totalFrames)
+	if (framesAvailable > 0 && readFromBegining)
+	{
+		readIndex = 0;
+		availableSamples = writeIndex - readIndex;
+
+		samplesToCopy = std::min(availableSamples, framesAvailable);
+		memcpy(samples, m_RingBuffer.Samples.data() + readIndex, samplesToCopy * sizeof(AudioFrame));
+
+		m_RingBuffer.ReadIndex.store(samplesToCopy);
+
+		totalNumberOfSamplesWritten += samplesToCopy;
+	}
+	else if(framesAvailable > 0)
+	{
+		FORMAT_LOG(Warning, Audio, "Audio Starvation: %d left", framesAvailable);
+		for (uint32_t i = 0; i < framesAvailable; ++i)
 		{
-			m_CurrentPlayingSounds.emplace_back(playingEffect);
+			samples[i].leftSample = 0.0f;
+			samples[i].rightSample = 0.0f;
 		}
 	}
 
-	//uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
-
-	//if(framesDecoded < framesAvailable)
-	//{
-	//	// Loop the background music
-	//	stb_vorbis_seek_start(m_VorbisDecoder);
-	//	stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData) + framesDecoded * 2, 2 * (framesAvailable - framesDecoded));
-	//}
-
-	//for (uint32_t i = 0; i < framesAvailable; ++i)
-	//{
-	//	//float sineWave = sinf(m_SampleCount * 2.0f * glm::pi<float>() * 110.0f / float(m_SampleRate));
-	//	//sineWave *= 0.1f;
-	//	//samples[i].leftSample = sineWave;
-	//	//samples[i].rightSample = sineWave;
-	//	//++m_SampleCount;
-	//}
-
-	if (FAILED(hr = m_RenderClient->ReleaseBuffer(framesAvailable, 0)))
+	if (FAILED(hr = m_RenderClient->ReleaseBuffer(totalNumberOfSamplesWritten, 0)))
 	{
 		LOG(Error, Audio, "Cannot release buffer");
 		return;
 	}
+}
+
+void AudioManager::Update()
+{
+    auto readIndex = m_RingBuffer.ReadIndex.load();
+    auto writeIndex = m_RingBuffer.WriteIndex.load();
+	bool shouldPrepareNewData = false;
+	if (writeIndex >= readIndex)
+	{
+		shouldPrepareNewData = (writeIndex - readIndex) < (sAudioSamplesForFrame * 10);
+	}
+	else
+	{
+		uint32_t availableSamples = m_RingBuffer.Size - readIndex + writeIndex;
+		shouldPrepareNewData = availableSamples < (sAudioSamplesForFrame * 10);
+	}
+
+	FORMAT_LOG(Trace, Audio, "Audio Update : %d read, %d write, %d will update", readIndex, writeIndex, shouldPrepareNewData);
+
+	if (shouldPrepareNewData)
+	{
+		PrepareNextFrameAudio();
+	}
+
+	WriteToAudioBuffer();
 }
 
 void AudioManager::LoadDatabase(const char* databaseName)

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <Windows.h>
 
+#define MINIMUM_LOG_SEVERITY LogSeverity::Info
+
 namespace Tempest
 {
 Logger* Logger::gLogger = nullptr;
@@ -30,6 +32,10 @@ static const char* StringifySeverity(LogSeverity severity)
 
 void Logger::WriteLog(LogSeverity severity, const char* system, const char* message)
 {
+	if (severity < MINIMUM_LOG_SEVERITY)
+	{
+		return;
+	}
 	// TODO: This could be better
 	//printf("%s: [%s] %s\n", StringifySeverity(severity), system, message);
     eastl::string buffer;

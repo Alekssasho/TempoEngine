@@ -20,6 +20,21 @@ struct PlayingSoundEffect
 	float VolumeRight;
 };
 
+struct AudioFrame
+{
+	float leftSample;
+	float rightSample;
+};
+
+struct AudioSamplesRingBuffer
+{
+	eastl::vector<AudioFrame> Samples;
+
+	std::atomic<uint32_t> ReadIndex;
+	std::atomic<uint32_t> WriteIndex;
+	uint32_t Size;
+};
+
 class AudioManager
 {
 public:
@@ -31,9 +46,15 @@ public:
 	void PlaySoundEffect(uint32_t soundEffectIndex, float volumeLeft, float volumeRight);
 	eastl::vector<PlayingSoundEffect> m_CurrentPlayingSounds;
 private:
+	void PrepareNextFrameAudio();
+	void WriteToAudioBuffer();
+
+
 	IAudioClient* m_AudioClient;
 	IAudioRenderClient* m_RenderClient;
 	uint32_t m_MaxFramesInBuffer = 0;
+
+	AudioSamplesRingBuffer m_RingBuffer;
 
 	//uint32_t m_SampleCount;
 

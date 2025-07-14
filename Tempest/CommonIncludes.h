@@ -14,5 +14,6 @@
 
 #include <Logging.h>
 #include <cassert>
+#include <atomic>
 
 #include <optick.h>

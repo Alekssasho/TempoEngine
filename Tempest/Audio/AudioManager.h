@@ -28,7 +28,7 @@ struct AudioFrame
 
 struct AudioSamplesRingBuffer
 {
-	eastl::vector<AudioFrame> Samples;
+	AudioFrame* Samples;
 
 	std::atomic<uint32_t> ReadIndex;
 	std::atomic<uint32_t> WriteIndex;

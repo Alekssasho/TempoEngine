@@ -12,6 +12,7 @@
 #include <limits>
 #include <mmdeviceapi.h>
 
+#include <immintrin.h>
 
 namespace Tempest
 {
@@ -94,12 +95,15 @@ AudioManager::AudioManager()
 
 	m_RingBuffer.ReadIndex.store(0);
 	m_RingBuffer.WriteIndex.store(sAudioSamplesForFrame * 3); // Start with 10 frames data for start
-	m_RingBuffer.Samples.resize(sAudioSampleRate, AudioFrame{0.0f, 0.0f}); // 1 second of data
+	m_RingBuffer.Samples = reinterpret_cast<AudioFrame*>(_aligned_malloc(sizeof(AudioFrame) * sAudioSampleRate, 32)); // 1 second of data
 	m_RingBuffer.Size = sAudioSampleRate;
 }
 
 AudioManager::~AudioManager()
 {
+	_aligned_free(m_RingBuffer.Samples);
+	m_RingBuffer.Samples = nullptr;
+
 	if(m_VorbisDecoder)
 	{
 		stb_vorbis_close(m_VorbisDecoder);
@@ -126,6 +130,7 @@ void AudioManager::PrepareNextFrameAudio()
 	// Write only data for 0.33ms
 	constexpr uint32_t desiredSamplesToWrite = sAudioSamplesForFrame * 2;
 	uint32_t writeIndex = m_RingBuffer.WriteIndex.load();
+	static_assert(desiredSamplesToWrite % 8 == 0);
 
 	bool writeInBeginning = false;
 	uint32_t samplesToWrite = desiredSamplesToWrite;
@@ -134,12 +139,16 @@ void AudioManager::PrepareNextFrameAudio()
 		samplesToWrite = m_RingBuffer.Size - writeIndex;
 		writeInBeginning = true;
 	}
-	AudioFrame* samples = m_RingBuffer.Samples.data() + writeIndex;
+	AudioFrame* samples = m_RingBuffer.Samples + writeIndex;
 
-    for (uint32_t i = 0; i < samplesToWrite; ++i)
+	assert(samplesToWrite % 8 == 0);
+
+    for (uint32_t i = 0; i < samplesToWrite; i += 4)
     {
-        samples[i].leftSample = 0.0f;
-        samples[i].rightSample = 0.0f;
+		__m256 zero = _mm256_setzero_ps();
+		_mm256_store_ps(reinterpret_cast<float*>(samples + i), zero);
+        //samples[i].leftSample = 0.0f;
+        //samples[i].rightSample = 0.0f;
     }
 
     eastl::vector<PlayingSoundEffect> currentEffects;
@@ -152,12 +161,36 @@ void AudioManager::PrepareNextFrameAudio()
         const auto& effectFramesAvailable = totalFrames - playingEffect.CurrentSample;
         const auto& effectSamplesHalf = reinterpret_cast<const uint32_t*>(m_Database->sound_clip_data()->data() + effect->start_index());
 
-        for (uint32_t i = 0; i < std::min(samplesToWrite, effectFramesAvailable); ++i)
+		uint32_t samplesLeftToWrite = std::min(samplesToWrite, effectFramesAvailable);
+		uint32_t leftovers = samplesLeftToWrite % 8;
+        for (uint32_t i = 0; i < (samplesLeftToWrite - leftovers); i += 8)
         {
+			__m256i effectSamples = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(effectSamplesHalf + playingEffect.CurrentSample + i));
+			__m256 loSamples = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(effectSamples, 0)));
+			__m256 hiSamples = _mm256_cvtepi32_ps(_mm256_cvtepi16_epi32(_mm256_extracti128_si256(effectSamples, 1)));
+			__m256 normalization = _mm256_set1_ps(1.0f / 32768.0f);
+			loSamples = _mm256_mul_ps(loSamples, normalization);
+			hiSamples = _mm256_mul_ps(hiSamples, normalization);
+
+			__m256 volumeInterleaved = _mm256_blend_ps(_mm256_set1_ps(playingEffect.VolumeLeft), _mm256_set1_ps(playingEffect.VolumeRight), 0b10101010);
+
+			__m256 outputLoSamples = _mm256_load_ps(reinterpret_cast<float*>(samples + i));
+			__m256 outputHiSamples = _mm256_load_ps(reinterpret_cast<float*>(samples + i + 4));
+
+            _mm256_store_ps(reinterpret_cast<float*>(samples + i), _mm256_fmadd_ps(loSamples, volumeInterleaved, outputLoSamples));
+            _mm256_store_ps(reinterpret_cast<float*>(samples + i + 4), _mm256_fmadd_ps(hiSamples, volumeInterleaved, outputHiSamples));
+
+            //const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
+            //samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.VolumeLeft;
+            //samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.VolumeRight;
+        }
+
+		for (uint32_t i = samplesLeftToWrite - leftovers; i < samplesLeftToWrite; ++i)
+		{
             const auto& currentSample = reinterpret_cast<const int16_t*>(effectSamplesHalf + playingEffect.CurrentSample + i);
             samples[i].leftSample += ConvertPCM16ToFloat(currentSample) * playingEffect.VolumeLeft;
             samples[i].rightSample += ConvertPCM16ToFloat(currentSample + 1) * playingEffect.VolumeRight;
-        }
+		}
 
         playingEffect.CurrentSample += samplesToWrite;
         if (playingEffect.CurrentSample < totalFrames)
@@ -232,7 +265,7 @@ void AudioManager::WriteToAudioBuffer()
 
 	auto totalNumberOfSamplesWritten = 0;
 	auto samplesToCopy = std::min(availableSamples, framesAvailable);
-	memcpy(samples, m_RingBuffer.Samples.data() + readIndex, samplesToCopy * sizeof(AudioFrame));
+	memcpy(samples, m_RingBuffer.Samples + readIndex, samplesToCopy * sizeof(AudioFrame));
 	framesAvailable -= samplesToCopy;
 	samples += samplesToCopy;
 	m_RingBuffer.ReadIndex.fetch_add(samplesToCopy);
@@ -244,7 +277,7 @@ void AudioManager::WriteToAudioBuffer()
 		availableSamples = writeIndex - readIndex;
 
 		samplesToCopy = std::min(availableSamples, framesAvailable);
-		memcpy(samples, m_RingBuffer.Samples.data() + readIndex, samplesToCopy * sizeof(AudioFrame));
+		memcpy(samples, m_RingBuffer.Samples + readIndex, samplesToCopy * sizeof(AudioFrame));
 
 		m_RingBuffer.ReadIndex.store(samplesToCopy);
 

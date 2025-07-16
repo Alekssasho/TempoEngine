@@ -206,7 +206,7 @@ void RegisterComponents(flecs::world& world)
     {
         auto componentId = world.component<Components::StaticMesh>(Components::StaticMesh::Name)
             .member<uint32_t>("Mesh")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &StaticMeshImGuiDebug;
     }
     {
@@ -219,7 +219,7 @@ void RegisterComponents(flecs::world& world)
     {
         auto componentId = world.component<Components::AnimationInfo>(Components::AnimationInfo::Name)
             .member<eastl::vector<uint32_t>>("AnimationIndices")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &AnimationInfoImGuiDebug;
     }
     {
@@ -260,7 +260,7 @@ void RegisterComponents(flecs::world& world)
     {
         auto componentId = world.component<Components::Faction>(Components::Faction::Name)
             .member<uint32_t>("FactionFlag")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &FactionImGuiDebug;
     }
     {
@@ -299,13 +299,13 @@ void RegisterComponents(flecs::world& world)
     {
         auto componentId = world.component<Components::MovementInfo>(Components::MovementInfo::Name)
             .member<float>("Speed")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &MovementInfoImGuiDebug;
     }
     {
         auto componentId = world.component<Components::Presence>(Components::Presence::Name)
             .member<float>("Radius")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &PresenceImGuiDebug;
     }
     {
@@ -322,7 +322,7 @@ void RegisterComponents(flecs::world& world)
             .member<float>("Speed")
             .member<float>("AwarenessRadius")
             .member<uint32_t>("ClashSoundEffect")
-            ;
+            .add(flecs::OnInstantiate, flecs::Inherit);
         g_CompIdToImGuiFunc[componentId] = &AttackInfoImGuiDebug;
     }
     {

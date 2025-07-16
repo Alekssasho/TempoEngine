@@ -26,6 +26,7 @@ pub struct Structure {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum StructureAttribute {
     NoReflection,
+    Inherit,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

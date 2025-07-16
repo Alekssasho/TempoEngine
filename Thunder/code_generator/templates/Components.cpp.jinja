@@ -26,6 +26,9 @@ void RegisterComponents(flecs::world& world)
             {% for member in structure.members -%}
             .member<{{type_for_member(member=member)}}>("{{member.name}}")
             {% endfor %}
+            {%- endif -%}
+            {% if structure is is_inherit -%}
+            .add(flecs::OnInstantiate, flecs::Inherit)
             {%- endif -%};
         g_CompIdToImGuiFunc[componentId] = &{{structure.name}}ImGuiDebug;
     }

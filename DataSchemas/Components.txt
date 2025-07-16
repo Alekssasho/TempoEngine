@@ -13,6 +13,7 @@ Component Rect
 }
 
 // Static mesh component for rendering
+[Inherit]
 Component StaticMesh
 {
     [StorageType(uint32_t)]
@@ -27,6 +28,7 @@ Component SkeletonMesh
 	BoneTransforms : eastl::vector<glm::mat4x4>;
 }
 
+[Inherit]
 Component AnimationInfo
 {
 	AnimationIndices : eastl::vector<uint32_t>;
@@ -72,6 +74,7 @@ Component VehicleController
 	InputMapIndex : uint32_t;
 }
 
+[Inherit]
 Component Faction
 {
     [StorageType(uint32_t)]
@@ -110,11 +113,13 @@ Component LaneMovement
 }
 
 // TODO: add tags for lanes
+[Inherit]
 Component MovementInfo
 {
 	Speed : float;
 }
 
+[Inherit]
 Component Presence
 {
 	Radius : float;
@@ -127,6 +132,7 @@ Component Health
 	MaxHealth : float;
 }
 
+[Inherit]
 Component AttackInfo
 {
 	DamageAmount : float;

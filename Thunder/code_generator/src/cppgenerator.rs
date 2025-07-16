@@ -23,9 +23,22 @@ fn needs_reflection(value: Option<&Value>, _: &[Value]) -> Result<bool> {
     for attrib in &structure.attributes {
         match attrib {
             StructureAttribute::NoReflection => return Ok(false),
+            _ => (),
         }
     }
     Ok(true)
+}
+
+fn is_inherit(value: Option<&Value>, _: &[Value]) -> Result<bool> {
+    let structure = from_value::<Structure>(value.unwrap().clone()).unwrap();
+
+    for attrib in &structure.attributes {
+        match attrib {
+            StructureAttribute::Inherit => return Ok(true),
+            _ => (),
+        }
+    }
+    Ok(false)
 }
 
 pub fn generate_cpp_code(structures: &[Structure]) {
@@ -58,6 +71,7 @@ pub fn generate_cpp_code(structures: &[Structure]) {
     tera.register_function("type_for_member", type_for_member);
 
     tera.register_tester("needs_reflection", needs_reflection);
+    tera.register_tester("is_inherit", is_inherit);
 
     let mut context = tera::Context::new();
     context.insert("structures", structures);

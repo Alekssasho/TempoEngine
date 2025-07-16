@@ -85,9 +85,9 @@ fn parse_structure_type(input: &str) -> IResult<&str, StructureType> {
 }
 
 fn parse_single_structure_attribute(input: &str) -> IResult<&str, StructureAttribute> {
-    alt((map(tag("NoReflection"), |_| {
-        StructureAttribute::NoReflection
-    }),))(input)
+    alt((map(tag("NoReflection"), |_| StructureAttribute::NoReflection),
+        map(tag("Inherit"), |_| StructureAttribute::Inherit),
+    ))(input)
 }
 
 fn parse_structure_attributes(input: &str) -> IResult<&str, Vec<StructureAttribute>> {

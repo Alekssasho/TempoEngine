@@ -22,25 +22,25 @@ struct Battle : public GameplayFeature
 					return;
 				}
 
-				auto spaceData = itr.world().get<SpaceLocation::SpaceData>();
+				auto& spaceData = itr.world().get<SpaceLocation::SpaceData>();
 				auto currentEntity = itr.entity(row);
 
 				float closestTarget = std::numeric_limits<float>::max();
 				SpaceLocation::ForEachCellTouched(transform.Position, attackInfo.AwarenessRadius, [&](uint32_t cellIndex) {
-					auto currentCell = spaceData->Cells[cellIndex];
+					auto currentCell = spaceData.Cells[cellIndex];
 					if (currentCell.Count == 0)
 					{
 						return;
 					}
 
-					for (const auto e : eastl::span(&spaceData->Entities[currentCell.StartIndex], currentCell.Count))
+					for (const auto e : eastl::span(&spaceData.Entities[currentCell.StartIndex], currentCell.Count))
 					{
-						if (faction.FactionFlag == e.get<Components::Faction>()->FactionFlag)
+						if (faction.FactionFlag == e.get<Components::Faction>().FactionFlag)
 						{
 							continue;
 						}
 
-						const auto& targetPos = e.get<Components::Transform>()->Position;
+						const auto& targetPos = e.get<Components::Transform>().Position;
 						const auto distanceSqr = glm::distance2(transform.Position, targetPos);
 						if (distanceSqr < closestTarget)
 						{
@@ -55,27 +55,27 @@ struct Battle : public GameplayFeature
 		world.m_EntityWorld.system<const Components::Transform, const Components::AttackInfo, Components::Attacking, Components::AnimationController, Components::SoundSource>("Battle Initial")
 			.kind(flecs::OnUpdate)
 			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, Components::Attacking& att, Components::AnimationController& animController, Components::SoundSource& soundSource) {
-				auto spaceData = itr.world().get<SpaceLocation::SpaceData>();
+				auto& spaceData = itr.world().get<SpaceLocation::SpaceData>();
 
 				auto currentEntity = itr.entity(row);
 
-				auto currentCell = spaceData->Cells[SpaceLocation::GetCellIndex(transform.Position)];
+				auto currentCell = spaceData.Cells[SpaceLocation::GetCellIndex(transform.Position)];
 				assert(currentCell.Count);
 
 				att.CurrentTime -= itr.delta_time();
 				if (att.CurrentTime < 0)
 					att.CurrentTime = 0;
 
-				for (const auto e : eastl::span(&spaceData->Entities[currentCell.StartIndex], currentCell.Count))
+				for (const auto e : eastl::span(&spaceData.Entities[currentCell.StartIndex], currentCell.Count))
 				{
 					if (e == att.Target)
 					{
-						const auto& targetPos = e.get<Components::Transform>()->Position;
+						const auto& targetPos = e.get<Components::Transform>().Position;
 						if (glm::distance2(targetPos, transform.Position) <= (attackInfo.Range * attackInfo.Range)
 							&& att.CurrentTime <= 0)
 						{
-							auto health = e.get_mut<Components::Health>();
-							health->CurrentHealth -= attackInfo.DamageAmount;
+							auto& health = e.get_mut<Components::Health>();
+							health.CurrentHealth -= attackInfo.DamageAmount;
 
 							att.CurrentTime = attackInfo.Speed;
 

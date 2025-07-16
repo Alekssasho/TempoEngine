@@ -51,12 +51,24 @@ static void* EcsWaitTask(ecs_os_thread_t taskData)
 	return nullptr;
 }
 
+static void EcsPushMarker(const char* file, size_t line, const char* name)
+{
+	OPTICK_PUSH_DYNAMIC(name);
+}
+
+static void EcsPopMarker(const char* file, size_t line, const char* name)
+{
+	OPTICK_POP();
+}
+
 FlecsIniter::FlecsIniter()
 {
     ecs_os_set_api_defaults();
     ecs_os_api_t api = ecs_os_get_api();
     api.task_new_ = EcsNewTask;
     api.task_join_ = EcsWaitTask;
+    api.perf_trace_push_ = EcsPushMarker;
+    api.perf_trace_pop_ = EcsPopMarker;
     ecs_os_set_api(&api);
 }
 

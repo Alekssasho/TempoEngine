@@ -43,6 +43,8 @@ namespace TempoEngine
             conf.CustomBuildStepBeforeTargets = "ClCompile";
             conf.CustomBuildStep.Add(@"[project.SharpmakeCsPath]\..\target\release\code_generator.exe");
             conf.CustomBuildStepInputs.Add(@"[project.SharpmakeCsPath]\..\DataSchemas\Components.txt");
+            conf.CustomBuildStepInputs.Add(@"[project.SharpmakeCsPath]\..\Thunder\code_generator\templates\Components.cpp.jinja");
+            conf.CustomBuildStepInputs.Add(@"[project.SharpmakeCsPath]\..\Thunder\code_generator\templates\Components.h.jinja");
             conf.CustomBuildStepOutputs.Add(@"[project.SharpmakeCsPath]\..\Tempest\Generated\Components.h");
             conf.CustomBuildStepOutputs.Add(@"[project.SharpmakeCsPath]\..\Tempest\Generated\Components.cpp");
         }

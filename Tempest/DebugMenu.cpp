@@ -35,6 +35,7 @@ struct EntitiesDebugger : DebugWindow
 			.without(flecs::Observer).self().up()
 			.without(flecs::System).self().up()
 			.without(flecs::Prefab).self().up()
+			.without(flecs::Query).self().up()
 			//.cached()
 			.build();
 	}
@@ -98,7 +99,7 @@ struct SpaceLocationDebugger : DebugWindow
 
 	virtual void DoRender() override
 	{
-		auto spaceData = gEngine->GetWorld().m_EntityWorld.get<GameplayFeatures::SpaceLocation::SpaceData>();
+		auto& spaceData = gEngine->GetWorld().m_EntityWorld.get<GameplayFeatures::SpaceLocation::SpaceData>();
 
 		auto drawList = ImGui::GetWindowDrawList();
 
@@ -126,7 +127,7 @@ struct SpaceLocationDebugger : DebugWindow
 		);
 
 		// Draw each entity from every cell
-		for (uint32_t cellIndex = 0; cellIndex < spaceData->Cells.size(); ++cellIndex)
+		for (uint32_t cellIndex = 0; cellIndex < spaceData.Cells.size(); ++cellIndex)
 		{
 			uint32_t cellX = cellIndex % GameplayFeatures::SpaceLocation::s_WorldCellDivisions;
 			uint32_t cellY = cellIndex / GameplayFeatures::SpaceLocation::s_WorldCellDivisions;
@@ -136,16 +137,16 @@ struct SpaceLocationDebugger : DebugWindow
 				float(cellY * cellWorldSize.y) - GameplayFeatures::SpaceLocation::s_WorldSize / 2.0f
 			);
 
-			auto& cellData = spaceData->Cells[cellIndex];
+			auto& cellData = spaceData.Cells[cellIndex];
 
 			for (uint32_t entityIndex = 0; entityIndex < cellData.Count; ++entityIndex)
 			{
-				if (!spaceData->Entities[entityIndex + cellData.StartIndex].is_alive())
+				if (!spaceData.Entities[entityIndex + cellData.StartIndex].is_alive())
 					continue;
-				auto& faction = spaceData->Entities[entityIndex + cellData.StartIndex].get<Components::Faction>()->FactionFlag;
+				auto& faction = spaceData.Entities[entityIndex + cellData.StartIndex].get<Components::Faction>().FactionFlag;
 				auto factionColor = faction == CastleFight::Faction::Blue ? IM_COL32(0, 0, 255, 255) : IM_COL32(255, 0, 0, 255);
 
-				auto& entityPosition = spaceData->Entities[entityIndex + cellData.StartIndex].get<Components::Transform>()->Position;
+				auto& entityPosition = spaceData.Entities[entityIndex + cellData.StartIndex].get<Components::Transform>().Position;
 				auto localPosInCell = glm::vec2(entityPosition.x - cellWorldPos.x, entityPosition.z - cellWorldPos.y) * (cellWindowSize / cellWorldSize);
 
 				drawList->AddCircle(ImVec2(localPosInCell.x + windowPos.x + cellX * cellWindowSize.x, localPosInCell.y + windowPos.y + cellY * cellWindowSize.y), 10, factionColor);

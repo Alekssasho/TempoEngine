@@ -9,10 +9,12 @@ namespace Tempest
 void {{structure.name}}ImGuiDebug(void* data)
 {
     auto comp = (Components::{{structure.name}}*)data;
+    ImGui::PushID("{{structure.name}}");
     ImGui::Text("{{structure.name}}");
     {% for member in structure.members -%}
     ImGuiDebugRender(&comp->{{member.name}}, "{{member.name}}");
-    {% endfor %}
+    {% endfor -%}
+    ImGui::PopID();
 }
 {% endif -%}
 {% endfor %}

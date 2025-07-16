@@ -44,13 +44,13 @@ void Debug::GatherData(const World& world, FrameData& frameData)
 {
 	if (gEngine->GetDebug().ShowNavigationLanes)
 	{
-		const Components::NavigationData* navData = world.m_EntityWorld.get<Components::NavigationData>();
-		for (const auto& line : navData->Lines)
+		const Components::NavigationData& navData = world.m_EntityWorld.get<Components::NavigationData>();
+		for (const auto& line : navData.Lines)
 		{
 			for (uint32_t i = 1; i < line.Count; ++i)
 			{
-				const auto& prevPoint = navData->Points[line.StartIndex + i - 1];
-				const auto& nextPoint = navData->Points[line.StartIndex + i];
+				const auto& prevPoint = navData.Points[line.StartIndex + i - 1];
+				const auto& nextPoint = navData.Points[line.StartIndex + i];
 
 				const glm::mat4x4 scale = glm::scale(glm::vec3(1.0f, 1.0f, glm::distance(prevPoint, nextPoint)));
 				const glm::mat4x4 rotate = glm::toMat4(glm::rotation(sForwardDirection, glm::normalize(nextPoint - prevPoint)));

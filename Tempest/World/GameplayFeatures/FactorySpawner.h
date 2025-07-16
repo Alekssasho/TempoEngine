@@ -17,7 +17,7 @@ struct FactorySpawner : public GameplayFeature
 			.kind(flecs::PreUpdate)
             .each([](flecs::iter& it, size_t row, const Components::Transform& transform, Components::Factory& factory, const Components::Faction& faction) {
 
-                auto manager = it.world().get<Components::CastleManager>();
+                auto& manager = it.world().get<Components::CastleManager>();
 
                 factory.CurrentTime += it.delta_time();
                 if (factory.CurrentTime >= factory.TimeToSpawn)
@@ -29,7 +29,7 @@ struct FactorySpawner : public GameplayFeature
                         .is_a(factory.PrefabToSpawn)
                         .set(transform)
                         .set(Components::LaneMovement{}) // TODO: maybe we can set in the prefab
-                        .add<Tags::Attacks>(manager->Castles[uint32_t(faction.FactionFlag)]);
+                        .add<Tags::Attacks>(manager.Castles[uint32_t(faction.FactionFlag)]);
                     factory.CurrentTime = 0.0f;
                     factory.NumSpawned++;
                 }

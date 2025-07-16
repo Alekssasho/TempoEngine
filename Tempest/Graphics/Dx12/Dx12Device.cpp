@@ -7,6 +7,7 @@
 #include <imgui.h>
 // TODO: Reimplement as our own
 #include <imgui_impl_dx12.h>
+#include <imgui_impl_win32.h>
 
 // DirectX 12 Agility SDK exports
 extern "C" { _declspec(dllexport) extern const UINT D3D12SDKVersion = 4; }
@@ -239,14 +240,22 @@ void Dx12Device::Initialize(WindowHandle handle)
 		srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 		CHECK_SUCCESS(m_Device->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&m_UISRVHeap)));
 
-		ImGui_ImplDX12_Init(
-			m_Device.Get(),
-			2,
-			DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-			m_UISRVHeap.Get(),
-			m_UISRVHeap->GetCPUDescriptorHandleForHeapStart(),
-			m_UISRVHeap->GetGPUDescriptorHandleForHeapStart()
-		);
+		ImGui_ImplDX12_InitInfo initInfo = {};
+		initInfo.Device = m_Device.Get();
+		initInfo.CommandQueue = m_GraphicsQueue.Get();
+		initInfo.NumFramesInFlight = 2;
+		initInfo.RTVFormat = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+
+		initInfo.SrvDescriptorHeap = m_UISRVHeap.Get();
+		initInfo.SrvDescriptorAllocFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE* outHandle, D3D12_GPU_DESCRIPTOR_HANDLE* outGpuHandle) {
+			*outHandle = info->SrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+			*outGpuHandle = info->SrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+		};
+		initInfo.SrvDescriptorFreeFn = [](ImGui_ImplDX12_InitInfo* info, D3D12_CPU_DESCRIPTOR_HANDLE handle, D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle) {
+			// Not used for now
+		};
+
+		ImGui_ImplDX12_Init(&initInfo);
 
 		ImGui_ImplDX12_CreateDeviceObjects();
 	}
@@ -288,6 +297,7 @@ void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 		OPTICK_EVENT("ImGUI CPU Render");
 		ImGui::Render();
 		ImGui_ImplDX12_NewFrame();
+		ImGui_ImplWin32_NewFrame();
 	}
 	{
 		// TODO: Merge ui srv heap into main descriptor heap

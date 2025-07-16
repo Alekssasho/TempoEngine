@@ -7,6 +7,7 @@
 #include <Windows.h>
 
 #include <imgui.h>
+#include <imgui_impl_win32.h>
 
 #pragma warning(push, 0)
 #include <gainput/gainput.h>
@@ -22,9 +23,13 @@ static Tempest::Engine* GetEngine(HWND hWnd)
 	return reinterpret_cast<Tempest::Engine*>(ptr);
 }
 
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
 LRESULT CALLBACK DefaultWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	auto& io = ImGui::GetIO();
+    if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+        return true;
+
 	switch (message)
 	{
 	case WM_CREATE:
@@ -40,55 +45,6 @@ LRESULT CALLBACK DefaultWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARA
 		::PostQuitMessage(0);
 		return 0;
 	}
-	case WM_KEYDOWN:
-		if (wParam < 256)
-		{
-			io.KeysDown[wParam] = 1;
-		}
-
-	break;
-	case WM_KEYUP:
-		if (wParam < 256)
-		{
-			io.KeysDown[wParam] = 0;
-		}
-
-	break;
-	case WM_CHAR:
-		if (wParam > 0 && wParam < 0x10000)
-		{
-			io.AddInputCharacter((unsigned short)wParam);
-		}
-		break;
-	case WM_MOUSEMOVE:
-		io.MousePos.x = (signed short)(lParam);
-		io.MousePos.y = (signed short)(lParam >> 16);
-
-	break;
-	case WM_LBUTTONDOWN:
-		g_MouseJustPressed[0] = true;
-		g_MouseCurrentState[0] = true;
-	break;
-	case WM_LBUTTONUP:
-		g_MouseCurrentState[0] = false;
-	break;
-	case WM_RBUTTONDOWN:
-		g_MouseJustPressed[1] = true;
-		g_MouseCurrentState[1] = true;
-	break;
-	case WM_RBUTTONUP:
-		g_MouseCurrentState[1] = false;
-	break;
-	case WM_MBUTTONDOWN:
-		g_MouseJustPressed[2] = true;
-		g_MouseCurrentState[2] = true;
-	break;
-	case WM_MBUTTONUP:
-		g_MouseCurrentState[2] = false;
-	break;
-	case WM_MOUSEWHEEL:
-		io.MouseWheel += GET_WHEEL_DELTA_WPARAM(wParam) > 0 ? +1.0f : -1.0f;
-		break;
 	}
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
@@ -107,6 +63,9 @@ WindowsPlatform::WindowsPlatform(gainput::InputManager& inputManager)
 void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* title, Engine* engine)
 {
 	ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+
 	ImGui::LoadIniSettingsFromDisk("imgui_settings.ini");
 
 	auto hIntance = ::GetModuleHandle(NULL);
@@ -138,30 +97,7 @@ void WindowsPlatform::SpawnWindow(unsigned width, unsigned height, const char* t
 
 	auto res = ::ShowWindow(hWnd, SW_RESTORE);
 
-	// UI
-	{
-		// Keyboard mapping. ImGui will use those indices to peek into the io.KeyDown[] array that we will update during the application lifetime.
-		ImGuiIO& io = ImGui::GetIO();
-		io.KeyMap[ImGuiKey_Tab] = VK_TAB;
-		io.KeyMap[ImGuiKey_LeftArrow] = VK_LEFT;
-		io.KeyMap[ImGuiKey_RightArrow] = VK_RIGHT;
-		io.KeyMap[ImGuiKey_UpArrow] = VK_UP;
-		io.KeyMap[ImGuiKey_DownArrow] = VK_DOWN;
-		io.KeyMap[ImGuiKey_PageUp] = VK_PRIOR;
-		io.KeyMap[ImGuiKey_PageDown] = VK_NEXT;
-		io.KeyMap[ImGuiKey_Home] = VK_HOME;
-		io.KeyMap[ImGuiKey_End] = VK_END;
-		io.KeyMap[ImGuiKey_Delete] = VK_DELETE;
-		io.KeyMap[ImGuiKey_Backspace] = VK_BACK;
-		io.KeyMap[ImGuiKey_Enter] = VK_RETURN;
-		io.KeyMap[ImGuiKey_Escape] = VK_ESCAPE;
-		io.KeyMap[ImGuiKey_A] = 'A';
-		io.KeyMap[ImGuiKey_C] = 'C';
-		io.KeyMap[ImGuiKey_V] = 'V';
-		io.KeyMap[ImGuiKey_X] = 'X';
-		io.KeyMap[ImGuiKey_Y] = 'Y';
-		io.KeyMap[ImGuiKey_Z] = 'Z';
-	}
+	ImGui_ImplWin32_Init(hWnd);
 
 	// Enable virtual terminal support for colored output
 	auto enableVirtualTerminal = [](HANDLE handle)
@@ -193,27 +129,12 @@ void WindowsPlatform::PumpMessages()
 
 		m_InputManager.HandleMessage(msg);
 	}
-
-	// UI
-	{
-		ImGuiIO& io = ImGui::GetIO();
-		for (int i = 0; i < 3; i++)
-		{
-			// If a mouse press event came, always pass it as "mouse held this frame", so we don't miss click-release events that are shorter than 1 frame.
-			io.MouseDown[i] = g_MouseJustPressed[i] || g_MouseCurrentState[i];
-			g_MouseJustPressed[i] = false;
-		}
-
-		io.KeyCtrl = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
-		io.KeyShift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
-		io.KeyAlt = (GetKeyState(VK_MENU) & 0x8000) != 0;
-		io.KeySuper = false;
-	}
 }
 
 void WindowsPlatform::KillWindow()
 {
 	ImGui::SaveIniSettingsToDisk("imgui_settings.ini");
+	ImGui_ImplWin32_Shutdown();
 	::DestroyWindow(HWND(m_Handle));
 }
 

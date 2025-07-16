@@ -118,8 +118,8 @@ void Game::LoadLevel(uint32_t, void* data)
 		.set<Components::VehicleController>({ 1 })
 		.add<Tags::SoundListener>();
 
-	const Components::CameraController* controller = cameraController.get<Components::CameraController>();
-	gEngine->GetRenderer().RegisterView(&controller->CameraData);
+	const Components::CameraController& controller = cameraController.get<Components::CameraController>();
+	gEngine->GetRenderer().RegisterView(&controller.CameraData);
 
 	// Wait for physics as well
 	//gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);

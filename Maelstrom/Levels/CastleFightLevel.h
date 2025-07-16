@@ -79,11 +79,11 @@ public:
             .set(Tempest::Components::MovementInfo{ 1.0f })
             .set(Tempest::Components::Presence{ .Radius = 1.0f })
             .set(Tempest::Components::AttackInfo{ .DamageAmount = 1.0f, .Range = 0.5f, .Speed = 1.0f, .AwarenessRadius = 5.0f, .ClashSoundEffect = RequestSoundClip("sword_slash.wav") })
-            .emplace_auto_override<Tempest::Components::Transform>()
-            .emplace_auto_override<Tempest::Components::Movement>()
-            .emplace_auto_override<Tempest::Components::Attacking>()
-            .emplace_auto_override<Tempest::Components::Health>(Tempest::Components::Health{ .CurrentHealth = 3.0f, .MaxHealth = 3.0f })
-            .emplace_auto_override<Tempest::Components::SoundSource>(uint32_t(-1))
+            .emplace<Tempest::Components::Transform>()
+            .emplace<Tempest::Components::Movement>()
+            .emplace<Tempest::Components::Attacking>()
+            .emplace<Tempest::Components::Health>(Tempest::Components::Health{ .CurrentHealth = 3.0f, .MaxHealth = 3.0f })
+            .emplace<Tempest::Components::SoundSource>(uint32_t(-1))
             ;
 
         AddPrefabsPerFaction(Tempest::CastleFight::Faction::Blue);
@@ -175,7 +175,7 @@ public:
         rightLane.AddPoint(glm::vec3(-20.0f, 0.0f, 0.0f));
 
         m_ECS.m_EntityWorld.set<Tempest::Components::NavigationData>({});
-        builder.Build(*m_ECS.m_EntityWorld.get_mut<Tempest::Components::NavigationData>());
+        builder.Build(m_ECS.m_EntityWorld.get_mut<Tempest::Components::NavigationData>());
     }
 
 private:

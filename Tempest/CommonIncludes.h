@@ -4,6 +4,7 @@
 
 #include <Math/Math.h>
 
+#define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
 #include <EASTL/unordered_map.h>

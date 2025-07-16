@@ -7,182 +7,205 @@ namespace Tempest
 void TransformImGuiDebug(void* data)
 {
     auto comp = (Components::Transform*)data;
+    ImGui::PushID("Transform");
     ImGui::Text("Transform");
     ImGuiDebugRender(&comp->Rotation, "Rotation");
     ImGuiDebugRender(&comp->Position, "Position");
     ImGuiDebugRender(&comp->Scale, "Scale");
-    
+    ImGui::PopID();
 }
 void RectImGuiDebug(void* data)
 {
     auto comp = (Components::Rect*)data;
+    ImGui::PushID("Rect");
     ImGui::Text("Rect");
     ImGuiDebugRender(&comp->Width, "Width");
     ImGuiDebugRender(&comp->Height, "Height");
     ImGuiDebugRender(&comp->Color, "Color");
-    
+    ImGui::PopID();
 }
 void StaticMeshImGuiDebug(void* data)
 {
     auto comp = (Components::StaticMesh*)data;
+    ImGui::PushID("StaticMesh");
     ImGui::Text("StaticMesh");
     ImGuiDebugRender(&comp->Mesh, "Mesh");
-    
+    ImGui::PopID();
 }
 void SkeletonMeshImGuiDebug(void* data)
 {
     auto comp = (Components::SkeletonMesh*)data;
+    ImGui::PushID("SkeletonMesh");
     ImGui::Text("SkeletonMesh");
     ImGuiDebugRender(&comp->Mesh, "Mesh");
     ImGuiDebugRender(&comp->BoneTransforms, "BoneTransforms");
-    
+    ImGui::PopID();
 }
 void AnimationInfoImGuiDebug(void* data)
 {
     auto comp = (Components::AnimationInfo*)data;
+    ImGui::PushID("AnimationInfo");
     ImGui::Text("AnimationInfo");
     ImGuiDebugRender(&comp->AnimationIndices, "AnimationIndices");
-    
+    ImGui::PopID();
 }
 void AnimationControllerImGuiDebug(void* data)
 {
     auto comp = (Components::AnimationController*)data;
+    ImGui::PushID("AnimationController");
     ImGui::Text("AnimationController");
     ImGuiDebugRender(&comp->State, "State");
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
-    
+    ImGui::PopID();
 }
 void DynamicPhysicsActorImGuiDebug(void* data)
 {
     auto comp = (Components::DynamicPhysicsActor*)data;
+    ImGui::PushID("DynamicPhysicsActor");
     ImGui::Text("DynamicPhysicsActor");
     ImGuiDebugRender(&comp->Actor, "Actor");
-    
+    ImGui::PopID();
 }
 void LightColorInfoImGuiDebug(void* data)
 {
     auto comp = (Components::LightColorInfo*)data;
+    ImGui::PushID("LightColorInfo");
     ImGui::Text("LightColorInfo");
     ImGuiDebugRender(&comp->Color, "Color");
     ImGuiDebugRender(&comp->Intensity, "Intensity");
-    
+    ImGui::PopID();
 }
 void CarPhysicsPartImGuiDebug(void* data)
 {
     auto comp = (Components::CarPhysicsPart*)data;
+    ImGui::PushID("CarPhysicsPart");
     ImGui::Text("CarPhysicsPart");
     ImGuiDebugRender(&comp->CarActor, "CarActor");
     ImGuiDebugRender(&comp->ShapeIndex, "ShapeIndex");
-    
+    ImGui::PopID();
 }
 void CameraControllerImGuiDebug(void* data)
 {
     auto comp = (Components::CameraController*)data;
+    ImGui::PushID("CameraController");
     ImGui::Text("CameraController");
     ImGuiDebugRender(&comp->CameraData, "CameraData");
     ImGuiDebugRender(&comp->InputMapIndex, "InputMapIndex");
-    
+    ImGui::PopID();
 }
 void VehicleControllerImGuiDebug(void* data)
 {
     auto comp = (Components::VehicleController*)data;
+    ImGui::PushID("VehicleController");
     ImGui::Text("VehicleController");
     ImGuiDebugRender(&comp->InputMapIndex, "InputMapIndex");
-    
+    ImGui::PopID();
 }
 void FactionImGuiDebug(void* data)
 {
     auto comp = (Components::Faction*)data;
+    ImGui::PushID("Faction");
     ImGui::Text("Faction");
     ImGuiDebugRender(&comp->FactionFlag, "FactionFlag");
-    
+    ImGui::PopID();
 }
 void FactoryImGuiDebug(void* data)
 {
     auto comp = (Components::Factory*)data;
+    ImGui::PushID("Factory");
     ImGui::Text("Factory");
     ImGuiDebugRender(&comp->PrefabToSpawn, "PrefabToSpawn");
     ImGuiDebugRender(&comp->TimeToSpawn, "TimeToSpawn");
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
     ImGuiDebugRender(&comp->NumSpawned, "NumSpawned");
-    
+    ImGui::PopID();
 }
 void CastleManagerImGuiDebug(void* data)
 {
     auto comp = (Components::CastleManager*)data;
+    ImGui::PushID("CastleManager");
     ImGui::Text("CastleManager");
     ImGuiDebugRender(&comp->Castles, "Castles");
-    
+    ImGui::PopID();
 }
 void NavigationDataImGuiDebug(void* data)
 {
     auto comp = (Components::NavigationData*)data;
+    ImGui::PushID("NavigationData");
     ImGui::Text("NavigationData");
     ImGuiDebugRender(&comp->Points, "Points");
     ImGuiDebugRender(&comp->Lines, "Lines");
-    
+    ImGui::PopID();
 }
 void MovementImGuiDebug(void* data)
 {
     auto comp = (Components::Movement*)data;
+    ImGui::PushID("Movement");
     ImGui::Text("Movement");
     ImGuiDebugRender(&comp->Velocity, "Velocity");
-    
+    ImGui::PopID();
 }
 void LaneMovementImGuiDebug(void* data)
 {
     auto comp = (Components::LaneMovement*)data;
+    ImGui::PushID("LaneMovement");
     ImGui::Text("LaneMovement");
     ImGuiDebugRender(&comp->Itr, "Itr");
-    
+    ImGui::PopID();
 }
 void MovementInfoImGuiDebug(void* data)
 {
     auto comp = (Components::MovementInfo*)data;
+    ImGui::PushID("MovementInfo");
     ImGui::Text("MovementInfo");
     ImGuiDebugRender(&comp->Speed, "Speed");
-    
+    ImGui::PopID();
 }
 void PresenceImGuiDebug(void* data)
 {
     auto comp = (Components::Presence*)data;
+    ImGui::PushID("Presence");
     ImGui::Text("Presence");
     ImGuiDebugRender(&comp->Radius, "Radius");
-    
+    ImGui::PopID();
 }
 void HealthImGuiDebug(void* data)
 {
     auto comp = (Components::Health*)data;
+    ImGui::PushID("Health");
     ImGui::Text("Health");
     ImGuiDebugRender(&comp->CurrentHealth, "CurrentHealth");
     ImGuiDebugRender(&comp->MaxHealth, "MaxHealth");
-    
+    ImGui::PopID();
 }
 void AttackInfoImGuiDebug(void* data)
 {
     auto comp = (Components::AttackInfo*)data;
+    ImGui::PushID("AttackInfo");
     ImGui::Text("AttackInfo");
     ImGuiDebugRender(&comp->DamageAmount, "DamageAmount");
     ImGuiDebugRender(&comp->Range, "Range");
     ImGuiDebugRender(&comp->Speed, "Speed");
     ImGuiDebugRender(&comp->AwarenessRadius, "AwarenessRadius");
     ImGuiDebugRender(&comp->ClashSoundEffect, "ClashSoundEffect");
-    
+    ImGui::PopID();
 }
 void AttackingImGuiDebug(void* data)
 {
     auto comp = (Components::Attacking*)data;
+    ImGui::PushID("Attacking");
     ImGui::Text("Attacking");
     ImGuiDebugRender(&comp->Target, "Target");
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
-    
+    ImGui::PopID();
 }
 void SoundSourceImGuiDebug(void* data)
 {
     auto comp = (Components::SoundSource*)data;
+    ImGui::PushID("SoundSource");
     ImGui::Text("SoundSource");
     ImGuiDebugRender(&comp->RequestedSoundEffect, "RequestedSoundEffect");
-    
+    ImGui::PopID();
 }
 
 void RegisterComponents(flecs::world& world)

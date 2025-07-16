@@ -23,13 +23,13 @@ struct SoldierMovementController : public GameplayFeature
 				auto target = e.target<Tags::Attacks>();
 				auto targetTransform = target.get_ref<Components::Transform>();
 
-				auto navData = itr.world().get<Components::NavigationData>();
+				auto& navData = itr.world().get<Components::NavigationData>();
 
 				Components::LaneMovement& movement = itr.field_at<Components::LaneMovement>(0, row);
 
-				auto factionFlag = uint64_t(e.get<Components::Faction>()->FactionFlag);
+				auto factionFlag = uint64_t(e.get<Components::Faction>().FactionFlag);
 
-				movement.Itr = Navigation::FindLane(*navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id() + factionFlag * 100000);
+				movement.Itr = Navigation::FindLane(navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id() + factionFlag * 100000);
 			});
 
 
@@ -39,9 +39,9 @@ struct SoldierMovementController : public GameplayFeature
 			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo, Components::AnimationController& animController) {
 				if (laneMovement.Itr.IsValid())
 				{
-					auto navData = itr.world().get<Components::NavigationData>();
+					auto& navData = itr.world().get<Components::NavigationData>();
 
-					movement.Velocity = laneMovement.Itr.UpdateNextDirection(*navData, transform.Position);
+					movement.Velocity = laneMovement.Itr.UpdateNextDirection(navData, transform.Position);
 				}
 				else
 				{
@@ -51,7 +51,7 @@ struct SoldierMovementController : public GameplayFeature
 				if (att.Target.is_valid() && att.Target.is_alive())
 				{
 
-					const auto& targetPos = att.Target.get<Components::Transform>()->Position;
+					const auto& targetPos = att.Target.get<Components::Transform>().Position;
 					if (glm::distance2(transform.Position, targetPos) > attackInfo.Range * attackInfo.Range)
 					{
 						movement.Velocity = glm::normalize(targetPos - transform.Position);

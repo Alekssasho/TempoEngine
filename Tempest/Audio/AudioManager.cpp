@@ -5,6 +5,8 @@
 #include <Engine.h>
 #include <DataDefinitions/SoundDatabase_generated.h>
 
+#include <imgui.h>
+
 //#define STB_VORBIS_HEADER_ONLY
 #include <stb_vorbis.c>
 
@@ -16,6 +18,118 @@
 
 namespace Tempest
 {
+struct CombFilter
+{
+	eastl::vector<float> DelayLine;
+	uint32_t CurrentIndex;
+	float Feedback;
+	float Damping;
+	float LPFState;
+
+	void Initialize(uint32_t delaySize, float feedback, float damping)
+	{
+		DelayLine.resize(delaySize, 0.0f);
+		CurrentIndex = 0;
+		Feedback = feedback;
+		Damping = damping;
+		LPFState = 0.0f;
+	}
+
+	float Process(float input)
+	{
+		float delayed = DelayLine[CurrentIndex];
+		float output = input + (Feedback * LPFState);
+
+		LPFState = output * (1.0f - Damping) + LPFState * Damping;
+		DelayLine[CurrentIndex] = output;
+
+		CurrentIndex = (CurrentIndex + 1) % DelayLine.size();
+		return output;
+	}
+};
+
+struct AllPassFilter
+{
+	eastl::vector<float> DelayLine;
+	uint32_t CurrentIndex;
+	float Gain;
+
+	void Initialize(uint32_t delaySize, float gain)
+	{
+		DelayLine.resize(delaySize, 0.0f);
+		CurrentIndex = 0;
+		Gain = gain;
+	}
+
+	float Process(float input)
+	{
+		float delayed = DelayLine[CurrentIndex];
+		float output = input + delayed * Gain;
+		DelayLine[CurrentIndex] = output;
+
+		CurrentIndex = (CurrentIndex + 1) % DelayLine.size();
+		return output * -Gain + delayed;
+	}
+};
+
+struct Reverb
+{
+	eastl::array<CombFilter, 4> combL;
+	eastl::array<CombFilter, 4> combR;
+	eastl::array<AllPassFilter, 2> apfL;
+	eastl::array<AllPassFilter, 2> apfR;
+
+	float Dry;
+	float Wet;
+
+	Reverb()
+	{
+		Dry = 0.7f;
+		Wet = 0.3f;
+
+		float combFeedback = 0.75f;
+		float combDamping = 0.3f;
+		combL[0].Initialize(1557, combFeedback, combDamping);
+		combL[1].Initialize(1617, combFeedback, combDamping);
+		combL[2].Initialize(1491, combFeedback, combDamping);
+		combL[3].Initialize(1422, combFeedback, combDamping);
+
+        combR[0].Initialize(1557, combFeedback, combDamping);
+        combR[1].Initialize(1617, combFeedback, combDamping);
+        combR[2].Initialize(1491, combFeedback, combDamping);
+        combR[3].Initialize(1422, combFeedback, combDamping);
+
+		float apfGain = 0.6f;
+        apfL[0].Initialize(225, apfGain);
+        apfL[1].Initialize(556, apfGain);
+
+        apfR[0].Initialize(225, apfGain);
+        apfR[1].Initialize(556, apfGain);
+	}
+
+	AudioFrame Process(AudioFrame input)
+	{
+		AudioFrame output = { 0.0f, 0.0f };
+
+		for (uint32_t i = 0; i < 4; ++i)
+		{
+			output.leftSample += combL[i].Process(input.leftSample);
+			output.rightSample += combR[i].Process(input.rightSample);
+		}
+
+		for (uint32_t i = 0; i < 2; ++i)
+		{
+			output.leftSample = apfL[i].Process(output.leftSample);
+			output.rightSample = apfR[i].Process(output.rightSample);
+		}
+
+		return AudioFrame{
+			input.leftSample * Dry + output.leftSample * Wet,
+			input.rightSample * Dry + output.rightSample * Wet,
+		};
+	}
+};
+
 AudioManager::AudioManager()
 	: m_VorbisDecoder(nullptr)
 {
@@ -97,6 +211,8 @@ AudioManager::AudioManager()
 	m_RingBuffer.WriteIndex.store(sAudioSamplesForFrame * 3); // Start with 10 frames data for start
 	m_RingBuffer.Samples = reinterpret_cast<AudioFrame*>(_aligned_malloc(sizeof(AudioFrame) * sAudioSampleRate, 32)); // 1 second of data
 	m_RingBuffer.Size = sAudioSampleRate;
+
+	m_Reverb.reset(new Reverb);
 }
 
 AudioManager::~AudioManager()
@@ -198,6 +314,14 @@ void AudioManager::PrepareNextFrameAudio()
             m_CurrentPlayingSounds.emplace_back(playingEffect);
         }
     }
+
+	if (gEngine->GetDebug().AudioUseReverb)
+	{
+		for (uint32_t i = 0; i < samplesToWrite; ++i)
+		{
+			samples[i] = m_Reverb->Process(samples[i]);
+		}
+	}
 
     //uint32_t framesDecoded = stb_vorbis_get_samples_float_interleaved(m_VorbisDecoder, 2, reinterpret_cast<float*>(pData), 2 * framesAvailable);
 
@@ -349,5 +473,11 @@ void AudioManager::LoadDatabase(const char* databaseName)
 	// We can only play 48kHz files. Thunder should have re-sampled it before adding to the database.
 	assert(backgroundMusicInfo.sample_rate == 48000 && backgroundMusicInfo.channels == 2);
 	FORMAT_LOG(Info, Audio, "Background music started decoding with %d channels and %d sample rate", backgroundMusicInfo.channels, backgroundMusicInfo.sample_rate);
+}
+
+void AudioManager::DebugDisplay()
+{
+	ImGui::SliderFloat("Reverb Dry", &m_Reverb->Dry, 0.0f, 1.0f);
+	ImGui::SliderFloat("Reverb Wet", &m_Reverb->Wet, 0.0f, 1.0f);
 }
 }

@@ -35,6 +35,8 @@ struct AudioSamplesRingBuffer
 	uint32_t Size;
 };
 
+struct Reverb;
+
 class AudioManager
 {
 public:
@@ -45,6 +47,8 @@ public:
 	void LoadDatabase(const char* databaseName);
 	void PlaySoundEffect(uint32_t soundEffectIndex, float volumeLeft, float volumeRight);
 	eastl::vector<PlayingSoundEffect> m_CurrentPlayingSounds;
+
+	void DebugDisplay();
 private:
 	void PrepareNextFrameAudio();
 	void WriteToAudioBuffer();
@@ -62,6 +66,7 @@ private:
 	// Background music
 	stb_vorbis* m_VorbisDecoder;
 
+	eastl::unique_ptr<Reverb> m_Reverb;
 };
 }
 

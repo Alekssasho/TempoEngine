@@ -192,6 +192,13 @@ void Engine::DoDebugMenu()
 			ImGui::EndMenu();
 		}
 
+        if (ImGui::BeginMenu("Audio"))
+        {
+            ImGui::Checkbox("Use Reverb", &m_DebugOptions.AudioUseReverb);
+			gEngine->GetAudio().DebugDisplay();
+            ImGui::EndMenu();
+        }
+
 		ImGui::SetCursorPosX(ImGui::GetWindowWidth() - 280.0f);
 		ImGui::Text("World Speed:");
 		ImGui::SameLine();

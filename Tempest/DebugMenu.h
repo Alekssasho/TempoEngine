@@ -23,5 +23,7 @@ struct DebugOptions
 
     bool ShowNavigationLanes = false;
     bool ShowSkeletons = false;
+
+	bool AudioUseReverb = true;
 };
 }

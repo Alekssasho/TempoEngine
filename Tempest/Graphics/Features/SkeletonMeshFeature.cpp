@@ -33,6 +33,7 @@ void SkeletonMesh::Initialize(const World& world, Renderer& renderer)
 
 void SkeletonMesh::GatherData(const World& world, FrameData& frameData)
 {
+	ZoneScoped;
 	m_Query.each([&frameData](const Components::Transform& transform, const Components::SkeletonMesh& skeletonMesh) {
 		const glm::mat4x4 scale = glm::scale(transform.Scale);
 		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
@@ -56,6 +57,7 @@ void SkeletonMesh::GatherData(const World& world, FrameData& frameData)
 
 void SkeletonMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
 {
+	ZoneScoped;
 	struct GeometryConstants
 	{
 		glm::mat4x4 worldMatrix;

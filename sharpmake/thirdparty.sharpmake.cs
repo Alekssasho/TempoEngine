@@ -29,16 +29,17 @@ namespace TempoEngine
     }
 
     [Sharpmake.Export]
-    public class Optick : ThirdPartyProject
+    public class Tracy : ThirdPartyVcpkgProject
     {
         public override void ConfigureAll(Project.Configuration conf, Target target)
         {
             base.ConfigureAll(conf, target);
 
-            conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\optick\include");
+            conf.LibraryFiles.Add("TracyClient");
 
-            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\Optick\lib\[target.Name]");
-            conf.LibraryFiles.Add("OptickCore");
+            conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\TracyClient.dll");
+
+            conf.ExportDefines.Add("TRACY_ENABLE");
         }
     }
 

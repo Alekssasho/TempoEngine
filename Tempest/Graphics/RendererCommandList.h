@@ -11,6 +11,8 @@ enum class RendererCommandType : uint8_t
 	BeginRenderPass,
 	EndRenderPass,
 	Barrier,
+	MarkerBegin,
+	MarkerEnd,
 	Count
 };
 
@@ -101,6 +103,15 @@ struct RendererCommandBarrier : RendererCommand<RendererCommandType::Barrier>
 	// TODO: Consider having only after state, and tracking state of resource internally
 	ResourceState BeforeState;
 	ResourceState AfterState;
+};
+
+struct RendererCommandMarkerBegin : RendererCommand<RendererCommandType::MarkerBegin>
+{
+	const char* Name;
+};
+
+struct RendererCommandMarkerEnd : RendererCommand<RendererCommandType::MarkerEnd>
+{
 };
 
 struct RendererCommandList

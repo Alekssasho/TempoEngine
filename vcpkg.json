@@ -16,6 +16,13 @@
     "glm",
     "meshoptimizer",
     "cgltf",
-    "nvtt"
+    "nvtt",
+    {
+      "name": "tracy",
+      "features": [
+        "gui-tools",
+        "fibers"
+      ]
+    }
   ]
 }

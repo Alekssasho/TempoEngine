@@ -16,7 +16,9 @@ struct Battle : public GameplayFeature
 	{
 		world.m_EntityWorld.system<const Components::Transform, const Components::AttackInfo, const Components::Faction, Components::Attacking>("Acquire Target")
 			.kind(flecs::PreUpdate)
+			.multi_threaded()
 			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, const Components::Faction& faction, Components::Attacking& att) {
+				ZoneScopedN("Acquire Target");
 				if (att.Target.is_valid() && att.Target.is_alive())
 				{
 					return;
@@ -54,7 +56,9 @@ struct Battle : public GameplayFeature
 
 		world.m_EntityWorld.system<const Components::Transform, const Components::AttackInfo, Components::Attacking, Components::AnimationController, Components::SoundSource>("Battle Initial")
 			.kind(flecs::OnUpdate)
+			.multi_threaded()
 			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, Components::Attacking& att, Components::AnimationController& animController, Components::SoundSource& soundSource) {
+				ZoneScopedN("Battle Initial");
 				auto& spaceData = itr.world().get<SpaceLocation::SpaceData>();
 
 				auto currentEntity = itr.entity(row);

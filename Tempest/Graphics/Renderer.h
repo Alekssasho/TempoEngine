@@ -9,6 +9,7 @@ namespace Tempest
 class World;
 class Camera;
 struct RenderFeature;
+class RenderGraphBlackboard;
 // This is forward declare and used through a pointer to avoid pulling Dx12 headers into rest of the engine
 namespace Dx12 { class Backend; struct ConstantBufferDataManager; }
 namespace Definition { struct ShaderLibrary; }
@@ -59,6 +60,8 @@ private:
 	BufferHandle m_MaterialData;
 
 	eastl::array<BufferHandle, 2> m_ExtraDataBuffer;
+
+	static void GenerateAllFeatures(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard);
 };
 }
 

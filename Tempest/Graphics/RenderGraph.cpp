@@ -43,6 +43,7 @@ RenderGraphResourceHandle RenderGraph::RequestTexture(const Dx12::TextureDescrip
 
 RendererCommandList RenderGraph::Compile()
 {
+	ZoneScoped;
 	// TODO: Make Multi Threaded using the Job System (per pass for example)
 	RendererCommandList commandList;
 
@@ -53,6 +54,9 @@ RendererCommandList RenderGraph::Compile()
 		{
 			RendererCommandEndRenderPass endRenderPassCommand;
 			commandList.AddCommand(endRenderPassCommand);
+
+			RendererCommandMarkerEnd endMarker;
+			commandList.AddCommand(endMarker);
 		}
 
 		for (auto& resource : pass.Description.UsedResources) {
@@ -98,6 +102,10 @@ RendererCommandList RenderGraph::Compile()
 
 		if (pass.Description.StartNewPass)
 		{
+			RendererCommandMarkerBegin beginMarker;
+			beginMarker.Name = pass.Name;
+			commandList.AddCommand(beginMarker);
+
 			RendererCommandBeginRenderPass beginRenderPassCommand;
 			beginRenderPassCommand.ColorTarget = {
 				ResolveResourceToHandle(pass.Description.RenderTarget.Handle), pass.Description.RenderTarget.LoadAction, pass.Description.RenderTarget.StoreAction
@@ -117,6 +125,9 @@ RendererCommandList RenderGraph::Compile()
 	{
 		RendererCommandEndRenderPass endRenderPassCommand;
 		commandList.AddCommand(endRenderPassCommand);
+
+		RendererCommandMarkerEnd endMarker;
+		commandList.AddCommand(endMarker);
 	}
 
 	return commandList;

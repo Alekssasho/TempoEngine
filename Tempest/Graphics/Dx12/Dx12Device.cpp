@@ -2,8 +2,6 @@
 
 #include <Graphics/Dx12/Dx12Device.h>
 
-#include <optick.h>
-
 #include <imgui.h>
 // TODO: Reimplement as our own
 #include <imgui_impl_dx12.h>
@@ -294,14 +292,14 @@ void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 {
 	// UI Rendering before we finish the frame
 	{
-		OPTICK_EVENT("ImGUI CPU Render");
+		ZoneScopedN("ImGUI CPU Render");
 		ImGui::Render();
 		ImGui_ImplDX12_NewFrame();
 		ImGui_ImplWin32_NewFrame();
 	}
 	{
 		// TODO: Merge ui srv heap into main descriptor heap
-		OPTICK_EVENT("ImGUI GPU Draw");
+		ZoneScopedN("ImGUI GPU Draw");
 		frame.CommandList->OMSetRenderTargets(1, &frame.BackBufferRTV, false, nullptr);
 		frame.CommandList->SetDescriptorHeaps(1, m_UISRVHeap.GetAddressOf());
 		ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), frame.CommandList);
@@ -326,6 +324,7 @@ void Dx12Device::SubmitFrame(const Dx12FrameData& frame)
 
 void Dx12Device::Present()
 {
+	ZoneScoped;
 	m_SwapChain->Present(1, 0);
 
 	const UINT64 fence = m_FenceValue;

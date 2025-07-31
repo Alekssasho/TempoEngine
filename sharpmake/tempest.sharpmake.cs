@@ -17,9 +17,9 @@ namespace TempoEngine
 
             conf.AddPublicDependency<Glm>(target);
             conf.AddPublicDependency<EASTL>(target);
-            conf.AddPublicDependency<Optick>(target);
 
             //conf.AddPublicDependency<PhysX>(target);
+            conf.AddPublicDependency<Tracy>(target);
             conf.AddPublicDependency<Flecs>(target);
             conf.AddPublicDependency<Flatbuffers>(target);
             conf.AddPublicDependency<GAInput>(target);

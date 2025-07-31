@@ -31,6 +31,7 @@ void StaticMesh::Initialize(const World& world, Renderer& renderer)
 
 void StaticMesh::GatherData(const World& world, FrameData& frameData)
 {
+	ZoneScoped;
 	m_Query.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::StaticMesh& staticMesh) {
 		const glm::mat4x4 scale = glm::scale(transform.Scale);
 		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
@@ -45,6 +46,7 @@ void StaticMesh::GatherData(const World& world, FrameData& frameData)
 
 void StaticMesh::GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
 {
+	ZoneScoped;
 	struct GeometryConstants
 	{
 		glm::mat4x4 worldMatrix;

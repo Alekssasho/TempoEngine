@@ -35,8 +35,10 @@ struct SoldierMovementController : public GameplayFeature
 
 		world.m_EntityWorld.system<const Components::Transform, Components::Movement, Components::LaneMovement, const Components::Attacking, const Components::AttackInfo, Components::AnimationController>("SoldierMovementController")
 			.kind(flecs::PreUpdate)
+			.multi_threaded()
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo, Components::AnimationController& animController) {
+				ZoneScopedN("SoldierMovementController");
 				if (laneMovement.Itr.IsValid())
 				{
 					auto& navData = itr.world().get<Components::NavigationData>();
@@ -81,8 +83,10 @@ struct SoldierMovementController : public GameplayFeature
 
 		world.m_EntityWorld.system<Components::Transform, const Components::Movement, const Components::MovementInfo>("MovementSystem")
 			.kind(flecs::PostUpdate)
+			.multi_threaded()
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter it, size_t row, Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo) {
+				ZoneScopedN("MovementSystem");
 				auto deltaTime = it.delta_time();
 
 				transform.Position += movement.Velocity * movementInfo.Speed * deltaTime;

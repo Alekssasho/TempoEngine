@@ -1,7 +1,6 @@
 #include <CommonIncludes.h>
 
 #include <Engine.h>
-#include <optick.h>
 
 #include <imgui.h>
 
@@ -31,9 +30,7 @@ Engine::~Engine()
 void Engine::StartEngineLoop()
 {
 	LOG(Info, Engine, "Starting Engine Loop");
-	OPTICK_APP("Tempo Engine");
-	// This is needed for proper visualization of profile library
-	OPTICK_FRAME("Engine Execution");
+	TracySetProgramName("Tempo Engine");
 
 	Job::JobDecl mainJob{ InitializeWindowJob, this };
 	m_JobSystem.RunJobs("Initialize Window Job", &mainJob, 1, nullptr, Job::ThreadTag::Windows);
@@ -64,13 +61,12 @@ void Engine::InitializeWindowJob(uint32_t, void* data)
 void Engine::DoFrameJob(uint32_t, void* data)
 {
 	// Start a new frame and update the profiler
-	OPTICK_UPDATE();
-	Optick::BeginFrame();
+	FrameMarkStart("Frame");
 
 	gEngine->DoFrame();
 
 	// End the current frame in the profiler
-	Optick::EndFrame();
+	FrameMarkEnd("Frame");
 
 	// Schedule frame again. This should be the last thing happening in this frame.
 	Job::JobDecl frameJob{ DoFrameJob, data };

@@ -25,6 +25,7 @@ Backend::Backend()
 
 Backend::~Backend()
 {
+	TracyD3D12Destroy(m_TracyCtx);
 	// TODO: move to Init/deinit methods as using constructor/desctuctor is very rigid and cannot do things properly
 	// Reset it by hand to force cleaning of all Dx References and then report live objects to debug
 	m_Device.reset();
@@ -40,11 +41,19 @@ Backend::~Backend()
 void Backend::Initialize(WindowHandle handle)
 {
 	m_Device->Initialize(handle);
+	m_TracyCtx = TracyD3D12Context(m_Device->GetDevice(), m_Device->GetMainGraphicsQueue());
+	TracyD3D12ContextName(m_TracyCtx, "Main Graphics", uint16_t(strlen("Main Graphics")));
 }
 
 void Backend::RenderFrame(const RendererCommandList& commandList)
 {
+	ZoneScoped;
 	Dx12::Dx12FrameData frame = m_Device->StartNewFrame();
+	TracyD3D12NewFrame(m_TracyCtx);
+	TracyD3D12Collect(m_TracyCtx);
+
+	{
+	TracyD3D12Zone(m_TracyCtx, frame.CommandList, "GPU Frame");
 
 	// TODO: This should probably be part of the pipeline itself
 	frame.CommandList->SetGraphicsRootSignature(Managers.Pipeline.GetSignature());
@@ -70,6 +79,9 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 			frame.CommandList->SetGraphicsRootConstantBufferView(i, constantBufferData + parameters[i].ConstantDataOffset);
 		}
 	};
+
+	eastl::stack<tracy::D3D12ZoneScope> tracyZones;
+	tracyZones.get_container().reserve(4);
 
 	const uint8_t* commandListIterator = commandList.m_DataBuffer.begin();
 	while (commandListIterator && commandListIterator < commandList.m_DataBuffer.end())
@@ -188,10 +200,25 @@ void Backend::RenderFrame(const RendererCommandList& commandList)
 			commandListIterator += sizeof(RendererCommandDrawMeshlet);
 			break;
 		}
+		case RendererCommandType::MarkerBegin:
+		{
+			const RendererCommandMarkerBegin* command = reinterpret_cast<const RendererCommandMarkerBegin*>(commandListIterator);
+			tracyZones.emplace(m_TracyCtx, TracyLine, TracyFile, strlen(TracyFile), TracyFunction, strlen(TracyFunction), command->Name, strlen(command->Name), frame.CommandList, true);
+			commandListIterator += sizeof(RendererCommandMarkerBegin);
+			break;
+		}
+		case RendererCommandType::MarkerEnd:
+		{
+			tracyZones.pop();
+
+			commandListIterator += sizeof(RendererCommandMarkerEnd);
+			break;
+		}
 		default:
 			assert(false);
 			break;
 		}
+	}
 	}
 
 	m_Device->SubmitFrame(frame);

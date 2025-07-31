@@ -38,6 +38,11 @@ public:
 		return m_Device.Get();
 	}
 
+	ID3D12CommandQueue* GetMainGraphicsQueue()
+	{
+		return m_GraphicsQueue.Get();
+	}
+
 	ConstantBufferDataManager& GetConstantDataManager()
 	{
 		return m_ConstantBufferData;

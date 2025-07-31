@@ -9,6 +9,7 @@ namespace GraphicsFeature
 {
 struct SkeletonMesh : RenderFeature
 {
+	virtual const char* MarkerName() override { return "Skeleton Mesh"; }
 	virtual void Initialize(const World& world, Renderer& renderer) override;
 	virtual void GatherData(const World&, FrameData&) override;
 	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard) override;

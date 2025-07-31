@@ -51,14 +51,20 @@ static void* EcsWaitTask(ecs_os_thread_t taskData)
 	return nullptr;
 }
 
+static thread_local eastl::stack<TracyCZoneCtx> s_FlecsTracyStack;
+
 static void EcsPushMarker(const char* file, size_t line, const char* name)
 {
-	OPTICK_PUSH_DYNAMIC(name);
+	uint64_t srcLoc = ___tracy_alloc_srcloc(uint32_t(line), file, strlen(file), name, strlen(name), 0);
+	s_FlecsTracyStack.push(___tracy_emit_zone_begin_alloc(srcLoc, true));
 }
 
 static void EcsPopMarker(const char* file, size_t line, const char* name)
 {
-	OPTICK_POP();
+	TracyCZoneCtx ctx = s_FlecsTracyStack.top();
+	s_FlecsTracyStack.pop();
+
+	___tracy_emit_zone_end(ctx);
 }
 
 FlecsIniter::FlecsIniter()
@@ -67,8 +73,9 @@ FlecsIniter::FlecsIniter()
     ecs_os_api_t api = ecs_os_get_api();
     api.task_new_ = EcsNewTask;
     api.task_join_ = EcsWaitTask;
-    api.perf_trace_push_ = EcsPushMarker;
-    api.perf_trace_pop_ = EcsPopMarker;
+	// TODO: We are using vcpkg build of flecs which we cannot enable this for now
+    //api.perf_trace_push_ = EcsPushMarker;
+    //api.perf_trace_pop_ = EcsPopMarker;
     ecs_os_set_api(&api);
 }
 
@@ -107,6 +114,7 @@ flecs::opaque<Vector, Elem> std_vector_support(flecs::world& world) {
 
 WorldStorage::WorldStorage()
 {
+	ecs_set_task_threads(m_EntityWorld, gEngineCore->GetOptions().NumWorkerThreads);
 	m_EntityWorld.set<flecs::Rest>({});
 	m_EntityWorld.import<flecs::stats>();
 	// Enable for debug
@@ -183,7 +191,6 @@ World::~World()
 
 void World::Update(float deltaTime, Job::JobSystem& jobSystem)
 {
-	OPTICK_EVENT();
 	m_EntityWorld.progress(deltaTime);
 }
 

@@ -109,7 +109,7 @@ void JobSystem::WaitForCompletion()
 
 void JobSystem::WorkerThreadEntryPoint(ThreadTag tag)
 {
-	OPTICK_THREAD("WorkerThread");
+	tracy::SetThreadName("WorkerThread");
 	SetThreadName("WorkerThread");
 
 	tlsWorkerThreadData.Tag = tag;
@@ -170,7 +170,7 @@ void JobSystem::WaitForCounter(Counter* counter, uint32_t value)
 		{
 			return;
 		}
-		OPTICK_POP();
+		TracyCZoneEnd(tlsWorkerThreadData.ZoneCtx);
 
 		assert(counter->Value.load() > value);
 
@@ -211,7 +211,10 @@ bool JobSystem::FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues)
 
 		tlsWorkerThreadData.CurrentJobName = readyFiber.JobName;
 		tlsWorkerThreadData.CurrentFiberId = readyFiber.FiberId;
-		OPTICK_PUSH_DYNAMIC(readyFiber.JobName);
+
+		TracyCZone(ctx, true);
+		TracyCZoneName(ctx, readyFiber.JobName, strlen(readyFiber.JobName));
+		tlsWorkerThreadData.ZoneCtx = ctx;
 
 		::SwitchToFiber(system->m_Fibers[readyFiber.FiberId]);
 
@@ -230,11 +233,14 @@ bool JobSystem::FiberLoopBody(JobSystem* system, ThreadQueues& jobQueues)
 		}
 
 		tlsWorkerThreadData.CurrentJobName = jobData.Name;
-		OPTICK_PUSH_DYNAMIC(jobData.Name);
+
+		TracyCZone(ctx, true);
+		TracyCZoneName(ctx, jobData.Name, strlen(jobData.Name));
+		tlsWorkerThreadData.ZoneCtx = ctx;
 
 		jobData.Job.EntryPoint(jobData.Index, jobData.Job.Data);
 
-		OPTICK_POP();
+		TracyCZoneEnd(tlsWorkerThreadData.ZoneCtx);
 		tlsWorkerThreadData.CurrentJobName = nullptr;
 
 		// This task is done. Decrement its counter

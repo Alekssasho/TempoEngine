@@ -66,6 +66,7 @@ public:
 	void ExecuteUpload(UploadData& uploadData);
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
+	TracyD3D12Ctx m_TracyCtx;
 public:
 	// Managers
 	BackendManagers Managers;

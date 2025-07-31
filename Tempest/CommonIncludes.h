@@ -12,9 +12,14 @@
 #include <EASTL/array.h>
 #include <EASTL/span.h>
 #include <EASTL/algorithm.h>
+#include <EASTL/stack.h>
 
 #include <Logging.h>
 #include <cassert>
 #include <atomic>
 
-#include <optick.h>
+#define TRACY_FIBERS
+#define TRACY_NO_CALLSTACK
+#include <tracy/Tracy.hpp>
+#include <tracy/TracyC.h>
+#include <tracy/TracyD3D12.hpp>

@@ -123,6 +123,7 @@ private:
 		unsigned FiberToPushToFreeList = INVALID_FIBER_ID;
 		std::atomic<bool>* CanBeMadeReadyFlag = nullptr;
 		ThreadTag Tag;
+		TracyCZoneCtx ZoneCtx;
 	};
 
 	static thread_local WorkerThreadData tlsWorkerThreadData;

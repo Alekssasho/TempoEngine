@@ -24,7 +24,9 @@ struct AnimationController : public GameplayFeature
 
         world.m_EntityWorld.system<Components::SkeletonMesh, Components::AnimationController, const Components::AnimationInfo>("Animation Controller System")
             .kind(flecs::OnUpdate)
+            .multi_threaded()
             .each([](flecs::iter& itr, size_t, Components::SkeletonMesh& mesh, Components::AnimationController& controller, const Components::AnimationInfo& animInfo) {
+                ZoneScopedN("Animation Controller System");
                 AnimationManager& anim = gEngine->GetAnimation();
 
                 const uint32_t animIndex = animInfo.AnimationIndices[uint32_t(controller.State)];

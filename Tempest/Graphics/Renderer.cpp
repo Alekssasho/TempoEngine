@@ -35,7 +35,7 @@ Renderer::~Renderer()
 
 void Renderer::InitializeAfterLevelLoad(const World& world)
 {
-	OPTICK_EVENT();
+	ZoneScoped;
 	for (const auto& feature : m_RenderFeatures)
 	{
 		feature->Initialize(world, *this);
@@ -73,7 +73,7 @@ bool Renderer::CreateWindowSurface(WindowHandle handle)
 
 FrameData Renderer::GatherWorldData(const World& world)
 {
-	OPTICK_EVENT();
+	ZoneScoped;
 	// TODO: No need to return it.
 	FrameData frameData;
 	assert(m_Views.size() == 1);
@@ -97,9 +97,24 @@ struct SceneConstantData
 	uint32_t LightShadowMapIndex;
 };
 
+void Renderer::GenerateAllFeatures(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard)
+{
+    for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
+    {
+        RendererCommandMarkerBegin markerBegin;
+        markerBegin.Name = feature->MarkerName();
+        commandList.AddCommand(markerBegin);
+
+        feature->GenerateCommands(data, commandList, blackboard);
+
+        RendererCommandMarkerEnd markerEnd;
+        commandList.AddCommand(markerEnd);
+    }
+}
+
 void Renderer::RenderFrame(const FrameData& data)
 {
-	OPTICK_EVENT();
+	ZoneScoped;
 
 	RenderGraph graph(*this, data, m_Backend->GetDevice()->GetConstantDataManager(), m_Backend->Managers.TemporaryTexture);
 
@@ -134,10 +149,7 @@ void Renderer::RenderFrame(const FrameData& data)
 			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
 			blackboard.SetRenderPhase(RenderPhase::Shadow);
 
-			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
-			{
-				feature->GenerateCommands(data, commandList, blackboard);
-			}
+			GenerateAllFeatures(data, commandList, blackboard);
 		};
 	});
 
@@ -159,10 +171,7 @@ void Renderer::RenderFrame(const FrameData& data)
 			blackboard.SetConstantDataOffset(BlackboardIdentifier{ "SceneData" }, blackboard.GetConstantDataManager().AddData(sceneData));
 			blackboard.SetRenderPhase(RenderPhase::Main);
 
-			for (const auto& feature : blackboard.GetRenderer().m_RenderFeatures)
-			{
-				feature->GenerateCommands(data, commandList, blackboard);
-			}
+			GenerateAllFeatures(data, commandList, blackboard);
 		};
 	});
 

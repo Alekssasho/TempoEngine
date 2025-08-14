@@ -73,9 +73,8 @@ FlecsIniter::FlecsIniter()
     ecs_os_api_t api = ecs_os_get_api();
     api.task_new_ = EcsNewTask;
     api.task_join_ = EcsWaitTask;
-	// TODO: We are using vcpkg build of flecs which we cannot enable this for now
-    //api.perf_trace_push_ = EcsPushMarker;
-    //api.perf_trace_pop_ = EcsPopMarker;
+    api.perf_trace_push_ = EcsPushMarker;
+    api.perf_trace_pop_ = EcsPopMarker;
     ecs_os_set_api(&api);
 }
 

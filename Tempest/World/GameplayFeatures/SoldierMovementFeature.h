@@ -38,7 +38,6 @@ struct SoldierMovementController : public GameplayFeature
 			.multi_threaded()
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo, Components::AnimationController& animController) {
-				ZoneScopedN("SoldierMovementController");
 				if (laneMovement.Itr.IsValid())
 				{
 					auto& navData = itr.world().get<Components::NavigationData>();
@@ -86,7 +85,6 @@ struct SoldierMovementController : public GameplayFeature
 			.multi_threaded()
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter it, size_t row, Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo) {
-				ZoneScopedN("MovementSystem");
 				auto deltaTime = it.delta_time();
 
 				transform.Position += movement.Velocity * movementInfo.Speed * deltaTime;

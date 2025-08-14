@@ -18,8 +18,5 @@
 #include <cassert>
 #include <atomic>
 
-#define TRACY_FIBERS
-#define TRACY_NO_CALLSTACK
 #include <tracy/Tracy.hpp>
 #include <tracy/TracyC.h>
-#include <tracy/TracyD3D12.hpp>

@@ -38,13 +38,12 @@ struct CombFilter
 	float Process(float input)
 	{
 		float delayed = DelayLine[CurrentIndex];
-		float output = input + (Feedback * LPFState);
 
-		LPFState = output * (1.0f - Damping) + LPFState * Damping;
-		DelayLine[CurrentIndex] = output;
+		DelayLine[CurrentIndex] = input + (Feedback * LPFState);
+		LPFState = delayed * (1.0f - Damping) + LPFState * Damping;
 
 		CurrentIndex = (CurrentIndex + 1) % DelayLine.size();
-		return output;
+		return delayed;
 	}
 };
 
@@ -243,6 +242,7 @@ float ConvertPCM16ToFloat(const int16_t* input) {
 
 void AudioManager::PrepareNextFrameAudio()
 {
+	ZoneScoped;
 	// Write only data for 0.33ms
 	constexpr uint32_t desiredSamplesToWrite = sAudioSamplesForFrame * 2;
 	uint32_t writeIndex = m_RingBuffer.WriteIndex.load();
@@ -355,6 +355,7 @@ void AudioManager::PrepareNextFrameAudio()
 
 void AudioManager::WriteToAudioBuffer()
 {
+	ZoneScoped;
 	HRESULT hr = S_OK;
 
 	uint32_t padding = 0;
@@ -426,6 +427,7 @@ void AudioManager::WriteToAudioBuffer()
 
 void AudioManager::Update()
 {
+	ZoneScoped;
     auto readIndex = m_RingBuffer.ReadIndex.load();
     auto writeIndex = m_RingBuffer.WriteIndex.load();
 	bool shouldPrepareNewData = false;

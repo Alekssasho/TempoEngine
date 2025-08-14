@@ -13,6 +13,8 @@
 
 #include <eastl/optional.h>
 
+#include <tracy/TracyD3D12.hpp>
+
 namespace Tempest
 {
 namespace Dx12
@@ -25,7 +27,7 @@ Backend::Backend()
 
 Backend::~Backend()
 {
-	TracyD3D12Destroy(m_TracyCtx);
+	TracyD3D12Destroy((TracyD3D12Ctx)m_TracyCtx);
 	// TODO: move to Init/deinit methods as using constructor/desctuctor is very rigid and cannot do things properly
 	// Reset it by hand to force cleaning of all Dx References and then report live objects to debug
 	m_Device.reset();

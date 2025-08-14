@@ -76,7 +76,6 @@ struct SpaceLocation : public GameplayFeature
 			.term_at(0).singleton()
 			.kind(flecs::PreFrame)
 			.each([this](SpaceData& spaceData) {
-			ZoneScopedN("Space Location Task");
 			// Phase 1
 			// Get count per cell so we can allocate the data
 			spaceData.Entities.clear();

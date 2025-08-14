@@ -18,7 +18,6 @@ struct Battle : public GameplayFeature
 			.kind(flecs::PreUpdate)
 			.multi_threaded()
 			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, const Components::Faction& faction, Components::Attacking& att) {
-				ZoneScopedN("Acquire Target");
 				if (att.Target.is_valid() && att.Target.is_alive())
 				{
 					return;
@@ -58,7 +57,6 @@ struct Battle : public GameplayFeature
 			.kind(flecs::OnUpdate)
 			.multi_threaded()
 			.each([](flecs::iter itr, size_t row, const Components::Transform& transform, const Components::AttackInfo& attackInfo, Components::Attacking& att, Components::AnimationController& animController, Components::SoundSource& soundSource) {
-				ZoneScopedN("Battle Initial");
 				auto& spaceData = itr.world().get<SpaceLocation::SpaceData>();
 
 				auto currentEntity = itr.entity(row);

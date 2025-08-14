@@ -6,6 +6,11 @@
 #include <Graphics/Dx12/Managers/TextureManager.h>
 #include <Graphics/RendererCommandList.h>
 
+namespace tracy
+{
+	class D3D12QueueCtx;
+}
+
 namespace Tempest
 {
 struct RendererCommandList;
@@ -66,7 +71,7 @@ public:
 	void ExecuteUpload(UploadData& uploadData);
 private:
 	eastl::unique_ptr<Dx12Device> m_Device;
-	TracyD3D12Ctx m_TracyCtx;
+	tracy::D3D12QueueCtx* m_TracyCtx;
 public:
 	// Managers
 	BackendManagers Managers;

@@ -40,6 +40,8 @@ namespace TempoEngine
             conf.TargetCopyFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\bin\TracyClient.dll");
 
             conf.ExportDefines.Add("TRACY_ENABLE");
+            conf.ExportDefines.Add("TRACY_NO_CALLSTACK");
+            conf.ExportDefines.Add("TRACY_FIBERS");
         }
     }
 

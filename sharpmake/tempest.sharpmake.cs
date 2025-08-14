@@ -9,6 +9,8 @@ namespace TempoEngine
         {
             Name = "Tempest";
             SourceRootPath = @"[project.SharpmakeCsPath]\..\Tempest";
+
+            NatvisFiles.Add(@"[project.SharpmakeCsPath]\..\vcpkg_installed\x64-windows\doc\EASTL.natvis");
         }
 
         public override void ConfigureAll(Project.Configuration conf, Target target)

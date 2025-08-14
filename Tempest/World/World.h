@@ -3,7 +3,6 @@
 // TODO: check if we can remove this from this header
 #pragma warning(push)
 #pragma warning(disable: 4267) // 'argument': conversion from 'size_t' to 'int32_t', possible loss of data
-//#define FLECS_PERF_TRACE
 #include <flecs.h>
 #pragma warning(pop)
 

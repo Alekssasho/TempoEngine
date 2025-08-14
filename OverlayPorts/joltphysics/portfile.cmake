@@ -41,6 +41,10 @@ vcpkg_copy_pdbs()
 vcpkg_fixup_pkgconfig()
 
 file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
+
+# Install natvis files
+file(INSTALL "${SOURCE_PATH}/Jolt/Jolt.natvis" DESTINATION "${CURRENT_PACKAGES_DIR}/doc")
+
 vcpkg_cmake_config_fixup(PACKAGE_NAME Jolt CONFIG_PATH "lib/cmake/Jolt")
 
 vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE")

@@ -5,11 +5,6 @@
 #include <World/Navigation.h>
 #include <Graphics/RendererTypes.h>
 
-namespace physx
-{
-class PxRigidBody;
-}
-
 namespace Tempest
 {
 namespace CastleFight

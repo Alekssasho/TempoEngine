@@ -58,12 +58,20 @@ void AnimationControllerImGuiDebug(void* data)
     ImGuiDebugRender(&comp->CurrentTime, "CurrentTime");
     ImGui::PopID();
 }
-void DynamicPhysicsActorImGuiDebug(void* data)
+void PhysicsBodyImGuiDebug(void* data)
 {
-    auto comp = (Components::DynamicPhysicsActor*)data;
-    ImGui::PushID("DynamicPhysicsActor");
-    ImGui::Text("DynamicPhysicsActor");
-    ImGuiDebugRender(&comp->Actor, "Actor");
+    auto comp = (Components::PhysicsBody*)data;
+    ImGui::PushID("PhysicsBody");
+    ImGui::Text("PhysicsBody");
+    ImGuiDebugRender(&comp->ID, "ID");
+    ImGui::PopID();
+}
+void PrefabPhysicsCreationRequestImGuiDebug(void* data)
+{
+    auto comp = (Components::PrefabPhysicsCreationRequest*)data;
+    ImGui::PushID("PrefabPhysicsCreationRequest");
+    ImGui::Text("PrefabPhysicsCreationRequest");
+    ImGuiDebugRender(&comp->Index, "Index");
     ImGui::PopID();
 }
 void LightColorInfoImGuiDebug(void* data)
@@ -73,15 +81,6 @@ void LightColorInfoImGuiDebug(void* data)
     ImGui::Text("LightColorInfo");
     ImGuiDebugRender(&comp->Color, "Color");
     ImGuiDebugRender(&comp->Intensity, "Intensity");
-    ImGui::PopID();
-}
-void CarPhysicsPartImGuiDebug(void* data)
-{
-    auto comp = (Components::CarPhysicsPart*)data;
-    ImGui::PushID("CarPhysicsPart");
-    ImGui::Text("CarPhysicsPart");
-    ImGuiDebugRender(&comp->CarActor, "CarActor");
-    ImGuiDebugRender(&comp->ShapeIndex, "ShapeIndex");
     ImGui::PopID();
 }
 void CameraControllerImGuiDebug(void* data)
@@ -253,9 +252,15 @@ void RegisterComponents(flecs::world& world)
         g_CompIdToImGuiFunc[componentId] = &AnimationControllerImGuiDebug;
     }
     {
-        auto componentId = world.component<Components::DynamicPhysicsActor>(Components::DynamicPhysicsActor::Name)
+        auto componentId = world.component<Components::PhysicsBody>(Components::PhysicsBody::Name)
             ;
-        g_CompIdToImGuiFunc[componentId] = &DynamicPhysicsActorImGuiDebug;
+        g_CompIdToImGuiFunc[componentId] = &PhysicsBodyImGuiDebug;
+    }
+    {
+        auto componentId = world.component<Components::PrefabPhysicsCreationRequest>(Components::PrefabPhysicsCreationRequest::Name)
+            .member<uint32_t>("Index")
+            ;
+        g_CompIdToImGuiFunc[componentId] = &PrefabPhysicsCreationRequestImGuiDebug;
     }
     {
         auto componentId = world.component<Components::LightColorInfo>(Components::LightColorInfo::Name)
@@ -263,11 +268,6 @@ void RegisterComponents(flecs::world& world)
             .member<float>("Intensity")
             ;
         g_CompIdToImGuiFunc[componentId] = &LightColorInfoImGuiDebug;
-    }
-    {
-        auto componentId = world.component<Components::CarPhysicsPart>(Components::CarPhysicsPart::Name)
-            ;
-        g_CompIdToImGuiFunc[componentId] = &CarPhysicsPartImGuiDebug;
     }
     {
         auto componentId = world.component<Components::CameraController>(Components::CameraController::Name)

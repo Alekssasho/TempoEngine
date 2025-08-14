@@ -48,12 +48,14 @@ public:
 
         {
             const uint32_t meshIndex = AddMeshRequest("Paladin_Anim", "Paladin_J_Nordstrom_Body", Tempest::Definition::MeshType_SkeletonMesh);
+            const uint32_t prefabPhysicIndex = AddPrefabPhysicsRequest(PrefabPhysicsRequest{ meshIndex, PhysicsMeshRequestType::Sphere });
             m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier] = m_ECS.m_EntityWorld.prefab(("Soldier_Prefab" + suffix).c_str())
                 .is_a(m_BasePrefabs[Prefabs::Soldier])
                 .set(Tempest::Components::SkeletonMesh{ meshIndex })
                 .set(Tempest::Components::Faction{ faction })
                 .set(Tempest::Components::AnimationController{ Tempest::AnimationState::Idle, 0.0f })
-                .set(Tempest::Components::AnimationInfo{ GetAnimationStates() });
+                .set(Tempest::Components::AnimationInfo{ GetAnimationStates() })
+                .set(Tempest::Components::PrefabPhysicsCreationRequest{ prefabPhysicIndex });
         }
 
         {
@@ -104,14 +106,9 @@ public:
                 .set(Tempest::Components::Health{ .CurrentHealth = 10.0f, .MaxHealth = 10.0f })
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint, glm::vec3(1.0f, 1.0f, 1.0f) });
             m_CastleManager.Castles[(uint32_t(faction) + 1) % uint32_t(Tempest::CastleFight::Faction::Count)] = castleId;
-        }
 
-        //// Soldiers
-        //{
-        //    m_ECS.m_EntityWorld.entity(("Soldier" + suffix).c_str())
-        //        .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Soldier])
-        //        .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint + 2.0f * factionOriginToWorldOrigin, glm::vec3(1.0f, 1.0f, 1.0f) });
-        //}
+            AddPhysicsRequest(PhysicsRequests{ castleId, castleId.get<Tempest::Components::StaticMesh>().Mesh, PhysicsMeshRequestType::Sphere, castleId.get<Tempest::Components::Transform>()});
+        }
     }
 
     void ConstructScript() override
@@ -140,15 +137,17 @@ public:
                 .set(Tempest::Components::LightColorInfo{
                     glm::vec3(1.0f, 1.0f, 1.0f),
                     1.0f })
-                    .add<Tempest::Tags::DirectionalLight>();
+                .add<Tempest::Tags::DirectionalLight>();
         }
 
         // Add ground
         {
             const uint32_t meshIndex = AddMeshRequest("car3", "Plane");
-            m_ECS.m_EntityWorld.entity("Ground")
+            auto groundId = m_ECS.m_EntityWorld.entity("Ground")
                 .set(Tempest::Components::StaticMesh{ meshIndex })
-                .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(23.0f, 23.0f, 23.0f)});
+                .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(23.0f, 23.0f, 23.0f)})
+                .add<Tempest::Components::PhysicsBody>();
+            AddPhysicsRequest(PhysicsRequests{ groundId, meshIndex, PhysicsMeshRequestType::Mesh, groundId.get<Tempest::Components::Transform>()});
         }
 
         AddPrefabs();

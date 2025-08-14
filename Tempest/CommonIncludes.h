@@ -20,3 +20,6 @@
 
 #include <tracy/Tracy.hpp>
 #include <tracy/TracyC.h>
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Body/BodyID.h>

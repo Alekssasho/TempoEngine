@@ -89,24 +89,20 @@ namespace TempoEngine
         }
     }
 
-    // [Sharpmake.Export]
-    // public class PhysX : ThirdPartyProject
-    // {
-    //     public override void ConfigureAll(Project.Configuration conf, Target target)
-    //     {
-    //         base.ConfigureAll(conf, target);
+    [Sharpmake.Export]
+    public class Jolt : ThirdPartyVcpkgProject
+    {
+        public override void ConfigureAll(Project.Configuration conf, Target target)
+        {
+            base.ConfigureAll(conf, target);
 
-    //         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\include");
+            conf.LibraryFiles.Add("Jolt");
 
-    //         conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]\..\ThirdParty\PhysX\lib\[target.Name]");
-    //         conf.LibraryFiles.Add("PhysXFoundation_64");
-    //         conf.LibraryFiles.Add("PhysXCommon_64");
-    //         conf.LibraryFiles.Add("PhysX_64");
-    //         conf.LibraryFiles.Add("PhysXExtensions_static_64");
-    //         conf.LibraryFiles.Add("PhysXPvdSDK_static_64");
-    //         conf.LibraryFiles.Add("PhysXVehicle_static_64");
-    //     }
-    // }
+            conf.ExportDefines.Add("JPH_EXTERNAL_PROFILE");
+            conf.ExportDefines.Add("JPH_OBJECT_STREAM");
+            conf.ExportDefines.Add("JPH_FLOATING_POINT_EXCEPTIONS_ENABLED");
+        }
+    }
 
     [Sharpmake.Export]
     public class ImGUI : ThirdPartyVcpkgProject

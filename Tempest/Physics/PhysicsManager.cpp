@@ -1,251 +1,296 @@
 #include <CommonIncludes.h>
-//#include <flecs.h>
-//
+
 #include <Physics/PhysicsManager.h>
-//
-//#include <PxPhysicsAPI.h>
-//#include <extensions/PxExtensionsAPI.h>
-//#include <vehicle/PxVehicleSDK.h>
-//#include <vehicle/PxVehicleUtil.h>
-//#include <vehicle/PxVehicleTireFriction.h>
-//#include <vehicle/PxVehicleSuspLimitConstraintShader.h>
-//
-//
-//#include <World/EntityQuery.h>
-//#include <World/Components/Components.h>
-//#include <World/World.h>
-//#include <DataDefinitions/CommonTypes_generated.h>
-//
+#include <Physics/PhysicsConstants.h>
+
+#include <EngineCore.h>
+
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/Profiler.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/PhysicsScene.h>
+
+#include <DataDefinitions/PhysicsDatabase_generated.h>
+
+#ifdef JPH_EXTERNAL_PROFILE
+JPH_NAMESPACE_BEGIN
+ExternalProfileMeasurement::ExternalProfileMeasurement(const char* inName, uint32 inColor)
+{
+    uint64_t srcLoc = ___tracy_alloc_srcloc(__LINE__, __FILE__, strlen(__FILE__), inName, strlen(inName), inColor);
+    TracyCZoneCtx ctx = ___tracy_emit_zone_begin_alloc(srcLoc, true);
+    memcpy(mUserData, &ctx, sizeof(TracyCZoneCtx));
+}
+
+ExternalProfileMeasurement::~ExternalProfileMeasurement()
+{
+    TracyCZoneCtx* ctx = reinterpret_cast<TracyCZoneCtx*>(mUserData);
+    ___tracy_emit_zone_end(*ctx);
+}
+JPH_NAMESPACE_END
+#endif
+
 namespace Tempest
 {
-//void PhysXErrorCallback::reportError(physx::PxErrorCode::Enum code, const char* message, const char* file, int line)
-//{
-//	Tempest::LogSeverity severity;
-//	switch (code)
-//	{
-//	case physx::PxErrorCode::eDEBUG_INFO:
-//		severity = Tempest::LogSeverity::Info;
-//		break;
-//	case physx::PxErrorCode::eDEBUG_WARNING:
-//	case physx::PxErrorCode::ePERF_WARNING:
-//		severity = Tempest::LogSeverity::Warning;
-//		break;
-//	case physx::PxErrorCode::eINVALID_PARAMETER:
-//	case physx::PxErrorCode::eINVALID_OPERATION:
-//	case physx::PxErrorCode::eOUT_OF_MEMORY:
-//	case physx::PxErrorCode::eINTERNAL_ERROR:
-//		severity = Tempest::LogSeverity::Error;
-//		break;
-//	case physx::PxErrorCode::eABORT:
-//	default:
-//		severity = Tempest::LogSeverity::Fatal;
-//		break;
-//	}
-//	
-//	Tempest::Logger::gLogger->WriteLog(severity, "Physics", message);
-//}
-//
-//void* PhysXAllocator::allocate(size_t size, const char* typeName, const char* filename, int line)
-//{
-//	// TODO: Proper allocator
-//	return malloc(size);
-//}
-//
-//void PhysXAllocator::deallocate(void* ptr)
-//{
-//	free(ptr);
-//}
-//
-//physx::PxQueryHitType::Enum WheelSceneQueryPreFilterBlocking(
-//	physx::PxFilterData filterData0,
-//	physx::PxFilterData filterData1,
-//	const void* constantBlock,
-//	physx::PxU32 constantBlockSize,
-//	physx::PxHitFlags& queryFlags
-//) {
-//	//filterData0 is the vehicle suspension query.
-//	//filterData1 is the shape potentially hit by the query.
-//	PX_UNUSED(filterData0);
-//	PX_UNUSED(constantBlock);
-//	PX_UNUSED(constantBlockSize);
-//	PX_UNUSED(queryFlags);
-//	return ((0 == (filterData1.word3 & Common::Tempest::PhysicsShapeFilter_DrivableSurface)) ? physx::PxQueryHitType::eNONE : physx::PxQueryHitType::eBLOCK);
-//}
-//
-//const int numWheels = 4;
-//const int groupGround = 0;
-//const int groupWheel = 1;
-//
-//// This should be per vehicle
-//physx::PxBatchQuery* gBatchQuery;
-//physx::PxRaycastQueryResult suspensionQueryResults[numWheels];
-//physx::PxRaycastHit suspensionQueryHitBuffer[numWheels];
-//
+static void TraceImpl(const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    eastl::string buffer;
+    buffer.sprintf_va_list(fmt, args);
+    Tempest::Logger::gLogger->WriteLog(Tempest::LogSeverity::Info, "Physics", buffer.c_str());
+
+    va_end(args);
+}
+
+struct JoltJobSystem : public JPH::JobSystemWithBarrier
+{
+    //struct JoltBarrier : public JPH::JobSystem::Barrier
+    //{
+    //    virtual ~JoltBarrier() override
+    //    {
+    //        assert(Counters.empty());
+    //    }
+    //    virtual void		AddJob(const JobHandle& inJob) override
+    //    {
+    //        AddJobs(&inJob, 1);
+    //    }
+    //    virtual void		AddJobs(const JobHandle* inHandles, JPH::uint inNumHandles) override
+    //    {
+    //        for (uint32_t i = 0; i < inNumHandles; ++i)
+    //        {
+    //            Counters.emplace_back();
+    //        }
+    //    }
+    //    virtual void		OnJobFinished(Job* inJob) override;
+
+    //    eastl::vector<Tempest::Job::Counter> Counters;
+    //};
+
+    virtual int GetMaxConcurrency() const override
+    {
+        return gEngineCore->GetOptions().NumWorkerThreads;
+    }
+
+    virtual JobHandle		CreateJob(const char* inName, JPH::ColorArg inColor, const JobFunction& inJobFunction, JPH::uint32 inNumDependencies = 0) override
+    {
+        JPH::JobSystem::Job* job = new JPH::JobSystem::Job(inName, inColor, this, inJobFunction, inNumDependencies);
+
+        if (inNumDependencies == 0)
+        {
+            QueueJob(job);
+        }
+        return JobHandle(job);
+    }
+    //virtual Barrier* CreateBarrier() override
+    //{
+    //    return new JoltBarrier;
+    //}
+    //virtual void			DestroyBarrier(Barrier* inBarrier) override
+    //{ 
+    //    JoltBarrier* jb = static_cast<JoltBarrier*>(inBarrier);
+    //    delete jb;
+    //}
+    //virtual void			WaitForJobs(Barrier* inBarrier) override
+    //{
+    //    for (Tempest::Job::Counter& jobs : static_cast<JoltBarrier*>(inBarrier)->Counters)
+    //    {
+    //        gEngineCore->GetJobSystem().WaitForCounter(&jobs, 0);
+    //    }
+
+    //    static_cast<JoltBarrier*>(inBarrier)->Counters.resize(0);
+    //}
+    virtual void			QueueJob(Job* inJob) override
+    {
+        Tempest::Job::JobDecl job{
+            [](uint32_t, void* jobData) {
+                auto job = static_cast<Job*>(jobData);
+                job->Execute();
+            },
+            inJob
+        };
+        gEngineCore->GetJobSystem().RunJobs("Physics Job", &job, 1);
+    }
+    virtual void			QueueJobs(Job** inJobs, JPH::uint inNumJobs) override
+    {
+        for (uint32_t i = 0; i < inNumJobs; ++i)
+        {
+            QueueJob(inJobs[i]);
+        }
+    }
+    virtual void			FreeJob(Job* inJob) override
+    {
+        delete inJob;
+    }
+};
+
+struct BPLImpl final : public JPH::BroadPhaseLayerInterface
+{
+    virtual JPH::uint GetNumBroadPhaseLayers() const override
+    {
+        return 2;
+    }
+
+    virtual JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer inLayer) const override
+    {
+        if (inLayer == Physics::ObjectLayers::Static)
+        {
+            return Physics::BroadPhaseLayers::sStatic;
+        }
+        else
+        {
+            assert(inLayer == Physics::ObjectLayers::Dynamic);
+            return Physics::BroadPhaseLayers::sDynamic;
+        }
+    }
+
+#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+    virtual const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer inLayer) const override
+    {
+        if (inLayer == Physics::BroadPhaseLayers::sStatic)
+        {
+            return "Static";
+        }
+        else if (inLayer == Physics::BroadPhaseLayers::sDynamic)
+        {
+            return "Dynamic";
+        }
+
+        return "Unknown";
+    }
+#endif
+};
+
+struct OBPLFImpl final : public JPH::ObjectVsBroadPhaseLayerFilter
+{
+    virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::BroadPhaseLayer inLayer2) const override
+    {
+        switch (inLayer1)
+        {
+        case Physics::ObjectLayers::Static:
+            return inLayer2 == Physics::BroadPhaseLayers::sDynamic;
+        case Physics::ObjectLayers::Dynamic:
+            return true;
+        default:
+            assert(false);
+            return false;
+        }
+    }
+};
+
+struct OLPFImple final : public JPH::ObjectLayerPairFilter
+{
+    virtual bool ShouldCollide(JPH::ObjectLayer inLayer1, JPH::ObjectLayer inLayer2) const override
+    {
+        switch (inLayer1)
+        {
+        case Physics::ObjectLayers::Static:
+            return inLayer2 == Physics::ObjectLayers::Dynamic;
+        case Physics::ObjectLayers::Dynamic:
+            return true;
+        default:
+            assert(false);
+            return false;
+        }
+    }
+};
+
+struct PhysicsImpl
+{
+    JPH::TempAllocatorImpl TempAllocator;
+    JoltJobSystem JobSystem;
+    JPH::PhysicsSystem System;
+
+    BPLImpl BPL;
+    OBPLFImpl OBPLF;
+    OLPFImple OLPF;
+
+    JPH::Ref<JPH::PhysicsScene> PrefabScene;
+
+    PhysicsImpl()
+        : TempAllocator(10 * 1024 * 1024)
+    {
+    }
+};
+
 PhysicsManager::PhysicsManager()
 {
-//	m_Foundation.reset(PxCreateFoundation(PX_PHYSICS_VERSION, m_Allocator, m_Logger));
-//	assert(m_Foundation);
-//
-//	physx::PxTolerancesScale scale;
-//
-//#ifdef _DEBUG
-//	const bool recordMemoryAllocations = true;
-//	//The normal way to connect to pvd.  PVD needs to be running at the time this function is called.
-//	//We don't worry about the return value because we are already registered as a listener for connections
-//	//and thus our onPvdConnected call will take care of setting up our basic connection state.
-//	char ip[] = "127.0.0.1";
-//	m_Transport.reset(physx::PxDefaultPvdSocketTransportCreate(ip, 5425, 1000));
-//	if (!m_Transport)
-//	{
-//		return;
-//	}
-//
-//	//Use these flags for a clean profile trace with minimal overhead
-//	physx::PxPvdInstrumentationFlags flags = physx::PxPvdInstrumentationFlag::eALL;
-//
-//	m_VisualDebugger.reset(physx::PxCreatePvd(*m_Foundation));
-//	m_VisualDebugger->connect(*m_Transport, flags);
-//#else
-//	const bool recordMemoryAllocations = false;
-//#endif
-//	m_PhysicsEngine.reset(PxCreatePhysics(PX_PHYSICS_VERSION, *m_Foundation, scale, recordMemoryAllocations, m_VisualDebugger.get()));
-//	assert(m_PhysicsEngine);
-//
-//	m_SerializationRegistry.reset(physx::PxSerialization::createSerializationRegistry(*m_PhysicsEngine));
-//
-//	PxInitExtensions(*m_PhysicsEngine, m_VisualDebugger.get());
-//
-//	// Vehicle setup
-//	physx::PxInitVehicleSDK(*m_PhysicsEngine, m_SerializationRegistry.get());
-//	physx::PxVehicleSetBasisVectors(physx::PxVec3(sUpDirection.x, sUpDirection.y, sUpDirection.z), physx::PxVec3(sForwardDirection.x, sForwardDirection.y, sForwardDirection.z));
-//	physx::PxVehicleSetUpdateMode(physx::PxVehicleUpdateMode::eVELOCITY_CHANGE);
-//
-//	// Scene setup
-//	physx::PxSceneDesc sceneDesc(m_PhysicsEngine->getTolerancesScale());
-//	sceneDesc.gravity = physx::PxVec3(0.0f, -9.8f, 0.0f);
-//	sceneDesc.filterShader = physx::PxDefaultSimulationFilterShader;
-//
-//	// TODO: Change to one specific for our job system
-//	sceneDesc.cpuDispatcher = physx::PxDefaultCpuDispatcherCreate(1);
-//
-//	m_Scene.reset(m_PhysicsEngine->createScene(sceneDesc));
-//	assert(m_Scene);
-//
-//	m_Scene->setVisualizationParameter(physx::PxVisualizationParameter::eSCALE, 1.f);
-//	m_Scene->setVisualizationParameter(physx::PxVisualizationParameter::eACTOR_AXES, 2.f);
-//	m_Scene->setVisualizationParameter(physx::PxVisualizationParameter::eCOLLISION_SHAPES, 1.0f);
-//
-//	physx::PxPvdSceneClient* pvdClient = m_Scene->getScenePvdClient();
-//	if (pvdClient)
-//	{
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONSTRAINTS, true);
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_CONTACTS, true);
-//		pvdClient->setScenePvdFlag(physx::PxPvdSceneFlag::eTRANSMIT_SCENEQUERIES, true);
-//	}
-//
-//	// Simulation filtering
-//	physx::PxSetGroupCollisionFlag(groupGround, groupGround, true);
-//	physx::PxSetGroupCollisionFlag(groupWheel, groupWheel, true);
-//	physx::PxSetGroupCollisionFlag(groupGround, groupWheel, false);
+    // TODO: override
+    JPH::RegisterDefaultAllocator();
+    JPH::Trace = TraceImpl;
+    JPH::Factory::sInstance = new JPH::Factory;
+    JPH::RegisterTypes();
+
+    m_Impl.reset(new PhysicsImpl);
+
+    m_Impl->System.Init(
+        65536,
+        0,
+        65536,
+        10240,
+        m_Impl->BPL,
+        m_Impl->OBPLF,
+        m_Impl->OLPF);
 }
-//
+
 PhysicsManager::~PhysicsManager()
 {
-//	physx::PxCloseVehicleSDK(m_SerializationRegistry.get());
-//	PxCloseExtensions();
+    JPH::UnregisterTypes();
+    m_Impl.reset();
 }
-//
-//physx::PxVehicleDrive4W* gVehicle4W = nullptr;
-//physx::PxVehicleDrivableSurfaceToTireFrictionPairs* gFrictionPairs;
-//physx::PxVehicleTelemetryData* gTelemetryData;
-//
-//void PhysicsManager::LoadFromData(void* data, uint32_t size)
-//{
-//	// we need to allocate aligned
-//	// Change to aligned allocator
-//	m_AllignedAlloc.reset(_aligned_malloc(size, 128));
-//	memcpy(m_AllignedAlloc.get(), data, size);
-//
-//	physx::PxCollection* collection = physx::PxSerialization::createCollectionFromBinary(m_AllignedAlloc.get(), *m_SerializationRegistry);
-//
-//	uint32_t numIds = collection->getNbIds();
-//	if (numIds == 0)
-//	{
-//		collection->release();
-//		return;
-//	}
-//	// TODO: Temp memory
-//	eastl::vector<physx::PxSerialObjectId> ids(numIds);
-//	collection->getIds(ids.data(), numIds);
-//
-//	m_Scene->addCollection(*collection);
-//
-//	// Patch userData of actors. We are using entity id as user data
-//	// and we have already used the same id inside the PxSerialObjectId so we need
-//	// to set it to the appropriate actor
-//	for(physx::PxSerialObjectId id : ids)
-//	{
-//		physx::PxBase* baseObject = collection->find(id);
-//		physx::PxActor* actor = baseObject->is<physx::PxActor>();
-//		physx::PxVehicleDrive4W* carDrive = nullptr;
-//		// Cannot use "is" method, because it is using typeMatch template which requires some internal header of the vehicle extension
-//		if(baseObject->getConcreteType() == physx::PxVehicleConcreteType::eVehicleDrive4W)
-//		{
-//			carDrive = static_cast<physx::PxVehicleDrive4W*>(baseObject);
-//		}
-//
-//		if(actor)
-//		{
-//			actor->userData = (void*)id;
-//		}
-//		else if(carDrive)
-//		{
-//			assert(gVehicle4W == nullptr);
-//			gVehicle4W = carDrive;
-//
-//			physx::PxVehicleDrivableSurfaceType surfaceTypes[1];
-//			surfaceTypes[0].mType = 0;
-//
-//			const physx::PxMaterial* surfaceMaterials[1];
-//			physx::PxShape* firstShape;
-//			gVehicle4W->getRigidDynamicActor()->getShapes(&firstShape, 1);
-//			surfaceMaterials[0] = firstShape->getMaterialFromInternalFaceIndex(0);
-//
-//			physx::PxVehicleDrivableSurfaceToTireFrictionPairs* surfaceTirePairs =
-//				physx::PxVehicleDrivableSurfaceToTireFrictionPairs::allocate(1, 1);
-//
-//			surfaceTirePairs->setup(1, 1, surfaceMaterials, surfaceTypes);
-//
-//			for (int i = 0; i < 1; i++)
-//			{
-//				for (int j = 0; j < 1; j++)
-//				{
-//					surfaceTirePairs->setTypePairFriction(i, j, 1);
-//				}
-//			}
-//			gFrictionPairs = surfaceTirePairs;
-//
-//			// 4 Wheel Vehicle setup
-//			physx::PxBatchQueryDesc suspensionQueryDesc(numWheels, 0, 0);
-//			suspensionQueryDesc.queryMemory.userRaycastResultBuffer = suspensionQueryResults;
-//			suspensionQueryDesc.queryMemory.userRaycastTouchBuffer = suspensionQueryHitBuffer;
-//			suspensionQueryDesc.queryMemory.raycastTouchBufferSize = numWheels;
-//			suspensionQueryDesc.preFilterShader = WheelSceneQueryPreFilterBlocking;
-//			gBatchQuery = m_Scene->createBatchQuery(suspensionQueryDesc);
-//
-//			gVehicle4W->setToRestState();
-//			gVehicle4W->mDriveDynData.forceGearChange(physx::PxVehicleGearsData::eFIRST);
-//			gVehicle4W->mDriveDynData.setUseAutoGears(true);
-//			gVehicle4W->mWheelsDynData.setTireForceShaderFunction(physx::PxVehicleComputeTireForceDefault);
-//		}
-//		else
-//		{
-//			assert(false);
-//		}
-//	}
-//
-//	collection->release();
-//}
+
+void PhysicsManager::LoadDatabase(const char* databaseName)
+{
+    const Definition::PhysicsDatabase* physicsDatabase = gEngineCore->GetResourceLoader().LoadResource<Definition::PhysicsDatabase>(databaseName);
+    if (!physicsDatabase)
+    {
+        LOG(Warning, Physics, "Physics Database is Invalid!");
+        return;
+    }
+
+    class StreamInFromMemory : public JPH::StreamIn
+    {
+    public:
+        /// Constructor
+        StreamInFromMemory(const uint8_t* data, uint32_t size)
+            : Data(data)
+            , Size(size)
+            , CurrentIndex(0)
+        { }
+        virtual void ReadBytes(void* outData, size_t inNumBytes) override { memcpy(outData, Data + CurrentIndex, inNumBytes); CurrentIndex += uint32_t(inNumBytes); }
+        virtual bool IsEOF() const override { return CurrentIndex >= Size; }
+        virtual bool IsFailed() const override { return false; }
+
+        const uint8_t* Data;
+        uint32_t Size;
+        uint32_t CurrentIndex;
+    };
+
+    StreamInFromMemory initialReader(physicsDatabase->initial_physics_scene()->data(), physicsDatabase->initial_physics_scene()->size());
+
+    JPH::PhysicsScene::PhysicsSceneResult initialSceneResult = JPH::PhysicsScene::sRestoreFromBinaryState(initialReader);
+    if (initialSceneResult.HasError())
+    {
+        FORMAT_LOG(Error, Physics, "Cannot load initial scene with %s", initialSceneResult.GetError().c_str());
+        return;
+    }
+
+    JPH::Ref<JPH::PhysicsScene> initialScene = initialSceneResult.Get();
+    initialScene->CreateBodies(&m_Impl->System);
+
+    StreamInFromMemory prefabReader(physicsDatabase->prefabs_scene()->data(), physicsDatabase->prefabs_scene()->size());
+    JPH::PhysicsScene::PhysicsSceneResult prefabSceneResult = JPH::PhysicsScene::sRestoreFromBinaryState(prefabReader);
+    if (prefabSceneResult.HasError())
+    {
+        FORMAT_LOG(Error, Physics, "Cannot load prefab scene with %s", prefabSceneResult.GetError().c_str());
+        return;
+    }
+
+    m_Impl->PrefabScene = prefabSceneResult.Get();
+}
 //
 //void PhysicsManager::PatchWorldComponents(World& world, const eastl::vector<flecs::entity_t>& newlyCreatedEntities)
 //{
@@ -303,39 +348,7 @@ PhysicsManager::~PhysicsManager()
 //		}
 //	}
 //}
-//
-//physx::PxVehicleKeySmoothingData gKeySmoothingData =
-//{
-//	{
-//		6.0f,	//rise rate eANALOG_INPUT_ACCEL
-//		6.0f,	//rise rate eANALOG_INPUT_BRAKE
-//		6.0f,	//rise rate eANALOG_INPUT_HANDBRAKE
-//		2.5f,	//rise rate eANALOG_INPUT_STEER_LEFT
-//		2.5f,	//rise rate eANALOG_INPUT_STEER_RIGHT
-//	},
-//	{
-//		10.0f,	//fall rate eANALOG_INPUT_ACCEL
-//		10.0f,	//fall rate eANALOG_INPUT_BRAKE
-//		10.0f,	//fall rate eANALOG_INPUT_HANDBRAKE
-//		5.0f,	//fall rate eANALOG_INPUT_STEER_LEFT
-//		5.0f	//fall rate eANALOG_INPUT_STEER_RIGHT
-//	}
-//};
-//
-//physx::PxF32 gSteerVsForwardSpeedData[2 * 8] =
-//{
-//	0.0f,		0.75f,
-//	5.0f,		0.75f,
-//	30.0f,		0.125f,
-//	120.0f,		0.1f,
-//	PX_MAX_F32, PX_MAX_F32,
-//	PX_MAX_F32, PX_MAX_F32,
-//	PX_MAX_F32, PX_MAX_F32,
-//	PX_MAX_F32, PX_MAX_F32
-//};
-//physx::PxFixedSizeLookupTable<8> gSteerVsForwardSpeedTable(gSteerVsForwardSpeedData, 4);
-//bool gIsVehicleInAir = true;
-//
+
 //void PhysicsManager::Update(float deltaTime)
 //{
 //	if(gVehicle4W)

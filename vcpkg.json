@@ -8,7 +8,13 @@
       ]
     },
     "eastl",
-    "physx",
+    {
+      "name": "joltphysics",
+      "features": [
+        "profiler",
+        "external-profiler"
+      ]
+    },
     "stb",
     "flatbuffers",
     "gainput",

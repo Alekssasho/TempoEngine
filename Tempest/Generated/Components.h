@@ -41,22 +41,21 @@ struct AnimationController
     float CurrentTime;
     static constexpr const char* Name = "AnimationController";
 };
-struct DynamicPhysicsActor
+struct PhysicsBody
 {
-    physx::PxRigidBody* Actor;
-    static constexpr const char* Name = "DynamicPhysicsActor";
+    JPH::BodyID ID;
+    static constexpr const char* Name = "PhysicsBody";
+};
+struct PrefabPhysicsCreationRequest
+{
+    uint32_t Index;
+    static constexpr const char* Name = "PrefabPhysicsCreationRequest";
 };
 struct LightColorInfo
 {
     glm::vec3 Color;
     float Intensity;
     static constexpr const char* Name = "LightColorInfo";
-};
-struct CarPhysicsPart
-{
-    physx::PxRigidBody* CarActor;
-    uint32_t ShapeIndex;
-    static constexpr const char* Name = "CarPhysicsPart";
 };
 struct CameraController
 {

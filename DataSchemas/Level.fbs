@@ -16,7 +16,7 @@ table Level
 {
     name: string;
     entities: [ubyte];
-    physics_world: [ubyte];
+    physics_database_file: string;
     geometry_database_file: string;
     texture_database_file: string;
     sound_database_file: string;

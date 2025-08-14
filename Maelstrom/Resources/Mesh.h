@@ -26,7 +26,7 @@ struct PrimitiveMeshData
 	eastl::vector<uint8_t> Vertices;
 	eastl::vector<uint8_t> MeshletIndices;
 	eastl::vector<uint32_t> WholeMeshIndices;
-	eastl::vector<uint32_t> SimplyfiedMeshIndices;
+	//eastl::vector<uint32_t> SimplyfiedMeshIndices;
 	uint32_t MaterialIndex;
 };
 
@@ -156,25 +156,25 @@ struct MeshResource : Resource<eastl::vector<PrimitiveMeshData>>
 				}
 			}
 
-			eastl::vector<uint32_t> simplifiedIndices(wholeMeshIndices.size());
-			const auto simplifiedIndicesCount = meshopt_simplifySloppy(
-				simplifiedIndices.data(),
-				wholeMeshIndices.data(),
-				wholeMeshIndices.size(),
-				reinterpret_cast<const float*>(vertices.data()),
-				vertexCount,
-				vertexLayoutSize,
-				std::min(size_t(256), wholeMeshIndices.size()),
-				1.0,
-				nullptr
-			);
-			simplifiedIndices.resize(simplifiedIndicesCount);
+			//eastl::vector<uint32_t> simplifiedIndices(wholeMeshIndices.size());
+			//const auto simplifiedIndicesCount = meshopt_simplifySloppy(
+			//	simplifiedIndices.data(),
+			//	wholeMeshIndices.data(),
+			//	wholeMeshIndices.size(),
+			//	reinterpret_cast<const float*>(vertices.data()),
+			//	vertexCount,
+			//	vertexLayoutSize,
+			//	std::min(size_t(256), wholeMeshIndices.size()),
+			//	1.0,
+			//	nullptr
+			//);
+			//simplifiedIndices.resize(simplifiedIndicesCount);
 
 			primitiveMeshes[prim].Meshlets.swap(meshlets);
             primitiveMeshes[prim].Vertices.swap(vertices);
             primitiveMeshes[prim].MeshletIndices.swap(meshletIndices);
             primitiveMeshes[prim].WholeMeshIndices.swap(wholeMeshIndices);
-            primitiveMeshes[prim].SimplyfiedMeshIndices.swap(simplifiedIndices);
+            //primitiveMeshes[prim].SimplyfiedMeshIndices.swap(simplifiedIndices);
 			primitiveMeshes[prim].MaterialIndex = m_Scene.MeshMaterialIndex(m_MeshIndex, prim);
 		}
 

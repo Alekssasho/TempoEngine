@@ -88,8 +88,9 @@ void ImGuiDebugRender(Navigation::LaneIterator* v, const char* nameOfMember)
 }
 
 template<>
-void ImGuiDebugRender(physx::PxRigidBody** v, const char* nameOfMember)
+void ImGuiDebugRender(JPH::BodyID* v, const char* nameOfMember)
 {
+    ImGui::InputInt(nameOfMember, (int*)v);
 }
 
 }

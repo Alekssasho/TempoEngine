@@ -43,22 +43,21 @@ Component AnimationController
 }
 
 [NoReflection]
-Component DynamicPhysicsActor
+Component PhysicsBody
 {
-    Actor : physx::PxRigidBody*;
+	[StorageType(uint32_t)]
+    ID : JPH::BodyID;
+}
+
+Component PrefabPhysicsCreationRequest
+{
+	Index : uint32_t;
 }
 
 Component LightColorInfo
 {
 	Color : glm::vec3;
 	Intensity : float;
-}
-
-[NoReflection]
-Component CarPhysicsPart
-{
-	CarActor : physx::PxRigidBody*;
-	ShapeIndex : uint32_t;
 }
 
 [NoReflection]

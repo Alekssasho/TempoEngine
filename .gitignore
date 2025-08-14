@@ -427,6 +427,7 @@ TempoEngine.sln
 *.tab
 *.ttb
 *.tsb
+*.tpb
 
 # Source Data which should be kept in something else
 *.gltf

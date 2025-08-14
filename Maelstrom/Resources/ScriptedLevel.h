@@ -7,6 +7,7 @@
 #include "TextureDatabase.h"
 #include "EntitiesDatabase.h"
 #include "AudioDatabase.h"
+#include "PhysicsDatabase.h"
 
 #include "../GLTFScene.h"
 
@@ -99,9 +100,10 @@ public:
         GeometryDatabaseResource geometryDatabaseResource(meshResources, materialDatabaseResource.GetCompiledData().Materials, materialRequests, animationDatabaseResource.GetCompiledData().SkeletonJointsMapping);
         TextureDatabaseResource textureDatabaseResource(loadedScenes, materialDatabaseResource.GetCompiledData().TextureRequests);
         AudioDatabaseResource audioDatabaseResource(m_RequestedSoundClips);
+        PhysicsDatabaseResource physicsDatabaseResource(meshResources, m_PhysicsRequests, m_PrefabPhysicsRequests);
 
         Tempest::Job::Counter databaseCounter;
-        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource);
+        CompileResources(databaseCounter, geometryDatabaseResource, textureDatabaseResource, audioDatabaseResource, physicsDatabaseResource);
 
         // Compile ECS state, while other databases are being compiled
         eastl::vector<uint8_t> ecsState;
@@ -113,16 +115,17 @@ public:
         // Now wait for the databases to finish
         Tempest::gEngineCore->GetJobSystem().WaitForCounter(&databaseCounter, 0);
 
-        // We are ready with all dependenacies so we just write the data
+        // We are ready with all dependencies so we just write the data
         auto geometryDatabaseName = WriteFile(Tempest::Definition::GeometryDatabaseExtension(), geometryDatabaseResource.GetCompiledData());
         auto audioDatabaseName = WriteFile(Tempest::Definition::SoundDatabaseExtension(), audioDatabaseResource.GetCompiledData());
         auto textureDatabaseName = WriteFile(Tempest::Definition::TextureDatabaseExtension(), textureDatabaseResource.GetCompiledData());
         auto animationDatabaseName = WriteFile(Tempest::Definition::AnimationDatabaseExtension(), animationDatabaseResource.GetCompiledData().CompiledData);
+        auto physicsDatabaseName = WriteFile(Tempest::Definition::PhysicsDatabaseExtension(), physicsDatabaseResource.GetCompiledData());
 
         flatbuffers::FlatBufferBuilder builder(1024 * 1024);
-        auto nameOffset = builder.CreateString(/*m_Name.c_str()*/"");
+        auto nameOffset = builder.CreateString(GetName());
         auto entitiesOffset = builder.CreateVector<uint8_t>(ecsState.data(), ecsState.size());
-        auto physicsWorldOffset = 0;
+        auto physicsDatabaseOffset = builder.CreateString(physicsDatabaseName.c_str());;
         auto geometryDatabaseFileOffset = builder.CreateString(geometryDatabaseName.c_str());
         auto textureDatabaseFileOffset = builder.CreateString(textureDatabaseName.c_str());
         auto audioDatabaseFileOffset = builder.CreateString(audioDatabaseName.c_str());
@@ -131,7 +134,7 @@ public:
             builder,
             nameOffset,
             entitiesOffset,
-            physicsWorldOffset,
+            physicsDatabaseOffset,
             geometryDatabaseFileOffset,
             textureDatabaseFileOffset,
             audioDatabaseFileOffset,
@@ -215,5 +218,26 @@ protected:
 
         m_RequestedSoundClips.emplace_back(eastl::move(clipName));
         return uint32_t(m_RequestedSoundClips.size() - 1);
+    }
+
+    eastl::vector<PhysicsRequests> m_PhysicsRequests;
+    void AddPhysicsRequest(PhysicsRequests&& request)
+    {
+        m_PhysicsRequests.push_back(eastl::move(request));
+    }
+
+    eastl::vector<PrefabPhysicsRequest> m_PrefabPhysicsRequests;
+    uint32_t AddPrefabPhysicsRequest(PrefabPhysicsRequest request)
+    {
+        auto findItr = eastl::find_if(m_PrefabPhysicsRequests.begin(), m_PrefabPhysicsRequests.end(), [&request](const auto& req) {
+            return req.MeshIndex == request.MeshIndex && req.Type == request.Type;
+        });
+        if (findItr != m_PrefabPhysicsRequests.end())
+        {
+            return uint32_t(eastl::distance(m_PrefabPhysicsRequests.begin(), findItr));
+        }
+
+        m_PrefabPhysicsRequests.emplace_back(eastl::move(request));
+        return uint32_t(m_PrefabPhysicsRequests.size() - 1);
     }
 };

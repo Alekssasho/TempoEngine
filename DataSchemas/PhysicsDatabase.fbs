@@ -1,0 +1,11 @@
+namespace Tempest.Definition;
+
+table PhysicsDatabase
+{
+    initial_physics_scene : [ubyte];
+    prefabs_scene : [ubyte];
+}
+
+file_identifier "TPDB";
+file_extension "tpb";
+root_type PhysicsDatabase;

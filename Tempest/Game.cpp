@@ -43,6 +43,7 @@ void Game::LoadLevel(uint32_t, void* data)
 	const char* textureDatabase = level->texture_database_file()->c_str();
 	const char* audioDatabase = level->sound_database_file()->c_str();
 	const char* animationDatabase = level->animation_database_file()->c_str();
+	const char* physicsDatabase = level->physics_database_file()->c_str();
 	FORMAT_LOG(Info, Game, "Loading Level \"%s\".", levelName);
 
 	// Async Load the rendering databases
@@ -91,20 +92,24 @@ void Game::LoadLevel(uint32_t, void* data)
 	}
 
 	// Async Load the physics world
-	const flatbuffers::Vector<uint8_t>* physicsData = level->physics_world();
-	//Job::Counter physicsWorldCounter;
-	//{
-	//	Job::JobDecl loadPhysicsWorld{ [](uint32_t, void* data) {
-	//		auto dataVector = reinterpret_cast<flatbuffers::Vector<uint8_t>*>(data);
-	//		gEngine->GetPhysics().LoadFromData(dataVector->Data(), dataVector->size());
-	//	}, (void*)physicsData };
-	//	gEngine->GetJobSystem().RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
-	//}
+	Job::Counter physicsWorldCounter;
+	{
+		Job::JobDecl loadPhysicsWorld{ [](uint32_t, void* databaseName) {
+			gEngine->GetPhysics().LoadDatabase((const char*)databaseName);
+		}, (void*)physicsDatabase };
+		gEngine->GetJobSystem().RunJobs("Load Physics World", &loadPhysicsWorld, 1, &physicsWorldCounter);
+	}
 
 	gEngine->GetJobSystem().WaitForCounter(&animationDatabaseCounter, 0);
 
+	// Wait for physics as well
+	gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);
+
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
 	const eastl::vector<flecs::entity_t>& newlyCreatedEntities = gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
+
+	// Patch the world with the loaded physics
+	//gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
 
 	auto camera = level->camera();
 
@@ -121,18 +126,11 @@ void Game::LoadLevel(uint32_t, void* data)
 	const Components::CameraController& controller = cameraController.get<Components::CameraController>();
 	gEngine->GetRenderer().RegisterView(&controller.CameraData);
 
-	// Wait for physics as well
-	//gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);
-
-	// Patch the world with the loaded physics
-	//gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
-
 	// Wait for the loading of the rendering databases before initializing it
 	gEngine->GetJobSystem().WaitForCounter(&renderingDatabasesCounter, 0);
 	gEngine->GetRenderer().InitializeAfterLevelLoad(gEngine->GetWorld());
 
 	// Wait for audio as well
-
-    gEngine->GetJobSystem().WaitForCounter(&audioDatabaseCounter, 0);
+	gEngine->GetJobSystem().WaitForCounter(&audioDatabaseCounter, 0);
 }
 }

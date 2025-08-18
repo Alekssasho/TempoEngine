@@ -8,6 +8,7 @@
 #include <Physics/PhysicsConstants.h>
 
 #include <Jolt/Physics/PhysicsScene.h>
+#include <Jolt/Physics/Collision/Shape/ScaledShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/MeshShape.h>
 
@@ -154,13 +155,19 @@ public:
 		for (const auto& initialRequest : m_InitialRequests)
 		{
 			JPH::BodyCreationSettings settings;
-			settings.mUserData = initialRequest.UserData;
+			settings.mUserData = initialRequest.UserData.id();
 			// TODO: Jolt uses Right handed system, but we use Left handed, check what needs to be different to accommodate this
 			settings.mPosition.Set(initialRequest.Transform.Position.x, initialRequest.Transform.Position.y, initialRequest.Transform.Position.z);
 			settings.mRotation.Set(initialRequest.Transform.Rotation.x, initialRequest.Transform.Rotation.y, initialRequest.Transform.Rotation.z, initialRequest.Transform.Rotation.w);
 			settings.mMotionType = JPH::EMotionType::Static;
 			settings.mObjectLayer = Tempest::Physics::ObjectLayers::Static;
-			settings.SetShapeSettings(getOrCreateShape(PrefabPhysicsRequest{initialRequest.MeshIndex, initialRequest.Type}));
+			JPH::ShapeSettings* shape = getOrCreateShape(PrefabPhysicsRequest{initialRequest.MeshIndex, initialRequest.Type});
+
+			if (initialRequest.Transform.Scale != glm::vec3(1.0f, 1.0f, 1.0f))
+			{
+				shape = new JPH::ScaledShapeSettings(shape, JPH::Vec3(initialRequest.Transform.Scale.x, initialRequest.Transform.Scale.y, initialRequest.Transform.Scale.z));
+			}
+			settings.SetShapeSettings(shape);
 
 			initialScene.AddBody(settings);
 		}

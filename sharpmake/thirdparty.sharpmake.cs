@@ -101,6 +101,7 @@ namespace TempoEngine
             conf.ExportDefines.Add("JPH_EXTERNAL_PROFILE");
             conf.ExportDefines.Add("JPH_OBJECT_STREAM");
             conf.ExportDefines.Add("JPH_FLOATING_POINT_EXCEPTIONS_ENABLED");
+            conf.ExportDefines.Add("JPH_DEBUG_RENDERER");
         }
     }
 

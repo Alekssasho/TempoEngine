@@ -32,7 +32,7 @@ public:
 
 	void Update(float deltaTime, Job::JobSystem& jobSystem);
 
-	eastl::vector<flecs::entity_t> LoadFromLevel(const char* data, size_t size);
+	void LoadFromLevel(const char* data, size_t size);
 // TODO: maybe being private is better
 //private:
 	eastl::vector<eastl::unique_ptr<GameplayFeature>> m_Features;

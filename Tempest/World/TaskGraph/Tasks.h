@@ -1,7 +1,6 @@
 #pragma once
 
 #include <World/TaskGraph/TaskGraph.h>
-#include <World/EntityQuery.h>
 #include <Job/JobSystem.h>
 #include <EASTL/hash_map.h>
 
@@ -18,45 +17,45 @@ struct ParallelFor : TaskGraph::Task
 		assert(false);
 	}
 };
-
-template<typename FunctionType, typename... Components>
-struct ParallelQueryEach : TaskGraph::Task
-{
-	ParallelQueryEach(EntityQuery<Components...>* query, FunctionType&& function, uint32_t stage)
-		: Query(query)
-		, Func(function)
-		, NumJobs(1/*std::thread::hardware_concurrency()*/)
-		, Stage(stage)
-	{}
-
-	virtual void Execute(Job::JobSystem& jobSystem) override
-	{
-		assert(Query);
-		// TODO: This should be temporary memory
-		eastl::vector<Job::JobDecl> jobs(NumJobs);
-		for (uint32_t i = 0; i < NumJobs; ++i)
-		{
-			jobs[i].Data = (void*)this;
-			jobs[i].EntryPoint = ParallelQueryEach::ExecuteJob;
-		}
-
-		Job::Counter counter;
-		jobSystem.RunJobs(Name.c_str(), jobs.data(), NumJobs, &counter);
-		jobSystem.WaitForCounter(&counter, 0);
-	}
-
-	static void ExecuteJob(uint32_t index, void* data)
-	{
-		ParallelQueryEach* task = (ParallelQueryEach*)data;
-		task->Query->ForEachWorker(index, task->NumJobs, std::forward<FunctionType&&>(task->Func), task->Stage);
-	}
-
-	EntityQuery<Components...>* Query;
-	FunctionType Func;
-	//TODO: Possible this could be part of the Job system as input argument
-	uint32_t NumJobs;
-	uint32_t Stage;
-};
+//
+//template<typename FunctionType, typename... Components>
+//struct ParallelQueryEach : TaskGraph::Task
+//{
+//	ParallelQueryEach(EntityQuery<Components...>* query, FunctionType&& function, uint32_t stage)
+//		: Query(query)
+//		, Func(function)
+//		, NumJobs(1/*std::thread::hardware_concurrency()*/)
+//		, Stage(stage)
+//	{}
+//
+//	virtual void Execute(Job::JobSystem& jobSystem) override
+//	{
+//		assert(Query);
+//		// TODO: This should be temporary memory
+//		eastl::vector<Job::JobDecl> jobs(NumJobs);
+//		for (uint32_t i = 0; i < NumJobs; ++i)
+//		{
+//			jobs[i].Data = (void*)this;
+//			jobs[i].EntryPoint = ParallelQueryEach::ExecuteJob;
+//		}
+//
+//		Job::Counter counter;
+//		jobSystem.RunJobs(Name.c_str(), jobs.data(), NumJobs, &counter);
+//		jobSystem.WaitForCounter(&counter, 0);
+//	}
+//
+//	static void ExecuteJob(uint32_t index, void* data)
+//	{
+//		ParallelQueryEach* task = (ParallelQueryEach*)data;
+//		task->Query->ForEachWorker(index, task->NumJobs, std::forward<FunctionType&&>(task->Func), task->Stage);
+//	}
+//
+//	EntityQuery<Components...>* Query;
+//	FunctionType Func;
+//	//TODO: Possible this could be part of the Job system as input argument
+//	uint32_t NumJobs;
+//	uint32_t Stage;
+//};
 
 template<typename Key, typename Value>
 struct ParallelMultiMap : TaskGraph::Task

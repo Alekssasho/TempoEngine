@@ -173,7 +173,7 @@ WorldStorage::WorldStorage()
 
 World::World()
 {
-    //m_Features.emplace_back(new GameplayFeatures::Physics);
+    m_Features.emplace_back(new GameplayFeatures::Physics);
     m_Features.emplace_back(new GameplayFeatures::InputController);
     m_Features.emplace_back(new GameplayFeatures::SoldierMovementController);
     m_Features.emplace_back(new GameplayFeatures::FactorySpawner);
@@ -229,19 +229,17 @@ private:
 	const uint8_t* m_Buffer;
 };
 
-eastl::vector<flecs::entity_t> World::LoadFromLevel(const char* data, size_t size)
+void World::LoadFromLevel(const char* data, size_t size)
 {
-	// We need to prepare systems first as to add observers if needed.
+	// First is entity world, as to have proper id to be the same as generating
+	// as Physics will use it
+	m_EntityWorld.from_json(data);
+
+	// We need to prepare systems second as to add observers if needed(they need yield_existing() to be called).
 	// if this is a problem maybe a split will be needed for observers and systems
 	for (const auto& feature : m_Features)
 	{
 		feature->PrepareSystems(*this);
 	}
-
-	m_EntityWorld.from_json(data);
-	// TODO: This is not working
-	eastl::vector<flecs::entity_t> newlyCreatedEntityIds;
-
-	return newlyCreatedEntityIds;
 }
 }

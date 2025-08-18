@@ -103,6 +103,7 @@ public:
             flecs::entity castleId = m_ECS.m_EntityWorld.entity(("Castle" + suffix).c_str())
                 .is_a(m_PerFactionPrefabs[uint32_t(faction)][Prefabs::Factory])
                 .add<Tempest::Tags::Castle>()
+                .add<Tempest::Components::PhysicsBody>()
                 .set(Tempest::Components::Health{ .CurrentHealth = 10.0f, .MaxHealth = 10.0f })
                 .set(Tempest::Components::Transform{ glm::identity<glm::quat>(), originPoint, glm::vec3(1.0f, 1.0f, 1.0f) });
             m_CastleManager.Castles[(uint32_t(faction) + 1) % uint32_t(Tempest::CastleFight::Faction::Count)] = castleId;

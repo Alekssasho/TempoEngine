@@ -12,7 +12,8 @@
       "name": "joltphysics",
       "features": [
         "profiler",
-        "external-profiler"
+        "external-profiler",
+        "debugrenderer"
       ]
     },
     "stb",

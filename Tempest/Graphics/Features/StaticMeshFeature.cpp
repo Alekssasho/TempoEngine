@@ -15,7 +15,7 @@ namespace GraphicsFeature
 
 void StaticMesh::Initialize(const World& world, Renderer& renderer)
 {
-	m_Query.Init(world);
+	m_Query = world.m_EntityWorld.query<Components::Transform, Components::StaticMesh>("Static Mesh Query");
 	m_Handle = renderer.RequestPipelineState(PipelineStateDescription{
         "StaticMesh",
         "MeshPixel",
@@ -32,7 +32,7 @@ void StaticMesh::Initialize(const World& world, Renderer& renderer)
 void StaticMesh::GatherData(const World& world, FrameData& frameData)
 {
 	ZoneScoped;
-	m_Query.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::StaticMesh& staticMesh) {
+	m_Query.each([&frameData](flecs::entity, Components::Transform& transform, Components::StaticMesh& staticMesh) {
 		const glm::mat4x4 scale = glm::scale(transform.Scale);
 		const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
 		const glm::mat4x4 translate = glm::translate(transform.Position);

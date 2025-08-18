@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Graphics/RenderFeature.h>
-#include <World/EntityQuery.h>
 #include <World/Components/Components.h>
 
 namespace Tempest
@@ -15,7 +14,7 @@ struct StaticMesh : RenderFeature
 	virtual void GatherData(const World&, FrameData&) override;
 	virtual void GenerateCommands(const FrameData& data, RendererCommandList& commandList, const RenderGraphBlackboard& blackboard) override;
 private:
-	EntityQuery<Components::Transform, Components::StaticMesh> m_Query;
+	flecs::query<Components::Transform, Components::StaticMesh> m_Query;
 	PipelineStateHandle m_Handle;
 	PipelineStateHandle m_ShadowHandle;
 };

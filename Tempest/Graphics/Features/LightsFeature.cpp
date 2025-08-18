@@ -12,12 +12,12 @@ namespace GraphicsFeature
 
 void Lights::Initialize(const World& world, Renderer& renderer)
 {
-	m_DirectionalLightQuery.Init(world);
+	m_DirectionalLightQuery = world.m_EntityWorld.query<Components::Transform, Components::LightColorInfo, Tags::DirectionalLight>("Directional Light Feature");
 }
 
 void Lights::GatherData(const World& world, FrameData& frameData)
 {
-	m_DirectionalLightQuery.ForEach([&frameData](flecs::entity, Components::Transform& transform, Components::LightColorInfo& lightColorInfo, Tags::DirectionalLight) {
+	m_DirectionalLightQuery.each([&frameData](flecs::entity, Components::Transform& transform, Components::LightColorInfo& lightColorInfo, Tags::DirectionalLight) {
         const glm::mat4x4 scale = glm::scale(transform.Scale);
         const glm::mat4x4 rotate = glm::toMat4(transform.Rotation);
         const glm::mat4x4 translate = glm::translate(transform.Position);

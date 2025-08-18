@@ -1,5 +1,8 @@
 #include <CommonIncludes.h>
 
+#include <World/World.h>
+#include <World/Components/Components.h>
+
 #include <Physics/PhysicsManager.h>
 #include <Physics/PhysicsConstants.h>
 
@@ -12,6 +15,10 @@
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/PhysicsScene.h>
+
+#include <fstream>
+#include <Jolt/Core/StreamWrapper.h>
+#include <Jolt/Renderer/DebugRendererRecorder.h>
 
 #include <DataDefinitions/PhysicsDatabase_generated.h>
 
@@ -48,6 +55,9 @@ static void TraceImpl(const char* fmt, ...)
 
 struct JoltJobSystem : public JPH::JobSystemWithBarrier
 {
+    JoltJobSystem()
+        : JPH::JobSystemWithBarrier(1)
+    {}
     //struct JoltBarrier : public JPH::JobSystem::Barrier
     //{
     //    virtual ~JoltBarrier() override
@@ -210,8 +220,15 @@ struct PhysicsImpl
 
     JPH::Ref<JPH::PhysicsScene> PrefabScene;
 
+    std::ofstream DebugFile;
+    JPH::StreamOutWrapper DebugStream;
+    JPH::DebugRendererRecorder DebugRecorder;
+
     PhysicsImpl()
         : TempAllocator(10 * 1024 * 1024)
+        , DebugFile(std::filesystem::path(gEngineCore->GetOptions().ResourceFolder) / "jolt_debug.jviewer", std::ios::binary)
+        , DebugStream(DebugFile)
+        , DebugRecorder(DebugStream)
     {
     }
 };
@@ -291,87 +308,56 @@ void PhysicsManager::LoadDatabase(const char* databaseName)
 
     m_Impl->PrefabScene = prefabSceneResult.Get();
 }
-//
-//void PhysicsManager::PatchWorldComponents(World& world, const eastl::vector<flecs::entity_t>& newlyCreatedEntities)
-//{
-//	physx::PxActorTypeFlags selectionFlags = physx::PxActorTypeFlag::eRIGID_DYNAMIC;
-//	// TODO: Temp memory
-//	eastl::vector<physx::PxActor*> actors(m_Scene->getNbActors(selectionFlags));
-//	m_Scene->getActors(selectionFlags, actors.data(), physx::PxU32(actors.size()));
-//
-//	for (physx::PxActor* actor : actors)
-//	{
-//		physx::PxRigidBody* rigidBody = actor->is<physx::PxRigidBody>();
-//		assert(rigidBody);
-//		if (rigidBody->getNbShapes() > 1) {
-//			// this is probably a car, so we handle it afterwards
-//			continue;
-//		}
-//		flecs::entity_t id = newlyCreatedEntities[uint64_t(actor->userData)];
-//		flecs::entity entity(world.m_EntityWorld, id);
-//		assert(entity.has<Components::DynamicPhysicsActor>());
-//		Components::DynamicPhysicsActor* dynamicActorComponent = entity.get_mut<Components::DynamicPhysicsActor>();
-//		dynamicActorComponent->Actor = rigidBody;
-//	}
-//
-//	// Setup car components
-//	{
-//		EntityQuery<Components::CarPhysicsPart> queryCar;
-//		queryCar.Init(world);
-//
-//		// TODO: assert(iter.count % 5 == 0);
-//		queryCar.ForEach([&actors](flecs::entity, Components::CarPhysicsPart& dynamicActor) {
-//			// Find the id in userData in physics actors
-//			auto findItr = eastl::find_if(actors.begin(), actors.end(), [dynamicActor](physx::PxActor* actor)
-//			{
-//				return size_t(actor->userData) == size_t(dynamicActor.CarActor);
-//			});
-//
-//			assert(findItr != actors.end());
-//			auto rigidBody = (*findItr)->is<physx::PxRigidDynamic>();
-//			assert(rigidBody);
-//			dynamicActor.CarActor = rigidBody;
-//			// TODO: remove me
-//			physx::PxSetGroup(*rigidBody, groupWheel);
-//		});
-//
-//		// Setup drivable planes
-//		physx::PxActorTypeFlags selectionFlagsStatic = physx::PxActorTypeFlag::eRIGID_STATIC;
-//		// TODO: Temp memory
-//		eastl::vector<physx::PxActor*> staticActors(m_Scene->getNbActors(selectionFlagsStatic));
-//		m_Scene->getActors(selectionFlagsStatic, staticActors.data(), physx::PxU32(staticActors.size()));
-//		for(const auto& staticActor : staticActors)
-//		{
-//			// TODO: Add simulation filtering to shapes and not actors
-//			// Simulation filtering
-//			physx::PxSetGroup(*staticActor, groupGround);
-//		}
-//	}
-//}
 
-//void PhysicsManager::Update(float deltaTime)
-//{
-//	if(gVehicle4W)
-//	{
-//		PxVehicleDrive4WSmoothDigitalRawInputsAndSetAnalogInputs(gKeySmoothingData, gSteerVsForwardSpeedTable, VehicleInputData, deltaTime, gIsVehicleInAir, *gVehicle4W);
-//
-//		//Raycasts.
-//		physx::PxVehicleWheels* vehicles[1] = { gVehicle4W };
-//		PxVehicleSuspensionRaycasts(gBatchQuery, 1, vehicles, numWheels, suspensionQueryResults);
-//
-//		//Vehicle update.
-//		const physx::PxVec3 grav = m_Scene->getGravity();
-//		physx::PxWheelQueryResult wheelQueryResults[PX_MAX_NB_WHEELS];
-//		physx::PxVehicleWheelQueryResult vehicleQueryResults[1] = { {wheelQueryResults, gVehicle4W->mWheelsSimData.getNbWheels()} };
-//		PxVehicleUpdates(deltaTime, grav, *gFrictionPairs, 1, vehicles, vehicleQueryResults);
-//
-//		gIsVehicleInAir = gVehicle4W->getRigidDynamicActor()->isSleeping() ? false : physx::PxVehicleIsInAir(vehicleQueryResults[0]);
-//	}
-//	// TODO: Add scratch memory
-//	m_Scene->simulate(deltaTime);
-//
-//	// TODO: Think of a way to not do it here, but do other work as well
-//	m_Scene->fetchResults(true);
-//
-//}
+void PhysicsManager::PatchWorldComponents(World& world)
+{
+    JPH::BodyIDVector bodies;
+    m_Impl->System.GetBodies(bodies);
+    JPH::BodyInterface& bodyInterface = m_Impl->System.GetBodyInterfaceNoLock();
+    for (const auto& bodyId : bodies)
+    {
+        flecs::entity_t id = bodyInterface.GetUserData(bodyId);
+        flecs::entity entity(world.m_EntityWorld, id);
+        entity.get_mut<Components::PhysicsBody>().ID = bodyId;
+    }
+}
+
+JPH::BodyID PhysicsManager::CreateBodyFromPrefabScene(uint32_t index, const Components::Transform& transform)
+{
+    JPH::BodyCreationSettings settings = m_Impl->PrefabScene->GetBodies()[index];
+    settings.mPosition = JPH::Vec3(transform.Position.x, transform.Position.y, transform.Position.z);
+    settings.mRotation = JPH::Quat(transform.Rotation.x, transform.Rotation.y, transform.Rotation.z, transform.Rotation.w);
+    assert(transform.Scale.x == 1.0f);
+    assert(transform.Scale.y == 1.0f);
+    assert(transform.Scale.z == 1.0f);
+
+    return m_Impl->System.GetBodyInterface().CreateAndAddBody(settings, JPH::EActivation::Activate);
+}
+
+void PhysicsManager::CopyTransformToBody(const Components::Transform& transform, JPH::BodyID id)
+{
+    m_Impl->System.GetBodyInterface().SetPositionAndRotation(
+        id,
+        JPH::Vec3(transform.Position.x, transform.Position.y, transform.Position.z),
+        JPH::Quat(transform.Rotation.x, transform.Rotation.y, transform.Rotation.z, transform.Rotation.w),
+        JPH::EActivation::Activate
+    );
+}
+
+void PhysicsManager::RemoveBody(JPH::BodyID id)
+{
+    auto& interface = m_Impl->System.GetBodyInterface();
+    interface.RemoveBody(id);
+    interface.DestroyBody(id);
+}
+
+void PhysicsManager::Update(float deltaTime)
+{
+    m_Impl->System.Update(deltaTime, 1, &m_Impl->TempAllocator, &m_Impl->JobSystem);
+
+    JPH::BodyManager::DrawSettings settings;
+    m_Impl->System.DrawBodies(settings, &m_Impl->DebugRecorder);
+
+    m_Impl->DebugRecorder.EndFrame();
+}
 }

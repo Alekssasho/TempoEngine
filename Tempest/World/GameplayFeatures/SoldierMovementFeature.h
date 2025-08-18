@@ -15,6 +15,7 @@ struct SoldierMovementController : public GameplayFeature
 	{
 		world.m_EntityWorld.observer("Init Movement Controller Observer")
 			.event(flecs::OnAdd)
+			.yield_existing()
 			.with<Components::LaneMovement>().filter()
 			.with<Components::Transform>().filter()
 			.with<Tags::Attacks>().second(flecs::Wildcard)

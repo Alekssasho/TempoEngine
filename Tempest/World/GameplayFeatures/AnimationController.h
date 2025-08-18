@@ -14,6 +14,7 @@ struct AnimationController : public GameplayFeature
 	{
         world.m_EntityWorld.observer<Components::SkeletonMesh>("Init Skeleton Meshes")
             .event(flecs::OnAdd)
+            .yield_existing()
             .each([](flecs::iter& itr, size_t row, Components::SkeletonMesh& mesh) {
                 AnimationManager& anim = gEngine->GetAnimation();
                 // TODO: Get actual skeleton index

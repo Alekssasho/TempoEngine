@@ -6,6 +6,8 @@ vcpkg_from_github(
     REF "f3dbdd2dadac4a5510391f103f264c0427d55c50"
     SHA512 d994fe39b3b31aea2a6195b3d8fb4212a6fa242136a67935b8fe98565c57eb3f7939d6589078209bdb47811d342d98e29e0d4edf3aa9a7c806b56b7e0026ca75
     HEAD_REF master
+    PATCHES
+        "serialize-user-data.patch"
 )
 
 string(COMPARE EQUAL "${VCPKG_CRT_LINKAGE}" "static" USE_STATIC_CRT)

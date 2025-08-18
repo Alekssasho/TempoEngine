@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Graphics/RenderFeature.h>
-#include <World/EntityQuery.h>
 #include <World/Components/Components.h>
 
 namespace Tempest

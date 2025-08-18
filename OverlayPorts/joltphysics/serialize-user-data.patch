@@ -1,0 +1,20 @@
+diff --git a/Jolt/Physics/Body/BodyCreationSettings.cpp b/Jolt/Physics/Body/BodyCreationSettings.cpp
+index 9b6d3f92..d4cb5b79 100644
+--- a/Jolt/Physics/Body/BodyCreationSettings.cpp
++++ b/Jolt/Physics/Body/BodyCreationSettings.cpp
+@@ -51,6 +51,7 @@ void BodyCreationSettings::SaveBinaryState(StreamOut &inStream) const
+ 	inStream.Write(mRotation);
+ 	inStream.Write(mLinearVelocity);
+ 	inStream.Write(mAngularVelocity);
++	inStream.Write(mUserData);
+ 	mCollisionGroup.SaveBinaryState(inStream);
+ 	inStream.Write(mObjectLayer);
+ 	inStream.Write(mMotionType);
+@@ -83,6 +84,7 @@ void BodyCreationSettings::RestoreBinaryState(StreamIn &inStream)
+ 	inStream.Read(mRotation);
+ 	inStream.Read(mLinearVelocity);
+ 	inStream.Read(mAngularVelocity);
++	inStream.Read(mUserData);
+ 	mCollisionGroup.RestoreBinaryState(inStream);
+ 	inStream.Read(mObjectLayer);
+ 	inStream.Read(mMotionType);

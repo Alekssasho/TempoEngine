@@ -90,7 +90,7 @@ void ImGuiDebugRender(Navigation::LaneIterator* v, const char* nameOfMember)
 template<>
 void ImGuiDebugRender(JPH::BodyID* v, const char* nameOfMember)
 {
-    ImGui::InputInt(nameOfMember, (int*)v);
+    ImGui::Text("%s: id:%d, seq:%d", nameOfMember, v->GetIndex(), v->GetSequenceNumber());
 }
 
 }

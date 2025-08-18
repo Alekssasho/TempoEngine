@@ -16,27 +16,45 @@ class Physics : public GameplayFeature
 public:
     virtual void PrepareSystems(class World& world) override
     {
-        //world.m_EntityWorld
-        //    .system<Components::Transform, Components::DynamicPhysicsActor>("MirrorFromPhysicsDynamicActors")
-        //    .kind(flecs::PostUpdate)
-        //    .each(&Physics::MirrorFromPhysicsDynamicActors);
+        world.m_EntityWorld
+            .system<const Components::Transform, const Components::PhysicsBody>("MirrorToPhysicsBodies")
+            .kind(flecs::PreUpdate)
+            .each([](const Components::Transform& transform, const Components::PhysicsBody& physicsBody) {
+                gEngine->GetPhysics().CopyTransformToBody(transform, physicsBody.ID);
+            });
 
         //world.m_EntityWorld
         //    .system<Components::Transform, Components::CarPhysicsPart>("MirrorFromPhysicsCar")
         //    .kind(flecs::PostUpdate)
         //    .each(&Physics::MirrorFromPhysicsCar);
 
-        //world.m_EntityWorld
-        //    .system<>("Physics Update")
-        //    .kind(flecs::OnUpdate)
-        //    //.singleton()
-        //    .run(&Physics::PhysicsUpdate);
-    }
+        world.m_EntityWorld.observer<Components::PrefabPhysicsCreationRequest>("Init Prefab Physics")
+            .event(flecs::OnAdd)
+            .yield_existing()
+            .with<const Components::Transform>().filter()
+            .each([](flecs::iter itr, size_t row, Components::PrefabPhysicsCreationRequest& request) {
+                auto e = itr.entity(row);
 
-    //static void PhysicsUpdate(flecs::iter& it)
-    //{
-    //    gEngine->GetPhysics().Update(it.delta_time());
-    //}
+                const Components::Transform& transform = itr.field_at<const Components::Transform>(1, row);
+
+                JPH::BodyID newId = gEngine->GetPhysics().CreateBodyFromPrefabScene(request.Index, transform);
+
+                e.remove<Components::PrefabPhysicsCreationRequest>();
+                e.set(Components::PhysicsBody{ newId });
+            });
+
+        world.m_EntityWorld.observer<Components::PhysicsBody>("Delete Physics Body")
+            .event(flecs::OnRemove)
+            .each([](Components::PhysicsBody& physicsBody) {
+                gEngine->GetPhysics().RemoveBody(physicsBody.ID);
+            });
+
+        world.m_EntityWorld.system("Physics Update")
+            .kind(flecs::OnUpdate)
+            .run([](flecs::iter& it) {
+                gEngine->GetPhysics().Update(it.delta_time());
+            });
+    }
 
     //static void MirrorFromPhysicsDynamicActors(flecs::entity, Components::Transform& transform, Components::DynamicPhysicsActor& physicsActor)
     //{

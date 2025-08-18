@@ -46,6 +46,7 @@ struct EntitiesDebugger : DebugWindow
 			//auto entity = m_World.m_EntityWorld.entity(e);
 			if (ImGui::TreeNode(e.name().size() > 0 ? e.name().c_str() : "NULL"))
 			{
+				ImGui::Text("ID:%d", e.id());
 				e.each([&](flecs::id componentId) {
 					//auto comp = gEngine->GetWorld().m_EntityWorld.entity(componentId);
 					//ImGui::Text(comp.name().c_str());

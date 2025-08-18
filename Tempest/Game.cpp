@@ -106,10 +106,10 @@ void Game::LoadLevel(uint32_t, void* data)
 	gEngine->GetJobSystem().WaitForCounter(&physicsWorldCounter, 0);
 
 	const flatbuffers::Vector<uint8_t>* entitiesData = level->entities();
-	const eastl::vector<flecs::entity_t>& newlyCreatedEntities = gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
+	gEngine->GetWorld().LoadFromLevel(reinterpret_cast<const char*>(entitiesData->Data()), entitiesData->size());
 
 	// Patch the world with the loaded physics
-	//gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld(), newlyCreatedEntities);
+	gEngine->GetPhysics().PatchWorldComponents(gEngine->GetWorld());
 
 	auto camera = level->camera();
 

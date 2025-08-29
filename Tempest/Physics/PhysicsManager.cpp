@@ -325,8 +325,8 @@ void PhysicsManager::PatchWorldComponents(World& world)
 JPH::BodyID PhysicsManager::CreateBodyFromPrefabScene(uint32_t index, const Components::Transform& transform)
 {
     JPH::BodyCreationSettings settings = m_Impl->PrefabScene->GetBodies()[index];
-    settings.mPosition = JPH::Vec3(transform.Position.x, transform.Position.y, transform.Position.z);
-    settings.mRotation = JPH::Quat(transform.Rotation.x, transform.Rotation.y, transform.Rotation.z, transform.Rotation.w);
+    settings.mPosition = ToJPH(transform.Position);
+    settings.mRotation = ToJPH(transform.Rotation);
     assert(transform.Scale.x == 1.0f);
     assert(transform.Scale.y == 1.0f);
     assert(transform.Scale.z == 1.0f);
@@ -338,10 +338,25 @@ void PhysicsManager::CopyTransformToBody(const Components::Transform& transform,
 {
     m_Impl->System.GetBodyInterface().SetPositionAndRotation(
         id,
-        JPH::Vec3(transform.Position.x, transform.Position.y, transform.Position.z),
-        JPH::Quat(transform.Rotation.x, transform.Rotation.y, transform.Rotation.z, transform.Rotation.w),
+        ToJPH(transform.Position),
+        ToJPH(transform.Rotation),
         JPH::EActivation::Activate
     );
+}
+
+void PhysicsManager::CopyTransformFromBody(Components::Transform& transform, JPH::BodyID id)
+{
+    JPH::Quat rotation;
+    JPH::Vec3 position;
+    m_Impl->System.GetBodyInterface().GetPositionAndRotation(id, position, rotation);
+
+    transform.Position = FromJPH(position);
+    transform.Rotation = FromJPH(rotation);
+}
+
+void PhysicsManager::SetVelocity(JPH::BodyID id, glm::vec3 linear, glm::vec3 angular)
+{
+    m_Impl->System.GetBodyInterface().SetLinearAndAngularVelocity(id, ToJPH(linear), ToJPH(angular));
 }
 
 void PhysicsManager::RemoveBody(JPH::BodyID id)

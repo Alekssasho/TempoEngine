@@ -2,8 +2,6 @@
 
 #include <Defines.h>
 
-#include <Math/Math.h>
-
 #define EASTL_DEPRECATIONS_FOR_2024_APRIL EA_ENABLED
 #include <EASTL/string.h>
 #include <EASTL/vector.h>
@@ -23,3 +21,5 @@
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Physics/Body/BodyID.h>
+
+#include <Math/Math.h>

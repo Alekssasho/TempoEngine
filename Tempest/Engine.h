@@ -81,12 +81,12 @@ private:
 	InputManager m_Input;
 	WindowsPlatform m_Platform;
 
-	Renderer m_Renderer;
-	Camera m_Camera;
 	AudioManager m_Audio;
 	PhysicsManager m_Physics;
 	AnimationManager m_Animation;
 	World m_World;
+	Renderer m_Renderer;
+	Camera m_Camera;
 
 	DebugOptions m_DebugOptions;
 

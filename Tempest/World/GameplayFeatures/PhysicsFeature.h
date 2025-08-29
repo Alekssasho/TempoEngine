@@ -16,17 +16,32 @@ class Physics : public GameplayFeature
 public:
     virtual void PrepareSystems(class World& world) override
     {
-        world.m_EntityWorld
-            .system<const Components::Transform, const Components::PhysicsBody>("MirrorToPhysicsBodies")
-            .kind(flecs::PreUpdate)
-            .each([](const Components::Transform& transform, const Components::PhysicsBody& physicsBody) {
-                gEngine->GetPhysics().CopyTransformToBody(transform, physicsBody.ID);
-            });
-
         //world.m_EntityWorld
-        //    .system<Components::Transform, Components::CarPhysicsPart>("MirrorFromPhysicsCar")
-        //    .kind(flecs::PostUpdate)
-        //    .each(&Physics::MirrorFromPhysicsCar);
+        //    .system<const Components::Transform, const Components::PhysicsBody>("MirrorToPhysicsBodies")
+        //    .kind(flecs::PreUpdate)
+        //    .each([](const Components::Transform& transform, const Components::PhysicsBody& physicsBody) {
+        //        gEngine->GetPhysics().CopyTransformToBody(transform, physicsBody.ID);
+        //    });
+
+        world.m_EntityWorld
+            .system<Components::Transform, const Components::PhysicsBody>("MirrorFromPhysicsBodies")
+            .kind(flecs::PostUpdate)
+            .each([](Components::Transform& transform, const Components::PhysicsBody& physicsBody) {
+                gEngine->GetPhysics().CopyTransformFromBody(transform, physicsBody.ID);
+             });
+
+        world.m_EntityWorld.system<Components::Transform, const Components::Movement, const Components::MovementInfo, const Components::PhysicsBody>("Kinematic Movement System")
+            .kind(flecs::PreUpdate)
+            .multi_threaded()
+            .with<Tags::SimpleMovement>()
+            .each([](Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo, const Components::PhysicsBody& body) {
+                    gEngine->GetPhysics().SetVelocity(body.ID, movement.Velocity * movementInfo.Speed, glm::vec3(0.0f, 0.0f, 0.0f));
+                    if (glm::length2(movement.Velocity) != 0.0f)
+                    {
+                        transform.Rotation = glm::rotation(sForwardDirection, movement.Velocity);
+                        gEngine->GetPhysics().CopyTransformToBody(transform, body.ID);
+                    }
+                });
 
         world.m_EntityWorld.observer<Components::PrefabPhysicsCreationRequest>("Init Prefab Physics")
             .event(flecs::OnAdd)
@@ -55,33 +70,6 @@ public:
                 gEngine->GetPhysics().Update(it.delta_time());
             });
     }
-
-    //static void MirrorFromPhysicsDynamicActors(flecs::entity, Components::Transform& transform, Components::DynamicPhysicsActor& physicsActor)
-    //{
-    //    physx::PxTransform pxTransform = physicsActor.Actor->getGlobalPose();
-    //    transform.Position.x = pxTransform.p.x;
-    //    transform.Position.y = pxTransform.p.y;
-    //    transform.Position.z = pxTransform.p.z;
-    //    transform.Rotation.x = pxTransform.q.x;
-    //    transform.Rotation.y = pxTransform.q.y;
-    //    transform.Rotation.z = pxTransform.q.z;
-    //    transform.Rotation.w = pxTransform.q.w;
-    //}
-
-
-    //static void MirrorFromPhysicsCar(flecs::entity, Components::Transform& transform, Components::CarPhysicsPart& carPhysics)
-    //{
-    //    physx::PxShape* wantedShape = nullptr;
-    //    carPhysics.CarActor->getShapes(&wantedShape, 1, carPhysics.ShapeIndex);
-    //    physx::PxTransform pxTransform = physx::PxShapeExt::getGlobalPose(*wantedShape, *carPhysics.CarActor);
-    //    transform.Position.x = pxTransform.p.x;
-    //    transform.Position.y = pxTransform.p.y;
-    //    transform.Position.z = pxTransform.p.z;
-    //    transform.Rotation.x = pxTransform.q.x;
-    //    transform.Rotation.y = pxTransform.q.y;
-    //    transform.Rotation.z = pxTransform.q.z;
-    //    transform.Rotation.w = pxTransform.q.w;
-    //}
 };
 
 }

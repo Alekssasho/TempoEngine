@@ -81,19 +81,19 @@ struct SoldierMovementController : public GameplayFeature
 			});
 
 
-		world.m_EntityWorld.system<Components::Transform, const Components::Movement, const Components::MovementInfo>("MovementSystem")
-			.kind(flecs::PostUpdate)
-			.multi_threaded()
-			.with<Tags::SimpleMovement>()
-			.each([](flecs::iter it, size_t row, Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo) {
-				auto deltaTime = it.delta_time();
+		//world.m_EntityWorld.system<Components::Transform, const Components::Movement, const Components::MovementInfo>("MovementSystem")
+		//	.kind(flecs::PostUpdate)
+		//	.multi_threaded()
+		//	.with<Tags::SimpleMovement>()
+		//	.each([](flecs::iter it, size_t row, Components::Transform& transform, const Components::Movement& movement, const Components::MovementInfo& movementInfo) {
+		//		auto deltaTime = it.delta_time();
 
-				transform.Position += movement.Velocity * movementInfo.Speed * deltaTime;
-				if (glm::length2(movement.Velocity) != 0.0f)
-				{
-					transform.Rotation = glm::rotation(sForwardDirection, movement.Velocity);
-				}
-			});
+		//		transform.Position += movement.Velocity * movementInfo.Speed * deltaTime;
+		//		if (glm::length2(movement.Velocity) != 0.0f)
+		//		{
+		//			transform.Rotation = glm::rotation(sForwardDirection, movement.Velocity);
+		//		}
+		//	});
 	}
 
 };

@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls:*)",
+      "Bash(ls:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo --version)",
+      "Bash(cargo.exe build:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)"
+    ]
+  }
+}

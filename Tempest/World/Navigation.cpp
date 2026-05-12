@@ -107,5 +107,45 @@ glm::vec3 LaneIterator::UpdateNextDirection(const Components::NavigationData& na
 
     return glm::normalize(lanePoints[CurrentPointIndex] - pos);
 }
+
+void ReanchorToPosition(LaneIterator& itr, const Components::NavigationData& navData, glm::vec3 pos)
+{
+    if (itr.CurrentMode != LaneIterator::Mode::Forward && itr.CurrentMode != LaneIterator::Mode::Backward)
+    {
+        return;
+    }
+
+    auto lanePoints = eastl::span(&navData.Points[navData.Lines[itr.LaneIndex].StartIndex], navData.Lines[itr.LaneIndex].Count);
+    if (lanePoints.size() < 2)
+    {
+        return;
+    }
+
+    const uint32_t closest = FindClosestPointOnLane(lanePoints, pos);
+    const int32_t step = itr.CurrentMode == LaneIterator::Mode::Forward ? 1 : -1;
+    const uint32_t lastPointIndex = itr.CurrentMode == LaneIterator::Mode::Forward ? uint32_t(lanePoints.size()) - 1 : 0;
+
+    // If closest point already is the terminal waypoint, nothing to do.
+    if (closest == lastPointIndex)
+    {
+        itr.CurrentPointIndex = closest;
+        return;
+    }
+
+    // Decide whether the closest point lies ahead or behind us along the lane direction.
+    // Segment direction from `closest` to the next point in travel order.
+    const glm::vec3 segmentDir = lanePoints[closest + step] - lanePoints[closest];
+    const glm::vec3 toPoint = lanePoints[closest] - pos;
+
+    // Positive dot => point is "ahead" of pos along travel direction. Negative => behind; advance one step.
+    if (glm::dot(toPoint, segmentDir) >= 0.0f)
+    {
+        itr.CurrentPointIndex = closest;
+    }
+    else
+    {
+        itr.CurrentPointIndex = uint32_t(int32_t(closest) + step);
+    }
+}
 }
 }

@@ -100,6 +100,7 @@ struct Movement
 struct LaneMovement
 {
     Navigation::LaneIterator Itr;
+    bool NeedsReanchor;
     static constexpr const char* Name = "LaneMovement";
 };
 struct MovementInfo

@@ -109,6 +109,7 @@ Component Movement
 Component LaneMovement
 {
 	Itr : Navigation::LaneIterator;
+	NeedsReanchor : bool;
 }
 
 // TODO: add tags for lanes

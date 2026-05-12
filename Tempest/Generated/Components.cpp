@@ -150,6 +150,7 @@ void LaneMovementImGuiDebug(void* data)
     ImGui::PushID("LaneMovement");
     ImGui::Text("LaneMovement");
     ImGuiDebugRender(&comp->Itr, "Itr");
+    ImGuiDebugRender(&comp->NeedsReanchor, "NeedsReanchor");
     ImGui::PopID();
 }
 void MovementInfoImGuiDebug(void* data)

@@ -39,6 +39,12 @@ void ImGuiDebugRender(uint32_t* v, const char* nameOfMember)
 }
 
 template<>
+void ImGuiDebugRender(bool* v, const char* nameOfMember)
+{
+    ImGui::Checkbox(nameOfMember, v);
+}
+
+template<>
 void ImGuiDebugRender(Camera* v, const char* nameOfMember)
 {
 }

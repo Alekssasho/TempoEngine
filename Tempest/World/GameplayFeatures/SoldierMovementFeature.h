@@ -31,6 +31,7 @@ struct SoldierMovementController : public GameplayFeature
 				auto factionFlag = uint64_t(e.get<Components::Faction>().FactionFlag);
 
 				movement.Itr = Navigation::FindLane(navData, itr.field_at<Components::Transform>(1, row).Position, targetTransform->Position, e.id() + factionFlag * 100000);
+				movement.NeedsReanchor = false;
 			});
 
 
@@ -39,20 +40,10 @@ struct SoldierMovementController : public GameplayFeature
 			.multi_threaded()
 			.with<Tags::SimpleMovement>()
 			.each([](flecs::iter itr, size_t, const Components::Transform& transform, Components::Movement& movement, Components::LaneMovement& laneMovement, const Components::Attacking& att, const Components::AttackInfo& attackInfo, Components::AnimationController& animController) {
-				if (laneMovement.Itr.IsValid())
-				{
-					auto& navData = itr.world().get<Components::NavigationData>();
+				const bool inCombat = att.Target.is_valid() && att.Target.is_alive();
 
-					movement.Velocity = laneMovement.Itr.UpdateNextDirection(navData, transform.Position);
-				}
-				else
+				if (inCombat)
 				{
-					movement.Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
-				}
-
-				if (att.Target.is_valid() && att.Target.is_alive())
-				{
-
 					const auto& targetPos = att.Target.get<Components::Transform>().Position;
 					if (glm::distance2(transform.Position, targetPos) > attackInfo.Range * attackInfo.Range)
 					{
@@ -62,6 +53,23 @@ struct SoldierMovementController : public GameplayFeature
 					{
 						movement.Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 					}
+					// Mark iterator dirty; we drifted off-lane chasing the target and
+					// will need to re-anchor before resuming lane nav.
+					laneMovement.NeedsReanchor = true;
+				}
+				else if (laneMovement.Itr.IsValid())
+				{
+					auto& navData = itr.world().get<Components::NavigationData>();
+					if (laneMovement.NeedsReanchor)
+					{
+						Navigation::ReanchorToPosition(laneMovement.Itr, navData, transform.Position);
+						laneMovement.NeedsReanchor = false;
+					}
+					movement.Velocity = laneMovement.Itr.UpdateNextDirection(navData, transform.Position);
+				}
+				else
+				{
+					movement.Velocity = glm::vec3(0.0f, 0.0f, 0.0f);
 				}
 
 				if (glm::length2(movement.Velocity) == 0.0f)
